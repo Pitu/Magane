@@ -5,6 +5,7 @@ class GUI {
 
 		this.lastKnownLocation; // eslint-disable-line no-unused-expressions
 		this.popupWindow; // eslint-disable-line no-unused-expressions
+		this.showingPopupWindow = false;
 		this.appendableElement; // eslint-disable-line no-unused-expressions
 		this.kuroStickers; // eslint-disable-line no-unused-expressions
 		this.stickersButton; // eslint-disable-line no-unused-expressions
@@ -107,8 +108,8 @@ class GUI {
 				}
 
 				st.addEventListener('click', async () => {
+					this.toggleStickerWindow();
 					await this.client.sendSticker(sticker, window.location.href.split('/').slice(-1)[0]);
-					this.popupWindow.classList.toggle('active');
 				});
 
 				st.addEventListener('contextmenu', ev => {
@@ -138,7 +139,7 @@ class GUI {
 		this.createPopupWindow();
 		this.stickersButton = document.createElement('div');
 		this.stickersButton.className = 'channel-textarea-emoji channel-textarea-stickers';
-		this.stickersButton.addEventListener('click', () => this.popupWindow.classList.toggle('active'));
+		this.stickersButton.addEventListener('click', () => this.toggleStickerWindow(), false);
 		this.kuroStickers.appendChild(this.stickersButton);
 		this.kuroStickers.appendChild(this.popupWindow);
 		this.configButton = this.kuroStickers.querySelector('.sticker-settings-btn');
@@ -147,12 +148,25 @@ class GUI {
 		this.configContainer = this.kuroStickers.querySelector('.config-container');
 		this.configButton.addEventListener('click', () => this.configContainer.classList.toggle('hidden'));
 		await this.processStickers();
+		document.querySelector('#app-mount').addEventListener('click', event => {
+			if (!this.kuroStickers.contains(event.target)) {
+				if (this.showingPopupWindow) {
+					this.toggleStickerWindow();
+				}
+			}
+		});
 		setInterval(() => {
 			if (window.location.href !== this.lastKnownLocation) {
 				this.lastKnownLocation = window.location.href;
 				this.checkDOM();
 			}
 		}, 1000);
+	}
+
+	toggleStickerWindow() {
+		this.stickersButton.classList.toggle('active');
+		this.popupWindow.classList.toggle('active');
+		this.showingPopupWindow = !this.showingPopupWindow;
 	}
 
 	createPopupWindow() {
