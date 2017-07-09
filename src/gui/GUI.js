@@ -11,7 +11,13 @@ class GUI {
 		this.configContainer; // eslint-disable-line no-unused-expressions
 		this.stickerContainer; // eslint-disable-line no-unused-expressions
 		this.configButton; // eslint-disable-line no-unused-expressions
-		this.stickerPacks = [];
+		this.favoriteStickers; // eslint-disable-line no-unused-expressions
+		this.subscribedPacks; // eslint-disable-line no-unused-expressions
+		this.favoriteStickers; // eslint-disable-line no-unused-expressions
+		this.favoritePack = {
+			name: 'favorites',
+			files: []
+		};
 
 		this.loadTimer = setInterval(async () => {
 			const appendableElement = document.querySelector('[class^="channelTextArea"] [class^="inner"]')
@@ -20,24 +26,25 @@ class GUI {
 				clearInterval(this.loadTimer);
 				await this.prepareDOM();
 			}
-		});
+		}, 1000);
 	}
 
 	async processStickers() {
 		const response = await fetch('https://lolisafe.moe/stickers.json');
 		const packs = await response.json();
 		this.updateConfigGUI(packs);
-		// Not needed anymore? this.updateStickersGUI(packs);
 	}
 
 	updateConfigGUI(fetchedStickers) {
 		if (!this.localStorage.subscribedPacks) this.localStorage.subscribedPacks = JSON.stringify([]);
-		const subscribedPacks = JSON.parse(this.localStorage.subscribedPacks);
+		if (!this.localStorage.favoriteStickers) this.localStorage.favoriteStickers = JSON.stringify([]);
+		this.subscribedPacks = JSON.parse(this.localStorage.subscribedPacks);
+		this.favoriteStickers = JSON.parse(this.localStorage.favoriteStickers);
 		for (const pack of fetchedStickers) {
 			let image = pack.files[0].thumb;
 			if (!image) image = pack.files[0].file;
 			let subscribed = '';
-			if (subscribedPacks.includes(pack.name)) subscribed = ' active';
+			if (this.subscribedPacks.includes(pack.name)) subscribed = ' active';
 
 			const sticker = document.createElement('div');
 			sticker.className = 'pack-container';
@@ -50,29 +57,34 @@ class GUI {
 
 			sticker.addEventListener('click', () => {
 				sticker.querySelector('.pack-status').classList.toggle('active');
-				if (subscribedPacks.includes(pack.name)) subscribedPacks.splice(subscribedPacks.indexOf(pack.name), 1);
-				else subscribedPacks.push(pack.name);
-				this.localStorage.subscribedPacks = JSON.stringify(subscribedPacks);
-				this.updateStickersGUI(fetchedStickers, subscribedPacks);
+				if (this.subscribedPacks.includes(pack.name)) this.subscribedPacks.splice(this.subscribedPacks.indexOf(pack.name), 1);
+				else this.subscribedPacks.push(pack.name);
+				this.localStorage.subscribedPacks = JSON.stringify(this.subscribedPacks);
+				this.updateStickersGUI(fetchedStickers, this.subscribedPacks);
 			});
 			const divider = document.createElement('div');
 			divider.className = 'pack-divider';
 			this.configContainer.appendChild(sticker);
 			this.configContainer.appendChild(divider);
-			this.updateStickersGUI(fetchedStickers, subscribedPacks);
 		}
+		this.updateStickersGUI(fetchedStickers);
 	}
 
-	updateStickersGUI(fetchedStickers, subscribedPacks) {
-		if (this.stickerPacks.length === fetchedStickers.length) return;
+	updateStickersGUI(fetchedStickers) {
 		while (this.stickerContainer.firstChild) this.stickerContainer.removeChild(this.stickerContainer.firstChild);
 
-		for (const pack of fetchedStickers) {
-			if (!subscribedPacks.includes(pack.name)) continue;
-			this.stickerPacks.push(fetchedStickers);
+		let stickersToProcess = [];
+		if (this.favoriteStickers.length > 0) {
+			this.favoritePack.files = this.favoriteStickers;
+			stickersToProcess.push(this.favoritePack);
+		}
+
+		for (let pack of fetchedStickers) stickersToProcess.push(pack);
+
+		for (const pack of stickersToProcess) {
+			if (pack.name !== 'favorites') if (!this.subscribedPacks.includes(pack.name)) continue;
 			const title = document.createElement('div');
 			title.className = 'category';
-			title.id = pack.name;
 			title.innerText = `${pack.name} - ${pack.files.length} Stickers`;
 			this.stickerContainer.appendChild(title);
 
@@ -84,6 +96,17 @@ class GUI {
 				st.style.backgroundImage = `url(${image})`;
 				this.stickerContainer.appendChild(st);
 
+				const favIcon = document.createElement('div');
+				favIcon.className = 'sticker-fav';
+				st.appendChild(favIcon);
+
+				for (let fav of this.favoriteStickers) {
+					if (fav.name === sticker.name) {
+						st.classList.toggle('favorited');
+						break;
+					}
+				}
+
 				st.addEventListener('click', async () => {
 					await this.client.sendSticker(sticker, window.location.href.split('/').slice(-1)[0]);
 					this.popupWindow.classList.toggle('active');
@@ -91,6 +114,19 @@ class GUI {
 
 				st.addEventListener('contextmenu', ev => {
 					ev.preventDefault();
+
+					let found = false;
+					let index = 0;
+					for (let fav of this.favoriteStickers) {
+						if (fav.name === sticker.name) {
+							this.favoriteStickers.splice(index, 1);
+							found = true;
+						}
+						index++;
+					}
+					if (!found) this.favoriteStickers.push(sticker);
+					this.localStorage.favoriteStickers = JSON.stringify(this.favoriteStickers);
+					this.updateStickersGUI(fetchedStickers);
 					return false;
 				}, false);
 			}
@@ -141,30 +177,11 @@ class GUI {
 					</div>
 				</div>
 				<div class="scrollerWrap-2uBjct scroller-wrap scrollerThemed-19vinI themeLight-1WK0Av scrollerFade-28dRsO scrollerTrack-3hhmU0">
-					<div class="scroller-fzNley scroller sticker-container">
-						<!--
-						<div class="row"></div>
-						-->
-					</div>
+					<div class="scroller-fzNley scroller sticker-container"></div>
 					<div class="scroller-fzNley scroller config-container hidden">
 						<div class="category">Subscribed sticker pack list</div>
 					</div>
 				</div>
-
-				<!--
-				<div class="categories sticker-packs">
-					<div class="item recent selected"></div>
-					<div class="item custom"></div>
-					<div class="item people"></div>
-					<div class="item nature"></div>
-					<div class="item food"></div>
-					<div class="item activity"></div>
-					<div class="item travel"></div>
-					<div class="item objects"></div>
-					<div class="item symbols"></div>
-					<div class="item flags"></div>
-				</div>
-				-->
 			</div>
 		`;
 	}
