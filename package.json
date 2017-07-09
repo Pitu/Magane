@@ -18,6 +18,9 @@
     "webpack": "parallel-webpack"
   },
   "devDependencies": {
+    "babel-core": "^6.25.0",
+    "babel-loader": "^7.1.1",
+    "babel-preset-env": "^1.6.0",
     "eslint": "^4.1.1",
     "eslint-config-aqua": "^1.4.1",
     "parallel-webpack": "^2.0.0",
