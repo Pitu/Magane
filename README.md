@@ -20,3 +20,7 @@ Press `CTRL + Shift + i` or `CMD + Shift + i` to open DevTools and paste the fol
 ```js
 document.head.appendChild(document.createElement('script')).setAttribute("src", "https://cdn.rawgit.com/Pitu/Magane/fd13b928/dist/stickers.min.js")
 ```
+If you are using mydiscord, make sure to add the following script to the plugins array:
+```
+https://raw.githubusercontent.com/Pitu/Magane/master/dist/stickers.min.js
+```
