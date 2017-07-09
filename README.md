@@ -1,3 +1,3 @@
 <div align="center">
-	<img src="https://lolisafe.moe/YmiwoSOb.png" />
+	<img src="https://lolisafe.moe/ptcZ8JUx.png" />
 </div>
