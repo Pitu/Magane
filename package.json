@@ -1,0 +1,40 @@
+{
+  "name": "magane",
+  "version": "1.0.0",
+  "description": "A lie about a lie... It turns inside-out on itself.",
+  "author": {
+    "name": "Pitu"
+  },
+  "contributors": [
+    {
+      "name": "iCrawl",
+      "email": "icrawltogo@gmail.com"
+    }
+  ],
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint src/",
+    "webpack": "parallel-webpack"
+  },
+  "devDependencies": {
+    "eslint": "^4.1.1",
+    "eslint-config-aqua": "^1.4.1",
+    "parallel-webpack": "^2.0.0",
+    "uglifyjs-webpack-plugin": "^1.0.0-beta.1",
+    "webpack": "^3.1.0"
+  },
+  "eslintConfig": {
+    "extends": "aqua",
+    "rules": {
+      "max-len": 0
+    },
+    "globals": {
+      "document": true,
+      "window": true,
+      "fetch": true,
+      "WebSocket": true,
+      "FormData": true
+    }
+  }
+}
