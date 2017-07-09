@@ -73,14 +73,13 @@ class GUI {
 	updateStickersGUI(fetchedStickers) {
 		while (this.stickerContainer.firstChild) this.stickerContainer.removeChild(this.stickerContainer.firstChild);
 
-		let stickersToProcess = [];
+		const stickersToProcess = [];
 		if (this.favoriteStickers.length > 0) {
 			this.favoritePack.files = this.favoriteStickers;
 			stickersToProcess.push(this.favoritePack);
 		}
 
-		for (let pack of fetchedStickers) stickersToProcess.push(pack);
-
+		for (const pack of fetchedStickers) stickersToProcess.push(pack);
 		for (const pack of stickersToProcess) {
 			if (pack.name !== 'favorites') if (!this.subscribedPacks.includes(pack.name)) continue;
 			const title = document.createElement('div');
@@ -100,7 +99,7 @@ class GUI {
 				favIcon.className = 'sticker-fav';
 				st.appendChild(favIcon);
 
-				for (let fav of this.favoriteStickers) {
+				for (const fav of this.favoriteStickers) {
 					if (fav.name === sticker.name) {
 						st.classList.toggle('favorited');
 						break;
@@ -117,7 +116,7 @@ class GUI {
 
 					let found = false;
 					let index = 0;
-					for (let fav of this.favoriteStickers) {
+					for (const fav of this.favoriteStickers) {
 						if (fav.name === sticker.name) {
 							this.favoriteStickers.splice(index, 1);
 							found = true;
