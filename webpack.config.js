@@ -10,7 +10,7 @@ const createConfig = options => {
 
 	if (options.minify) plugins.push(new UglifyJSPlugin({ uglifyOptions: { compress: { conditionals: true, booleans: true, loops: true, unused: true, if_return: true }, output: { comments: false }, warnings: true } })); // eslint-disable-line camelcase
 
-	const filename = `./webpack/stickers${options.minify ? '.min' : ''}.js`;
+	const filename = `./dist/stickers${options.minify ? '.min' : ''}.js`;
 
 	return {
 		entry: './src/index.js',
