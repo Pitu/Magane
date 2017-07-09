@@ -18,5 +18,5 @@ After opening the sticker popup click on the little tool icon and you'll see a l
 ### Give me the code, I want to run this right now!
 Press `CTRL + Shift + i` or `CMD + Shift + i` to open DevTools and paste the following code inside:
 ```js
-document.head.appendChild(document.createElement('script')).setAttribute("src", "https://cdn.rawgit.com/Pitu/Magane/master/dist/stickers.min.js")
+document.head.appendChild(document.createElement('script')).setAttribute("src", "https://cdn.rawgit.com/Pitu/Magane/1c67d2b1/dist/stickers.min.js")
 ```
