@@ -143,7 +143,6 @@ class GUI {
 		this.kuroStickers.appendChild(this.stickersButton);
 		this.kuroStickers.appendChild(this.popupWindow);
 		this.configButton = this.kuroStickers.querySelector('.sticker-settings-btn');
-		this.configButton.classList.toggle('hidden');
 		this.stickerContainer = this.kuroStickers.querySelector('.sticker-container');
 		this.configContainer = this.kuroStickers.querySelector('.config-container');
 		this.configButton.addEventListener('click', () => this.configContainer.classList.toggle('hidden'));
@@ -186,7 +185,7 @@ class GUI {
 						</div>
 					</div>
 					<div class="diversity-selector">
-						<div class="item sticker-settings-btn"></div>
+						<div class="item sticker-settings-btn hidden"></div>
 					</div>
 				</div>
 				<div class="scrollerWrap-2uBjct scroller-wrap scrollerThemed-19vinI themeLight-1WK0Av scrollerFade-28dRsO scrollerTrack-3hhmU0">
