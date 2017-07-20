@@ -1,4 +1,4 @@
-const CSS = require('./style');
+const CSS = require('../css/style');
 const GUI = require('../gui/GUI');
 
 class Client {

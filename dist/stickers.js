@@ -297,17 +297,17 @@ var GUI = function () {
 		Object.defineProperty(this, 'client', { value: client });
 		this.localStorage = localStorage;
 
-		this.lastKnownLocation; // eslint-disable-line no-unused-expressions
-		this.popupWindow; // eslint-disable-line no-unused-expressions
-		this.appendableElement; // eslint-disable-line no-unused-expressions
-		this.kuroStickers; // eslint-disable-line no-unused-expressions
-		this.stickersButton; // eslint-disable-line no-unused-expressions
-		this.configContainer; // eslint-disable-line no-unused-expressions
-		this.stickerContainer; // eslint-disable-line no-unused-expressions
-		this.configButton; // eslint-disable-line no-unused-expressions
-		this.favoriteStickers; // eslint-disable-line no-unused-expressions
-		this.subscribedPacks; // eslint-disable-line no-unused-expressions
-		this.favoriteStickers; // eslint-disable-line no-unused-expressions
+		this.lastKnownLocation = null;
+		this.popupWindow = null;
+		this.appendableElement = null;
+		this.kuroStickers = null;
+		this.stickersButton = null;
+		this.configContainer = null;
+		this.stickerContainer = null;
+		this.configButton = null;
+		this.favoriteStickers = null;
+		this.subscribedPacks = null;
+		this.favoriteStickers = null;
 		this.favoritePack = {
 			name: 'favorites',
 			files: []
