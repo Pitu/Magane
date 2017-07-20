@@ -16,11 +16,12 @@ div.channel-textarea-stickers {
 	cursor: pointer;
 }
 
-div.channel-textarea-stickers:hover {
+div.channel-textarea-stickers:hover, div.channel-textarea-stickers.active {
 	transform: scale(1.275);
 	-webkit-transform: scale(1.275);
 	filter: grayscale(0%);
 	-webkit-filter: grayscale(0%);
+	opacity: 1;
 }
 
 div.sticker-selector {

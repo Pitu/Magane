@@ -107,8 +107,8 @@ class GUI {
 				}
 
 				st.addEventListener('click', async () => {
+					this.toggleStickerWindow();
 					await this.client.sendSticker(sticker, window.location.href.split('/').slice(-1)[0]);
-					this.popupWindow.classList.toggle('active');
 				});
 
 				st.addEventListener('contextmenu', ev => {
@@ -138,21 +138,33 @@ class GUI {
 		this.createPopupWindow();
 		this.stickersButton = document.createElement('div');
 		this.stickersButton.className = 'channel-textarea-emoji channel-textarea-stickers';
-		this.stickersButton.addEventListener('click', () => this.popupWindow.classList.toggle('active'));
+		this.stickersButton.addEventListener('click', () => this.toggleStickerWindow(), false);
 		this.kuroStickers.appendChild(this.stickersButton);
 		this.kuroStickers.appendChild(this.popupWindow);
 		this.configButton = this.kuroStickers.querySelector('.sticker-settings-btn');
-		this.configButton.classList.toggle('hidden');
 		this.stickerContainer = this.kuroStickers.querySelector('.sticker-container');
 		this.configContainer = this.kuroStickers.querySelector('.config-container');
 		this.configButton.addEventListener('click', () => this.configContainer.classList.toggle('hidden'));
 		await this.processStickers();
+		document.querySelector('#app-mount').addEventListener('click', event => {
+			if (!this.kuroStickers.contains(event.target)) {
+				if (this.showingPopupWindow) {
+					this.toggleStickerWindow();
+				}
+			}
+		});
 		setInterval(() => {
 			if (window.location.href !== this.lastKnownLocation) {
 				this.lastKnownLocation = window.location.href;
 				this.checkDOM();
 			}
 		}, 1000);
+	}
+
+	toggleStickerWindow() {
+		this.stickersButton.classList.toggle('active');
+		this.popupWindow.classList.toggle('active');
+		this.showingPopupWindow = !this.showingPopupWindow;
 	}
 
 	createPopupWindow() {
@@ -172,7 +184,7 @@ class GUI {
 						</div>
 					</div>
 					<div class="diversity-selector">
-						<div class="item sticker-settings-btn"></div>
+						<div class="item sticker-settings-btn hidden"></div>
 					</div>
 				</div>
 				<div class="scrollerWrap-2uBjct scroller-wrap scrollerThemed-19vinI themeLight-1WK0Av scrollerFade-28dRsO scrollerTrack-3hhmU0">

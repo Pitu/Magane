@@ -273,7 +273,7 @@ module.exports = Client;
 "use strict";
 
 
-exports.Style = "\ndiv#boot-modal { display: none; }\ndiv.channel-textarea-stickers {\n\tposition: absolute;\n\ttop: 12px !important;\n\tright: 45px;\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\twidth: 22px;\n\theight: 22px;\n\tbackground-position: -176px -396px;\n\tbackground-size: 924px 704px;\n\tbackground-repeat: no-repeat;\n\ttransition: border-bottom-color .1s ease-in-out;\n\t-webkit-filter: grayscale(100%);\n\tfilter: grayscale(100%);\n\tcursor: pointer;\n}\n\ndiv.channel-textarea-stickers:hover {\n\ttransform: scale(1.275);\n\t-webkit-transform: scale(1.275);\n\tfilter: grayscale(0%);\n\t-webkit-filter: grayscale(0%);\n}\n\ndiv.sticker-selector {\n\tz-index: 2000;\n\tdisplay: none;\n\tbottom: 46px;\n\tright: 0px;\n\twidth: 600px;\n}\n\ndiv.sticker-selector.active { display: block; }\n.sticker-selector .emoji-picker .scroller .row { height: 96px; }\n\n.emoji-picker .scroller .emoji-item.sticker {\n\twidth: 88px;\n\theight: 88px;\n\tposition: relative;\n}\n\n.emoji-picker .scroller .emoji-item.sticker.favorited .sticker-fav {\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\tbackground-position: -462px -132px;\n\tbackground-size: 924px 704px;\n\tposition: absolute;\n\tright: 5px;\n\tbottom: 5px;\n\twidth: 22px;\n\theight: 22px;\n}\n\n.diversity-selector .item.sticker-settings-btn {\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\tbackground-position: 0px -330px;\n\tbackground-size: 924px 704px;\n\tpadding: 0px;\n\tmargin-top: 3px;\n}\n\n.kuro-stickers .popout .emoji-picker .scroller-wrap,\n.kuro-stickers .popout .emoji-picker .scroller-wrap .scroller {\n\tmin-height: 400px;\n}\n\n.sticker-container, .config-container {\n\tdisplay: block;\n}\n\n.sticker-container.hidden, .config-container.hidden {\n\tdisplay: none;\n}\n\n.pack-container {\n\tposition: relative;\n\tcursor: pointer;\n}\n\n.pack-container > img {\n\tbackground: #efefef;\n}\n\n.pack-name, .pack-length {\n\tcolor: #98aab6;\n\tfont-size: 12px;\n\tfont-weight: 500;\n\tpadding: 0 4px;\n\ttext-transform: uppercase;\n\tposition: absolute;\n\tleft: 65px;\n\ttop: 14px;\n}\n\n.pack-length {\n\ttop: 27px;\n}\n\n.pack-status.active {\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\t/*background-position: -484px -132px;*/\n\tbackground-position: -176px -396px;\n\tbackground-size: 924px 704px;\n\tposition: absolute;\n\tright: 12px;\n\ttop: 13px;\n\twidth: 22px;\n\theight: 22px;\n\tmargin: 3px;\n}\n\n.pack-divider {\n\twidth: 50%;\n\theight: 1px;\n\tbackground: #e8e8e8;\n\tmargin-left: 25%;\n\tmargin-top: 10px;\n\tmargin-bottom: 10px;\n}\n";
+exports.Style = "\ndiv#boot-modal { display: none; }\ndiv.channel-textarea-stickers {\n\tposition: absolute;\n\ttop: 12px !important;\n\tright: 45px;\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\twidth: 22px;\n\theight: 22px;\n\tbackground-position: -176px -396px;\n\tbackground-size: 924px 704px;\n\tbackground-repeat: no-repeat;\n\ttransition: border-bottom-color .1s ease-in-out;\n\t-webkit-filter: grayscale(100%);\n\tfilter: grayscale(100%);\n\tcursor: pointer;\n}\n\ndiv.channel-textarea-stickers:hover, div.channel-textarea-stickers.active {\n\ttransform: scale(1.275);\n\t-webkit-transform: scale(1.275);\n\tfilter: grayscale(0%);\n\t-webkit-filter: grayscale(0%);\n\topacity: 1;\n}\n\ndiv.sticker-selector {\n\tz-index: 2000;\n\tdisplay: none;\n\tbottom: 46px;\n\tright: 0px;\n\twidth: 600px;\n}\n\ndiv.sticker-selector.active { display: block; }\n.sticker-selector .emoji-picker .scroller .row { height: 96px; }\n\n.emoji-picker .scroller .emoji-item.sticker {\n\twidth: 88px;\n\theight: 88px;\n\tposition: relative;\n}\n\n.emoji-picker .scroller .emoji-item.sticker.favorited .sticker-fav {\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\tbackground-position: -462px -132px;\n\tbackground-size: 924px 704px;\n\tposition: absolute;\n\tright: 5px;\n\tbottom: 5px;\n\twidth: 22px;\n\theight: 22px;\n}\n\n.diversity-selector .item.sticker-settings-btn {\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\tbackground-position: 0px -330px;\n\tbackground-size: 924px 704px;\n\tpadding: 0px;\n\tmargin-top: 3px;\n}\n\n.kuro-stickers .popout .emoji-picker .scroller-wrap,\n.kuro-stickers .popout .emoji-picker .scroller-wrap .scroller {\n\tmin-height: 400px;\n}\n\n.sticker-container, .config-container {\n\tdisplay: block;\n}\n\n.sticker-container.hidden, .config-container.hidden {\n\tdisplay: none;\n}\n\n.pack-container {\n\tposition: relative;\n\tcursor: pointer;\n}\n\n.pack-container > img {\n\tbackground: #efefef;\n}\n\n.pack-name, .pack-length {\n\tcolor: #98aab6;\n\tfont-size: 12px;\n\tfont-weight: 500;\n\tpadding: 0 4px;\n\ttext-transform: uppercase;\n\tposition: absolute;\n\tleft: 65px;\n\ttop: 14px;\n}\n\n.pack-length {\n\ttop: 27px;\n}\n\n.pack-status.active {\n\tbackground-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');\n\t/*background-position: -484px -132px;*/\n\tbackground-position: -176px -396px;\n\tbackground-size: 924px 704px;\n\tposition: absolute;\n\tright: 12px;\n\ttop: 13px;\n\twidth: 22px;\n\theight: 22px;\n\tmargin: 3px;\n}\n\n.pack-divider {\n\twidth: 50%;\n\theight: 1px;\n\tbackground: #e8e8e8;\n\tmargin-left: 25%;\n\tmargin-top: 10px;\n\tmargin-bottom: 10px;\n}\n";
 
 /***/ }),
 /* 3 */
@@ -530,11 +530,9 @@ var GUI = function () {
 								while (1) {
 									switch (_context3.prev = _context3.next) {
 										case 0:
-											_context3.next = 2;
+											_this3.toggleStickerWindow();
+											_context3.next = 3;
 											return _this3.client.sendSticker(_sticker, window.location.href.split('/').slice(-1)[0]);
-
-										case 2:
-											_this3.popupWindow.classList.toggle('active');
 
 										case 3:
 										case 'end':
@@ -641,8 +639,8 @@ var GUI = function () {
 								this.stickersButton = document.createElement('div');
 								this.stickersButton.className = 'channel-textarea-emoji channel-textarea-stickers';
 								this.stickersButton.addEventListener('click', function () {
-									return _this4.popupWindow.classList.toggle('active');
-								});
+									return _this4.toggleStickerWindow();
+								}, false);
 								this.kuroStickers.appendChild(this.stickersButton);
 								this.kuroStickers.appendChild(this.popupWindow);
 								this.configButton = this.kuroStickers.querySelector('.sticker-settings-btn');
@@ -656,6 +654,13 @@ var GUI = function () {
 								return this.processStickers();
 
 							case 15:
+								document.querySelector('#app-mount').addEventListener('click', function (event) {
+									if (!_this4.kuroStickers.contains(event.target)) {
+										if (_this4.showingPopupWindow) {
+											_this4.toggleStickerWindow();
+										}
+									}
+								});
 								setInterval(function () {
 									if (window.location.href !== _this4.lastKnownLocation) {
 										_this4.lastKnownLocation = window.location.href;
@@ -663,7 +668,7 @@ var GUI = function () {
 									}
 								}, 1000);
 
-							case 16:
+							case 17:
 							case 'end':
 								return _context4.stop();
 						}
@@ -677,6 +682,13 @@ var GUI = function () {
 
 			return prepareDOM;
 		}()
+	}, {
+		key: 'toggleStickerWindow',
+		value: function toggleStickerWindow() {
+			this.stickersButton.classList.toggle('active');
+			this.popupWindow.classList.toggle('active');
+			this.showingPopupWindow = !this.showingPopupWindow;
+		}
 	}, {
 		key: 'createPopupWindow',
 		value: function createPopupWindow() {
