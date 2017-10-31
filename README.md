@@ -21,7 +21,7 @@ It's very easy.
 After opening the sticker popup click on the little tool icon and you'll see a list of available sticker packs. Clicking on a sticker pack will subscribe you to it, making every sticker on that pack available on the main window. You can also right click any sticker in the list and add them to your favorites for easy access! To remove one, right click on it again.
 
 ### Give me the code, I want to run this right now!
-Press `Ctrl + Shift + i` or `CMD + Shift + i` to open DevTools, and paste the following code inside:
+Press `Ctrl + Shift + i` or `CMD + Option + i` to open DevTools, and paste the following code inside:
 ```js
 document.head.appendChild(document.createElement('script')).setAttribute("src", "https://cdn.rawgit.com/Pitu/Magane/cd777e32/dist/stickers.min.js")
 ```
