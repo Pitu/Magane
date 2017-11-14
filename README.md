@@ -14,7 +14,7 @@ You know how LINE and Telegram have this beautiful sticker system where you can 
 By injecting the script into Discord it will automatically pull a curated list of sticker packs from [lolisafe](https://lolisafe.moe) and add them to your Discord client. After that a heart button will appear in your message bar where you'll be able to see all the stickers!
 
 ### Can I make this permanent?
-You can! If you are on Windows you can use this brand new Discord injector (it's actually mydiscord under the hood). Just download and run! [InjectMeDaddy](https://github.com/anonymousthing/InjectMeDaddy/releases/latest).
+You can! If you are on Windows you can use this brand new Discord injector. Just download and run! [InjectMeDaddy](https://github.com/anonymousthing/InjectMeDaddy/releases/latest).
 
 If you are on Linux/MacOS, you can use [mydiscord](https://github.com/justinoboyle/mydiscord) and make sure to add the following script to the plugins array:
 ```
