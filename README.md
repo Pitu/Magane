@@ -8,7 +8,7 @@
 ### What does this do?
 You know how LINE and Telegram have this beautiful sticker system where you can send different reactions with just one click? This is a new approach at doing exactly that but on Discord!
 
-[It looks like this](https://lolisafe.moe/OXI6AEeH.mp4)
+[It looks like this](https://lolisafe.moe/owdxQF9m.mp4)
 
 ### How even?
 By injecting the script into Discord it will automatically pull a curated list of sticker packs from [lolisafe](https://lolisafe.moe) and add them to your Discord client. After that a heart button will appear in your message bar where you'll be able to see all the stickers!
