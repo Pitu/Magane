@@ -84,6 +84,12 @@ div#magane div.stickerWindow > div.stickers {
 	padding-bottom: 100px;
 }
 
+div#magane div.stickerWindow > div.stickers h3.getStarted {
+	text-align: center;
+	padding-top: 40%;
+	pointer-events: none;
+}
+
 div#magane div.stickerWindow > div.stickers > div.pack {
 	float: left;
 	display: flex;

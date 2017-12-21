@@ -7,6 +7,7 @@
 				<input type="text">
 			</div>-->
 			<div class="stickers" id="stickers">
+				<h3 class="getstarted" v-show="favoriteStickers.length === 0 && subscribedPacks.length === 0">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				<div class="pack" v-show="favoriteStickers.length > 0">
 					<span id="pfavorites">Favorites</span>
 					<div class="sticker"
