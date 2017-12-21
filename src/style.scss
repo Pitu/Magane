@@ -206,6 +206,8 @@ div#magane div.stickerWindow > div.packs div.pack div.icon-favorite {
 }
 div#magane div.stickerWindow > div.packs div.pack div.icon-plus {
 	background-position: -374px -484px;
+	-webkit-filter: invert();
+			filter: invert();
 }
 
 div#magane div.stickerWindow > div.packs div.pack:hover,
