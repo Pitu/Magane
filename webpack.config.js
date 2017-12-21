@@ -7,7 +7,7 @@ module.exports = {
 	output: {
 		path: path.resolve(__dirname, './dist'),
 		publicPath: '/dist/',
-		filename: 'magane.min.js'
+		filename: 'stickers.min.js'
 	},
 	module: {
 		rules: [
