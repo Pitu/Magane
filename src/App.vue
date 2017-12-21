@@ -455,7 +455,7 @@ drag.prototype = {
 	div#magane div.stickerWindow div.stickers {
 		overflow: auto;
 		height: 550px !important;
-		padding-bottom: 100px;
+		margin-bottom: 100px;
 	}
 
 	div#magane div.stickerWindow div.stickers h3.getStarted {
@@ -470,10 +470,6 @@ drag.prototype = {
 		flex-flow: wrap;
 		justify-content: center;
 		padding: 25px;
-	}
-
-	div#magane div.stickerWindow div.stickers > div.pack:last-child {
-		margin-bottom: 100px;
 	}
 
 	div#magane div.stickerWindow div.stickers > div.pack span {
