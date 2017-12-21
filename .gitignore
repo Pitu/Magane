@@ -3,7 +3,7 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
-dist/magane.min.js.map
+dist/stickers.min.js.map
 TODO
 # Editor directories and files
 .idea
