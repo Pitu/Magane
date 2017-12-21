@@ -5027,6 +5027,10 @@ vue@^2.4.4:
   version "2.5.11"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.5.11.tgz#80ca2657aa81f03545cd8dd5a2f55454641e6405"
 
+vuebar@^0.0.17:
+  version "0.0.17"
+  resolved "https://registry.yarnpkg.com/vuebar/-/vuebar-0.0.17.tgz#62de08ffed46291d34588201013d887aa5d332fe"
+
 watchpack@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/watchpack/-/watchpack-1.4.0.tgz#4a1472bcbb952bd0a9bb4036801f954dfb39faac"
