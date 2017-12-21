@@ -132,10 +132,6 @@
 </template>
 
 <script>
-/* .
-		TODO:
-			- No devolver la ruta completa del pack desde la api
-*/
 const baseURL = '';
 export default {
 	name: 'app',
