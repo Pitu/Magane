@@ -6,6 +6,9 @@
 			<!--<div class="search">
 				<input type="text">
 			</div>-->
+
+
+			<div v-bar class="vuebar-element">
 			<div class="stickers" id="stickers">
 				<h3 class="getStarted" v-show="favoriteStickers.length === 0 && subscribedPacks.length === 0">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				<div class="pack" v-show="favoriteStickers.length > 0">
@@ -39,6 +42,9 @@
 					</div>
 				</div>
 			</div>
+			</div>
+
+
 			<div class="packs">
 				<div class="pack" @click="isStickerAddModalActive = true">
 					<div class="icon-plus"></div>
@@ -79,15 +85,13 @@
 			<div class="modal-background" @click="isStickerAddModalActive = !isStickerAddModalActive"></div>
 			<div class="modal-close" @click="isStickerAddModalActive = !isStickerAddModalActive"></div>
 
-				<div class="modal-content">
-					<div class="stickersConfig">
-						<div class="tabs">
-							<div class="tab" @click="activeTab = 0" v-bind:class="{ 'is-active': activeTab == 0 }">Installed</div>
-							<div class="tab" @click="activeTab = 1" v-bind:class="{ 'is-active': activeTab == 1 }">Packs</div>
-						</div>
-
-
-
+			<div class="modal-content">
+				<div class="stickersConfig">
+					<div class="tabs">
+						<div class="tab" @click="activeTab = 0" v-bind:class="{ 'is-active': activeTab == 0 }">Installed</div>
+						<div class="tab" @click="activeTab = 1" v-bind:class="{ 'is-active': activeTab == 1 }">Packs</div>
+					</div>
+					<div v-bar class="vuebar-element">
 						<div class="tabContent" v-show="activeTab == 0">
 							<div class="pack" v-for="pack in subscribedPacks" v-bind:key="pack.id">
 								<div class="preview"
@@ -102,7 +106,9 @@
 								</div>
 							</div>
 						</div>
+					</div>
 
+					<div v-bar class="vuebar-element">
 						<div class="tabContent" v-show="activeTab == 1">
 							<div class="pack" v-for="pack in availablePacks" v-bind:key="pack.id">
 								<div class="preview"
@@ -118,12 +124,9 @@
 								</div>
 							</div>
 						</div>
-
-
-
 					</div>
 				</div>
-
+			</div>
 		</div>
 	</div>
 </template>
@@ -373,6 +376,7 @@ drag.prototype = {
 </script>
 
 <style lang="scss" scoped>
+	$darkishBackground: #4b4c4e;
 	$darkBackground: #202225;
 	$darkerBackground: #151617;
 
@@ -452,45 +456,47 @@ drag.prototype = {
 		transform: rotateZ(180deg);
 	}
 
-	div#magane div.stickerWindow > div.stickers {
-		padding: 25px;
+	div#magane div.stickerWindow div.stickers {
 		overflow: auto;
-		height: 600px;
+		height: 550px !important;
 		padding-bottom: 100px;
 	}
 
-	div#magane div.stickerWindow > div.stickers h3.getStarted {
+	div#magane div.stickerWindow div.stickers h3.getStarted {
 		text-align: center;
 		padding-top: 40%;
 		pointer-events: none;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack {
+	div#magane div.stickerWindow div.stickers > div.pack {
 		float: left;
 		display: flex;
 		flex-flow: wrap;
 		justify-content: center;
+		padding: 25px;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack:last-child {
+	div#magane div.stickerWindow div.stickers > div.pack:last-child {
 		margin-bottom: 100px;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack span {
+	div#magane div.stickerWindow div.stickers > div.pack span {
 		display: block;
 		color: #d2d2d2;
 		width: 100%;
 		cursor: auto;
+		padding-left: 10px;
+		margin: 10px 0px;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker {
 		width: 100px;
 		height: 100px;
 		float: left;
 		position: relative;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.image {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.image {
 		background-position: center;
 		background-size: cover;
 		background-repeat: no-repeat;
@@ -499,8 +505,8 @@ drag.prototype = {
 		height: 100px;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.addFavorite,
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.deleteFavorite {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.addFavorite,
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.deleteFavorite {
 		width: 20px;
 		height: 20px;
 		position: absolute;
@@ -510,31 +516,31 @@ drag.prototype = {
 		z-index: 2;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.addFavorite {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.addFavorite {
 		bottom: 0;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.deleteFavorite {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.deleteFavorite {
 		top: 0px;
 		transform: rotateZ(45deg);
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker:hover div.addFavorite,
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker:hover div.deleteFavorite {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker:hover div.addFavorite,
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker:hover div.deleteFavorite {
 		display: block;
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.addFavorite:hover {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.addFavorite:hover {
 		transform: scale(1.25);
 		-webkit-transform: scale(1.25);
 	}
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.deleteFavorite:hover {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.deleteFavorite:hover {
 		transform: scale(1.25) rotateZ(45deg);
 		-webkit-transform: scale(1.25) rotateZ(45deg);
 	}
 
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.addFavorite:hover svg path,
-	div#magane div.stickerWindow > div.stickers > div.pack div.sticker div.deleteFavorite:hover svg path {
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.addFavorite:hover svg path,
+	div#magane div.stickerWindow div.stickers > div.pack div.sticker div.deleteFavorite:hover svg path {
 		transition: all .2s ease;
 		fill: white;
 	}
@@ -598,6 +604,10 @@ drag.prototype = {
 		max-width: 640px;
 		min-height: 480px;
 		max-height: 750px;
+	}
+
+	div#magane div.stickersConfig div.tabContent {
+		height: 565px !important;
 	}
 
 	div#magane div.stickersConfig div.pack {
@@ -758,7 +768,6 @@ drag.prototype = {
 	div#magane div.stickersModal .modal-content,
 	div#magane div.stickersModal .modal-card {
 		max-height: calc(100vh - 160px);
-		overflow: auto;
 		position: absolute;
 		width: 640px;
 		height: 640px;
@@ -767,6 +776,7 @@ drag.prototype = {
 		left: 50%;
 		top: 50%;
 		background: $darkerBackground;
+		overflow: hidden;
 	}
 
 	div#magane div.stickersModal .modal .animation-content {
@@ -860,8 +870,59 @@ drag.prototype = {
 		background-color: rgba(10, 10, 10, 0.3);
 	}
 
+
 </style>
 
 <style lang="scss">
 	iframe#localStorageIframe { display: none }
+
+	$darkishBackground: #4b4c4e;
+	$darkBackground: #202225;
+
+	.vb > .vb-dragger {
+		z-index: 2005;
+		width: 12px;
+		right: 0;
+	}
+
+	.vb > .vb-dragger > .vb-dragger-styler {
+		-webkit-backface-visibility: hidden;
+		backface-visibility: hidden;
+		-webkit-transform: rotate3d(0,0,0,0);
+		transform: rotate3d(0,0,0,0);
+		-webkit-transition:
+			background-color 100ms ease-out,
+			margin 100ms ease-out,
+			height 100ms ease-out;
+		transition:
+			background-color 100ms ease-out,
+			margin 100ms ease-out,
+			height 100ms ease-out;
+		background-color: $darkBackground;
+		margin: 5px 5px 5px 0;
+		border-radius: 20px;
+		height: calc(100% - 10px);
+		display: block;
+	}
+
+	.vb.vb-scrolling-phantom > .vb-dragger > .vb-dragger-styler {
+		background-color: $darkishBackground;
+	}
+
+	.vb > .vb-dragger:hover > .vb-dragger-styler {
+		background-color: $darkishBackground;
+		margin: 0px;
+		height: 100%;
+	}
+
+	.vb.vb-dragging > .vb-dragger > .vb-dragger-styler {
+		background-color: $darkishBackground;
+		margin: 0px;
+		height: 100%;
+	}
+
+	.vb.vb-dragging-phantom > .vb-dragger > .vb-dragger-styler {
+		background-color: $darkishBackground;
+	}
+
 </style>
