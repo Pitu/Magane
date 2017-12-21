@@ -925,13 +925,6 @@ browserslist@^2.1.2:
     caniuse-lite "^1.0.30000780"
     electron-to-chromium "^1.3.28"
 
-buefy@^0.6.2:
-  version "0.6.2"
-  resolved "https://registry.yarnpkg.com/buefy/-/buefy-0.6.2.tgz#990e501c2a609e12913abb014c42f6fe72522112"
-  dependencies:
-    bulma "^0.6.1"
-    vue "^2.5.2"
-
 buffer-indexof@^1.0.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/buffer-indexof/-/buffer-indexof-1.1.1.tgz#52fabcc6a606d1a00302802648ef68f639da268c"
@@ -955,10 +948,6 @@ builtin-modules@^1.0.0:
 builtin-status-codes@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/builtin-status-codes/-/builtin-status-codes-3.0.0.tgz#85982878e21b98e1c66425e03d0174788f569ee8"
-
-bulma@^0.6.1:
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/bulma/-/bulma-0.6.1.tgz#5f21a77c0c06f7d80051c06628c23516081bd649"
 
 bytes@3.0.0:
   version "3.0.0"
@@ -2798,10 +2787,6 @@ isobject@^3.0.1:
 isstream@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
-
-javascript-detect-element-resize@^0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/javascript-detect-element-resize/-/javascript-detect-element-resize-0.5.3.tgz#1a71cd51dfe565907f299012fe73a294104025de"
 
 js-base64@^2.1.8, js-base64@^2.1.9:
   version "2.4.0"
@@ -4982,10 +4967,6 @@ vm-browserify@0.0.4:
   dependencies:
     indexof "0.0.1"
 
-vue-draggable-resizable@^1.5.3:
-  version "1.5.3"
-  resolved "https://registry.yarnpkg.com/vue-draggable-resizable/-/vue-draggable-resizable-1.5.3.tgz#549a199e2987bdfbecba704076f3995f7806be6e"
-
 vue-eslint-parser@^2.0.1-beta.1:
   version "2.0.1-beta.2"
   resolved "https://registry.yarnpkg.com/vue-eslint-parser/-/vue-eslint-parser-2.0.1-beta.2.tgz#82e5130ac18ae4b0c894a7c831b55ec92478fa2f"
@@ -5018,18 +4999,6 @@ vue-loader@^13.0.5:
     vue-style-loader "^3.0.0"
     vue-template-es2015-compiler "^1.6.0"
 
-vue-mixins@^0.2.9:
-  version "0.2.20"
-  resolved "https://registry.yarnpkg.com/vue-mixins/-/vue-mixins-0.2.20.tgz#f58cf2af25dd012cd81afdd3a0daf77005634a78"
-  dependencies:
-    javascript-detect-element-resize "^0.5.3"
-
-vue-resize-handle@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/vue-resize-handle/-/vue-resize-handle-1.0.0.tgz#778a480168f12ed6338ae8f730f87e2fac8db9c3"
-  dependencies:
-    vue-mixins "^0.2.9"
-
 vue-scrollto@^2.8.0:
   version "2.8.0"
   resolved "https://registry.yarnpkg.com/vue-scrollto/-/vue-scrollto-2.8.0.tgz#289ab662067e75c8c00aec309a051d4f3edd6692"
@@ -5054,13 +5023,9 @@ vue-template-es2015-compiler@^1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.6.0.tgz#dc42697133302ce3017524356a6c61b7b69b4a18"
 
-vue@^2.4.4, vue@^2.5.2:
+vue@^2.4.4:
   version "2.5.11"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.5.11.tgz#80ca2657aa81f03545cd8dd5a2f55454641e6405"
-
-vuex@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/vuex/-/vuex-3.0.1.tgz#e761352ebe0af537d4bb755a9b9dc4be3df7efd2"
 
 watchpack@^1.4.0:
   version "1.4.0"

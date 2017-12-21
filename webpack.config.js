@@ -7,7 +7,7 @@ module.exports = {
 	output: {
 		path: path.resolve(__dirname, './dist'),
 		publicPath: '/dist/',
-		filename: 'build.js'
+		filename: 'magane.min.js'
 	},
 	module: {
 		rules: [
@@ -32,7 +32,7 @@ module.exports = {
 					'vue-style-loader',
 					'css-loader',
 					'sass-loader?indentedSyntax'
-				],
+				]
 			},
 			{
 				test: /\.vue$/,
