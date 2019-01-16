@@ -11,11 +11,12 @@ let appendableElement = null;
 function prepareDOM() {
 	const maganeContainer = document.createElement('div');
 	maganeContainer.id = 'maganeContainer';
-  appendableElement.insertAdjacentElement('afterbegin', maganeContainer);
+	appendableElement.insertAdjacentElement('afterbegin', maganeContainer);
 
+	// eslint-disable-next-line no-new
 	new Vue({
 		el: '#maganeContainer',
-		render: h => h(App)
+		render: ce => ce(App)
 	});
 }
 
