@@ -1,10 +1,10 @@
 <template>
 	<div id="magane">
-    <div class="channel-textarea-emoji channel-textarea-stickers"
+		<div class="channel-textarea-emoji channel-textarea-stickers"
 			v-bind:class="{ active: stickerWindowActive }"
 			@click="stickerWindowActive = !stickerWindowActive">
 			<div class="channel-textarea-stickers-content"></div>
-    </div>
+		</div>
 		<div class="stickerWindow" v-show="stickerWindowActive">
 			<!--<div class="handle" id="maganeDragHandle"></div>-->
 			<!--<div class="search">
@@ -97,7 +97,11 @@
 					</div>
 					<div v-bar class="vuebar-element">
 						<div class="tabContent" v-show="activeTab == 0">
-							<div class="pack" v-for="pack in subscribedPacks" v-bind:key="pack.id">
+							<input class="inputQuery" type="text" placeholder="Search"
+								v-bind:value="filterSubQuery"
+								v-on:input="filterSubQuery = $event.target.value"
+								v-on:click="focus"/>
+							<div class="pack" v-for="pack in filteredSubs" v-bind:key="pack.id">
 								<div class="preview"
 									v-bind:style="{ 'background-image': 'url(' + baseURL + '/' + pack.id + '/' + pack.files[0].replace('.png', '_key.png') + ')' }">
 								</div>
@@ -114,7 +118,11 @@
 
 					<div v-bar class="vuebar-element">
 						<div class="tabContent" v-show="activeTab == 1">
-							<div class="pack" v-for="pack in availablePacks" v-bind:key="pack.id">
+							<input class="inputQuery" type="text" placeholder="Search"
+								v-bind:value="filterPackQuery"
+								v-on:input="filterPackQuery = $event.target.value"
+								v-on:click="focus"/>
+							<div class="pack" v-for="pack in filteredPacks" v-bind:key="pack.id">
 								<div class="preview"
 									v-bind:style="{ 'background-image': 'url(' + baseURL + '/' + pack.id + '/' + pack.files[0].replace('.png', '_key.png') + ')' }">
 								</div>
@@ -164,7 +172,9 @@ export default {
 			onCooldown: false,
 			localStorage: null,
 			activeTab: 0,
-			lastKnownLocation: null
+			lastKnownLocation: null,
+			filterPackQuery: '',
+			filterSubQuery: ''
 		}
 	},
 	methods: {
@@ -297,6 +307,10 @@ export default {
 					console.error(error); // eslint-disable-line no-console
 				}
 			};
+		},
+		focus(event) {
+			event.stopPropagation();
+			// event.focus();
 		}
 	},
 	computed: {
@@ -305,6 +319,16 @@ export default {
 		},
 		favorites() {
 			return this.$store.state.favorites;
+		},
+		filteredPacks() {
+			return this.availablePacks.filter(pack => {
+				return pack.name.toLowerCase().indexOf(this.filterPackQuery.toLowerCase()) >= 0;
+			})
+		},
+		filteredSubs() {
+			return this.subscribedPacks.filter(pack => {
+				return pack.name.toLowerCase().indexOf(this.filterSubQuery.toLowerCase()) >= 0;
+			})
 		}
 	}
 };
@@ -379,7 +403,7 @@ drag.prototype = {
 	$darkBackground: #202225;
 	$darkerBackground: #151617;
 
-  div#magane {
+	div#magane {
 		position: relative;
 		height: 100%;
 		display: -webkit-box;
@@ -411,7 +435,7 @@ drag.prototype = {
 		opacity: 0.6;
 	}
 
-  div.channel-textarea-stickers:hover,
+	div.channel-textarea-stickers:hover,
 	div.channel-textarea-stickers.active {
 		-webkit-transform: scale(1.275);
 		transform: scale(1.275);
@@ -797,6 +821,23 @@ drag.prototype = {
 
 	div#magane div.stickersModal .modal .animation-content {
 		margin: 0 20px;
+	}
+
+	div#magane div.stickersModal .inputQuery {
+		width: calc(100% - 20px);
+		float: left;
+		display: -webkit-box;
+		display: -ms-flexbox;
+		display: flex;
+		height: 36px;
+		-webkit-box-sizing: border-box;
+		box-sizing: border-box;
+		margin-left: 15px;
+		margin-bottom: 10px;
+		padding: 5px 12px;
+		border-radius: 3px;
+		border: 1px solid $darkerBackground;
+		color: #151617;
 	}
 
 	div#magane .tabs {
