@@ -1,6 +1,10 @@
 <template>
 	<div id="magane">
-		<div class="channel-textarea-emoji channel-textarea-stickers" @click="stickerWindowActive = !stickerWindowActive"></div>
+    <div class="channel-textarea-emoji channel-textarea-stickers"
+			v-bind:class="{ active: stickerWindowActive }"
+			@click="stickerWindowActive = !stickerWindowActive">
+			<div class="channel-textarea-stickers-content"></div>
+    </div>
 		<div class="stickerWindow" v-show="stickerWindowActive">
 			<!--<div class="handle" id="maganeDragHandle"></div>-->
 			<!--<div class="search">
@@ -165,10 +169,9 @@ export default {
 	},
 	methods: {
 		restoreDom: function() {
-			const appendableElement = document.querySelector('[class^="channelTextArea"] [class^="inner"]')
-			|| document.querySelector('.channel-textarea-inner');
+			const appendableElement = document.querySelector('[class^="channelTextArea"] [class^="inner"] [class^="buttons"]');
 			if (appendableElement !== null) {
-				appendableElement.appendChild(this.$el);
+				appendableElement.insertAdjacentElement('afterbegin', this.$el);
 			}
 		},
 		getLocalStorage: function() {
@@ -376,31 +379,52 @@ drag.prototype = {
 	$darkBackground: #202225;
 	$darkerBackground: #151617;
 
-	div.channel-textarea-stickers {
-		position: absolute;
-		top: 12px !important;
-		right: 45px;
-		//background-color: red;
-		background-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');
-		width: 22px;
-		height: 22px;
-		background-position: -176px -396px;
-		background-size: 924px 704px;
-		background-repeat: no-repeat;
-		transition: border-bottom-color .1s ease-in-out;
-		-webkit-filter: grayscale(100%);
-		filter: grayscale(100%);
-		cursor: pointer;
-		transition: all .2s ease;
+  div#magane {
+		position: relative;
+		height: 100%;
+		display: -webkit-box;
+		display: -ms-flexbox;
+		display: flex;
+		flex-direction: row;
 	}
 
-	div.channel-textarea-stickers:hover, div.channel-textarea-stickers.active {
-		transform: scale(1.275);
-		-webkit-transform: scale(1.275);
-		filter: grayscale(0%);
-		-webkit-filter: grayscale(0%);
-		opacity: 1;
+	div.channel-textarea-stickers {
+		position: relative;
+		width: auto;
+		padding: 6px;
+		-ms-flex-align: center;
+		-ms-flex-pack: center;
+		-webkit-box-align: center;
+		-webkit-box-pack: center;
+		align-items: center;
+		cursor: pointer;
+		display: -webkit-box;
+		display: -ms-flexbox;
+		display: flex;
+		justify-content: center;
+		max-height: 50px;
+		cursor: pointer;
+		-webkit-filter: grayscale(100%);
+		filter: grayscale(100%);
+		-webkit-transition: all .2s ease;
 		transition: all .2s ease;
+		opacity: 0.6;
+	}
+
+  div.channel-textarea-stickers:hover,
+	div.channel-textarea-stickers.active {
+		-webkit-transform: scale(1.275);
+		transform: scale(1.275);
+		-webkit-filter: grayscale(0%);
+		filter: grayscale(0%);
+		opacity: 1;
+	}
+
+	div.channel-textarea-stickers-content {
+		background-image: url('https://discordapp.com/assets/a42df564f00ed8bbca652dc9345d3834.svg');
+		background-size: 100%;
+		width: 22px;
+		height: 22px;
 	}
 
 	div#magane button,
