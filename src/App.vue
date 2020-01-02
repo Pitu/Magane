@@ -148,7 +148,7 @@ const baseURL = '';
 export default {
 	name: 'app',
 	mounted() {
-		console.log('Magane mounted on DOM');
+		console.log('[MAGANE] > mounted on DOM');
 		this.getLocalStorage();
 		this.checkAuth();
 		this.grabPacks();
@@ -221,6 +221,7 @@ export default {
 			this.subscribedPacks.push(pack);
 			this.subscribedPacksSimple.push(pack.id);
 			this.saveToLocalStorage('magane.subscribed', this.subscribedPacks);
+			console.log(`[MAGANE] > Subscribed to pack > ${pack.name}`);
 		},
 		unsubscribeToPack: function(pack) {
 			if (!this.subscribedPacks.includes(pack)) return;
@@ -229,6 +230,7 @@ export default {
 				if (this.subscribedPacks[i].id === pack.id) {
 					this.subscribedPacks.splice(i, 1);
 					this.subscribedPacksSimple.splice(i, 1);
+					console.log(`[MAGANE] > Unsubscribed from pack > ${pack.name}`);
 				}
 			}
 
@@ -310,7 +312,6 @@ export default {
 		},
 		focus(event) {
 			event.stopPropagation();
-			// event.focus();
 		}
 	},
 	computed: {
