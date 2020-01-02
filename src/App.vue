@@ -332,70 +332,6 @@ export default {
 		}
 	}
 };
-
-/*
-function registerResize() {
-	var drag1 = new drag();
-	drag1.init({
-		id: "maganeDragHandle",
-		direction: "xy",
-		limit: {
-			x: [100,500],
-			y: [50,300]
-		}
-	});
-}
-
-function drag(id) {
-	this.id = id;
-}
-
-drag.prototype = {
-	init:function() {
-		this.elem = document.getElementById('maganeDragHandle');
-		this.elem.onmousedown = this._mouseDown.bind(this);
-	},
-	_mouseDown: function(e) {
-		e = e || window.event;
-		this.elem.onselectstart=function(){ return false };
-		this._event_docMouseMove = this._docMouseMove.bind(this);
-		this._event_docMouseUp = this._docMouseUp.bind(this);
-		if (this.onstart) this.onstart();
-		this.x = e.clientX||e.PageX;
-		this.y = e.clientY||e.PageY;
-		this.left = parseInt(this.elem.style.left);
-		this.top = parseInt(this.elem.style.top);
-		document.addEventListener('mousemove', this._event_docMouseMove);
-		document.addEventListener('mousemove', this._event_docMouseUp);
-		// addEvent(document, 'mousemove', this._event_docMouseMove);
-		// addEvent(document, 'mouseup', this._event_docMouseUp);
-		return false;
-	},
-
-	_docMouseMove: function(e) {
-		this.setValuesClick(e);
-		if (this.ondrag) this.ondrag();
-	},
-
-	_docMouseUp: function(e) {
-		document.removeEventListener('mousemove', this._event_docMouseMove);
-		// removeEvent(document, 'mousemove', this._event_docMouseMove);
-		if (this.onstop) this.onstop();
-		document.removeEventListener('mousemove', this._event_docMouseUp);
-		// removeEvent(document, 'mouseup', this._event_docMouseUp);
-	},
-
-	setValuesClick: function(e){
-		this.mouseX = e.clientX||e.PageX;
-		this.mouseY = e.clientY||e.pageY;
-		this.X = this.left+ this.mouseX - this.x;
-		this.Y = this.top + this.mouseY - this.y;
-		this.elem.style.left = this.X+"px";
-		this.elem.style.top = this.Y +"px";
-	}
-}
-*/
-
 </script>
 
 <style lang="scss" scoped>
@@ -480,13 +416,14 @@ drag.prototype = {
 		z-index: 2000;
 		width: 600px;
 		min-height: 200px;
-		right: 0px;
-		bottom: 46px;
-		position: absolute;
+		right: 270px;
+		bottom: 82px;
+		position: fixed;
 		background: $darkBackground;
 		max-height: 600px;
 		overflow: hidden;
 		transition: all .2s ease;
+		border-radius: 4px;
 	}
 
 	div#magane div.stickerWindow div.handle {
