@@ -1,29 +1,26 @@
-import Vue from 'vue';
-import App from './App.vue';
-import Vuebar from 'vuebar';
-import VueScrollTo from 'vue-scrollto';
+import App from './App.svelte';
+const searchForElement = '[class*=baseLayer] > [class*=container] > [class*=base]';
 
-Vue.use(Vuebar);
-Vue.use(VueScrollTo);
+const prepareDOM = () => {
+	console.log('[MAGANE] > checkDOM()');
+	let maganeContainer = document.getElementById('maganeContainer');
+	if (maganeContainer) return;
 
-let appendableElement = null;
+	const appendableElement = document.querySelector(searchForElement);
+	if (!appendableElement) {
+		return setTimeout(() => prepareDOM(), 500);
+	}
 
-function prepareDOM() {
-	const maganeContainer = document.createElement('div');
+	console.log('[MAGANE] > DOM ready, injecting!');
+	maganeContainer = document.createElement('div');
 	maganeContainer.id = 'maganeContainer';
 	appendableElement.insertAdjacentElement('afterbegin', maganeContainer);
 
-	// eslint-disable-next-line no-new
-	new Vue({
-		el: '#maganeContainer',
-		render: ce => ce(App)
+	new App({
+		target: maganeContainer
 	});
 }
 
-let loadTimer = setInterval(() => {
-	appendableElement = document.querySelector('[class^="channelTextArea"] [class^="inner"] [class^="buttons"]');
-	if (appendableElement !== null) {
-		clearInterval(loadTimer);
-		prepareDOM();
-	}
-}, 1000);
+prepareDOM();
+
+export default app;

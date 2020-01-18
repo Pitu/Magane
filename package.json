@@ -1,63 +1,32 @@
 {
   "name": "magane",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "A lie about a lie... It turns inside-out on itself.",
-  "author": "Pitu <7425261+Pitu@users.noreply.github.com>",
+  "author": "Pitu <heyitspitu@gmail.com>",
+  "license": "MIT",
   "contributors": [
     {
       "name": "iCrawl",
       "email": "icrawltogo@gmail.com"
     }
   ],
-  "license": "MIT",
-  "private": false,
   "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "start": "sirv public"
   },
-  "dependencies": {
-    "vue": "^2.4.4",
-    "vue-scrollto": "^2.8.0",
-    "vuebar": "^0.0.17"
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not ie <= 8"
-  ],
   "devDependencies": {
-    "babel-core": "^6.26.0",
-    "babel-loader": "^7.1.2",
-    "babel-plugin-transform-regenerator": "^6.26.0",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-stage-3": "^6.24.1",
-    "cross-env": "^5.0.5",
-    "css-loader": "^0.28.7",
-    "eslint": "^4.4.1",
-    "eslint-config-aqua": "^1.4.1",
-    "eslint-plugin-vue": "beta",
-    "file-loader": "^1.1.4",
+    "@rollup/plugin-commonjs": "^11.0.0",
+    "@rollup/plugin-node-resolve": "^6.0.0",
     "node-sass": "^4.13.0",
-    "vue-loader": "^13.0.5",
-    "vue-template-compiler": "^2.4.4",
-    "webpack": "^3.6.0",
-    "webpack-dev-server": "^2.9.1"
-  },
-  "eslintConfig": {
-    "extends": [
-      "aqua",
-      "plugin:vue/recommended"
-    ],
-    "env": {
-      "browser": true,
-      "node": true
-    },
-    "rules": {
-      "func-names": 0
-    }
-  },
-  "resolutions": {
-    "nan": "2.14.0"
+    "rollup": "^1.20.0",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-postcss": "^2.0.3",
+    "rollup-plugin-svelte": "^5.0.3",
+    "rollup-plugin-terser": "^5.1.2",
+    "simplebar": "^5.1.0",
+    "sirv-cli": "^0.4.4",
+    "svelte": "^3.0.0",
+    "svelte-preprocess": "^3.3.0"
   }
 }

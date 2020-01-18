@@ -17,8 +17,7 @@ By injecting the script into Discord it will automatically pull a curated list o
 
 ### Can I make this permanent?
 You can! If you are on Windows you can use this brand new Discord injector. Just download and run! [InjectMeDaddy](https://github.com/anonymousthing/InjectMeDaddy/releases/latest).
-
-If you are on Linux/MacOS, you can use [mydiscord](https://github.com/justinoboyle/mydiscord) and make sure to add the following script to the plugins array:
+If you are on Linux/MacOS, you can use other alternatives like [BetterDiscord](https://github.com/rauenzi/BetterDiscordApp/releases) . Make sure to head to the [Magane website](https://magane.moe) for instructions on how to install it:
 ```
 https://raw.githubusercontent.com/Pitu/Magane/master/dist/stickers.min.js
 ```
