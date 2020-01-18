@@ -19,7 +19,7 @@ By injecting the script into Discord it will automatically pull a curated list o
 You can! If you are on Windows you can use this brand new Discord injector. Just download and run! [InjectMeDaddy](https://github.com/anonymousthing/InjectMeDaddy/releases/latest).
 If you are on Linux/MacOS, you can use other alternatives like [BetterDiscord](https://github.com/rauenzi/BetterDiscordApp/releases) . Make sure to head to the [Magane website](https://magane.moe) for instructions on how to install it:
 ```
-https://raw.githubusercontent.com/Pitu/Magane/master/dist/stickers.min.js
+https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.min.js
 ```
 
 ### So how exactly do I use it after adding the script?
