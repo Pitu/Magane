@@ -49,7 +49,6 @@
 	}
 
 	const checkAuth = async (token = storage.token) => {
-		console.log('checkAuth()');
 		if (storage.canCallAPI) return;
 		if (typeof token !== 'string') throw new Error('Not a token, buddy.');
 		token = token.replace(/"/ig, '');
@@ -71,7 +70,6 @@
 						large_threshold: 50
 					}
 				}));
-				console.log('Sucessful authenticated. You can now make REST request!');
 			} catch (error) {
 				console.error(error);
 			}
@@ -79,14 +77,12 @@
 	}
 
 	const getLocalStorage = () => {
-		console.log('getLocalStorage()');
 		const localStorageIframe = document.createElement('iframe');
 		localStorageIframe.id = 'localStorageIframe';
 		storage = document.body.appendChild(localStorageIframe).contentWindow.localStorage;
 	}
 
 	const grabPacks = async () => {
-		console.log('grabPacks()');
 		const response = await fetch('https://magane.moe/api/packs');
 		const packs = await response.json();
 		baseURL = packs.baseURL;
@@ -113,10 +109,6 @@
 				// Do nothing
 			}
 		}
-
-		console.log('packs', packs);
-		console.log('favoriteStickers', favoriteStickers);
-		console.log('subscribedPacks', subscribedPacks);
 	}
 
 	const subscribeToPack = pack => {
@@ -156,7 +148,6 @@
 	};
 
 	const sendSticker = async (pack, id, token = storage.token) => {
-		console.log('sendSticker() => ', pack, id);
 		const channel = window.location.href.split('/').slice(-1)[0];
 		if (onCooldown) return;
 		onCooldown = true;
@@ -176,7 +167,6 @@
 	}
 
 	const favoriteSticker = (pack, id) => {
-		console.log('favoriteSticker() => ', pack, id);
 		for (let favorite of favoriteStickers) {
 			if (favorite.id === id) return
 		}
@@ -188,7 +178,6 @@
 	}
 
 	const unfavoriteSticker = (pack, id) => {
-		console.log('unfavoriteSticker() => ', pack, id);
 		let found = false;
 		for (let favorite of favoriteStickers) {
 			if (favorite.id === id) found = true;
@@ -207,7 +196,6 @@
 	}
 
 	const filterPacks = () => {
-		console.log('filterPacks', event.target.value)
 		filteredPacks = availablePacks.filter(pack => pack.name.toLowerCase().indexOf(event.target.value.toLowerCase()) >= 0);
 	}
 </script>
