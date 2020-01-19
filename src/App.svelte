@@ -771,15 +771,12 @@
 			box-shadow: none;
 			display: inline-flex;
 			font-size: 1rem;
-			padding-bottom: calc(0.375em - 1px);
-			padding-top: calc(0.375em - 1px);
+			padding: calc(0.375em - 1px) 0.75em;
 			position: relative;
 			vertical-align: top;
 			user-select: none;
 			cursor: pointer;
 			justify-content: center;
-			padding-left: 0.75em;
-			padding-right: 0.75em;
 			text-align: center;
 			white-space: nowrap;
 			border-color: transparent;
