@@ -10,6 +10,7 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 }
 	let showIcon = true;
+	let isThereTopBar = null;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
@@ -34,6 +35,7 @@
 		checkAuth();
 		grabPacks();
 		setInterval(() => keepMaganeInPlace(), 500);
+		isThereTopBar = document.querySelector('#app-mount > [class*=titleBar]');
 	});
 
 	const keepMaganeInPlace = () => {
@@ -44,7 +46,7 @@
 		}
 		if (!showIcon) showIcon = true;
 		const props = el.getBoundingClientRect();
-		coords.top = props.top - 21;
+		coords.top = isThereTopBar ? props.top - 21 : props.top - 3;
 		coords.left = props.left - 107;
 	}
 
