@@ -226,9 +226,12 @@
 					<span id="pfavorites">Favorites</span>
 					{ #each favoriteStickers as sticker, i }
 					<div class="sticker">
-						<div class="image"
-							style="background-image: { `url(${baseURL}${sticker.pack}/${sticker.id.replace('.png', '_key.png')})` }"
-							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"></div>
+						<img
+							class="image"
+							src="{`${baseURL}${sticker.pack}/${sticker.id.replace('.png', '_key.png')}`}"
+							alt="{sticker.pack}-{sticker.id}"
+							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+						>
 						<div class="deleteFavorite"
 							on:click="{ () => unfavoriteSticker(sticker.pack, sticker.id) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
@@ -246,9 +249,12 @@
 
 					{ #each pack.files as sticker, i }
 					<div class="sticker">
-						<div class="image"
-							style="background-image: { `url(${baseURL}${pack.id}/${sticker.replace('.png', '_key.png')})` }"
-							on:click="{ () => sendSticker(pack.id, sticker) }"></div>
+						<img
+							class="image"
+							src="{`${baseURL}${pack.id}/${sticker.replace('.png', '_key.png')}`}"
+							alt="{pack.id}-{sticker}"
+							on:click="{ () => sendSticker(pack.id, sticker) }"
+						>
 						<div class="addFavorite"
 							on:click="{ () => favoriteSticker(pack.id, sticker) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
@@ -450,18 +456,16 @@
 					}
 
 					div.sticker {
+						display: flex;
+						align-items: center;
 						width: 100px;
 						height: 100px;
 						float: left;
 						position: relative;
 
-						div.image {
-							background-position: center;
-							background-size: cover;
-							background-repeat: no-repeat;
+						.image {
 							cursor: pointer;
 							width: 100px;
-							height: 100px;
 						}
 
 						div.addFavorite, div.deleteFavorite {
@@ -571,15 +575,14 @@
 			}
 
 			.inputQuery {
-				width: calc(100% - 20px);
+				position: fixed;
+				z-index: 10;
+				width: 570px;
 				float: left;
-				display: -webkit-box;
-				display: -ms-flexbox;
 				display: flex;
 				height: 36px;
 				box-sizing: border-box;
-				margin-left: 15px;
-				margin-bottom: 10px;
+				margin: 0 15px 10px;
 				padding: 5px 12px;
 				border-radius: 3px;
 				border: 1px solid #151617;
@@ -652,6 +655,10 @@
 						margin-left: 20px;
 						margin-bottom: 10px;
 						height: 75px;
+
+						&:first-of-type {
+							margin-top: 46px;
+						}
 
 						div.handle,
 						div.preview,
