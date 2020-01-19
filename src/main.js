@@ -8,7 +8,8 @@ const prepareDOM = () => {
 
 	const appendableElement = document.querySelector(searchForElement);
 	if (!appendableElement) {
-		return setTimeout(() => prepareDOM(), 500);
+		setTimeout(() => prepareDOM(), 500);
+		return;
 	}
 
 	console.log('[MAGANE] > DOM ready, injecting!');
@@ -16,11 +17,9 @@ const prepareDOM = () => {
 	maganeContainer.id = 'maganeContainer';
 	appendableElement.insertAdjacentElement('afterbegin', maganeContainer);
 
-	new App({
+	new App({ // eslint-disable-line no-new
 		target: maganeContainer
 	});
-}
+};
 
 prepareDOM();
-
-export default app;
