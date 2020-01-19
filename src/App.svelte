@@ -226,9 +226,12 @@
 					<span id="pfavorites">Favorites</span>
 					{ #each favoriteStickers as sticker, i }
 					<div class="sticker">
-						<div class="image"
-							style="background-image: { `url(${baseURL}${sticker.pack}/${sticker.id.replace('.png', '_key.png')})` }"
-							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"></div>
+						<img
+							class="image"
+							src="{`${baseURL}${sticker.pack}/${sticker.id.replace('.png', '_key.png')}`}"
+							alt="{sticker.pack}-{sticker.id}"
+							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+						>
 						<div class="deleteFavorite"
 							on:click="{ () => unfavoriteSticker(sticker.pack, sticker.id) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
@@ -246,9 +249,12 @@
 
 					{ #each pack.files as sticker, i }
 					<div class="sticker">
-						<div class="image"
-							style="background-image: { `url(${baseURL}${pack.id}/${sticker.replace('.png', '_key.png')})` }"
-							on:click="{ () => sendSticker(pack.id, sticker) }"></div>
+						<img
+							class="image"
+							src="{`${baseURL}${pack.id}/${sticker.replace('.png', '_key.png')}`}"
+							alt="{pack.id}-{sticker}"
+							on:click="{ () => sendSticker(pack.id, sticker) }"
+						>
 						<div class="addFavorite"
 							on:click="{ () => favoriteSticker(pack.id, sticker) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
@@ -450,18 +456,16 @@
 					}
 
 					div.sticker {
+						display: flex;
+						align-items: center;
 						width: 100px;
 						height: 100px;
 						float: left;
 						position: relative;
 
-						div.image {
-							background-position: center;
-							background-size: cover;
-							background-repeat: no-repeat;
+						.image {
 							cursor: pointer;
 							width: 100px;
-							height: 100px;
 						}
 
 						div.addFavorite, div.deleteFavorite {
