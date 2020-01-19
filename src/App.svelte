@@ -571,15 +571,14 @@
 			}
 
 			.inputQuery {
-				width: calc(100% - 20px);
+				position: fixed;
+				z-index: 10;
+				width: 570px;
 				float: left;
-				display: -webkit-box;
-				display: -ms-flexbox;
 				display: flex;
 				height: 36px;
 				box-sizing: border-box;
-				margin-left: 15px;
-				margin-bottom: 10px;
+				margin: 0 15px 10px;
 				padding: 5px 12px;
 				border-radius: 3px;
 				border: 1px solid #151617;
@@ -652,6 +651,10 @@
 						margin-left: 20px;
 						margin-bottom: 10px;
 						height: 75px;
+
+						&:first-of-type {
+							margin-top: 46px;
+						}
 
 						div.handle,
 						div.preview,
