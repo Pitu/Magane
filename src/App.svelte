@@ -783,7 +783,7 @@
 			color: white;
 			background-color: #696080;
 
-			&.button.is-danger {
+			&.is-danger {
 				background-color: #883030;
 			}
 
