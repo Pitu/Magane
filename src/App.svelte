@@ -221,8 +221,8 @@
 					<div class="sticker">
 						<img
 							class="image"
-							src="{`${baseURL}${sticker.pack}/${sticker.id.replace('.png', '_key.png')}`}"
-							alt="{sticker.pack}-{sticker.id}"
+							src="{ `${baseURL}${sticker.pack}/${sticker.id.replace('.png', '_key.png')}` }"
+							alt="{ sticker.pack } - { sticker.id }"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
@@ -244,8 +244,8 @@
 					<div class="sticker">
 						<img
 							class="image"
-							src="{`${baseURL}${pack.id}/${sticker.replace('.png', '_key.png')}`}"
-							alt="{pack.id}-{sticker}"
+							src="{ `${baseURL}${pack.id}/${sticker.replace('.png', '_key.png')}` }"
+							alt="{ pack.id } - { sticker }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
 						<div class="addFavorite"
