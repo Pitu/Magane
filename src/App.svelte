@@ -235,7 +235,7 @@
 			class:active="{ stickerWindowActive }"
 			on:click="{ () => toggleStickerWindow() }"
 			on:contextmenu|stopPropagation|preventDefault="{ () => grabPacks() }">
-			<div class="channel-textarea-stickers-content" />
+			<img class="channel-textarea-stickers-content" src="https://discordapp.com/assets/a42df564f00ed8bbca652dc9345d3834.svg" alt="Magane menu button">
 		</div>
 
 		{ #if stickerWindowActive }

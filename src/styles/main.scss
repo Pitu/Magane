@@ -25,13 +25,7 @@ div#magane {
 	}
 
 	div.channel-textarea-stickers {
-		position: relative;
-		width: auto;
-		padding: 6px;
-		align-items: center;
 		display: flex;
-		justify-content: center;
-		max-height: 50px;
 		cursor: pointer;
 		filter: grayscale(100%);
 		transition: all 0.2s ease;
@@ -41,9 +35,7 @@ div#magane {
 			filter: grayscale(0%);
 		}
 	}
-	div.channel-textarea-stickers-content {
-		background-image: url('https://discordapp.com/assets/a42df564f00ed8bbca652dc9345d3834.svg');
-		background-size: 100%;
+	.channel-textarea-stickers-content {
 		width: 22px;
 		height: 22px;
 	}
