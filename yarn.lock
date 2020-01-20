@@ -1017,9 +1017,10 @@ escape-string-regexp@^1.0.2, escape-string-regexp@^1.0.5:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz#1b61c0562190a8dff6ae3bb2cf0200ca130b86d4"
   integrity sha1-G2HAViGQqN/2rjuyzwIAyhMLhtQ=
 
-"eslint-config-aqua@ssh://git@github.com:Pitu/eslint-config-aqua.git":
-  version "7.1.2"
-  resolved "ssh://git@github.com:Pitu/eslint-config-aqua.git#5e188d161facf1a0c1c9dd7ef431537dde2bd5bf"
+eslint-config-aqua@^7.2.0:
+  version "7.2.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-aqua/-/eslint-config-aqua-7.2.0.tgz#f9d087168a63effa995c56b9c93af0faacdc5a1a"
+  integrity sha512-xZE/qTjQqMzaZ8FNoCw/q0TRlNKFBFjcvyJ8hmqegzg7abbxCmVxgtJ0VzlGXLW9MEy3UBAX9Un8+y8l4G5T7A==
 
 eslint-plugin-svelte3@^2.7.3:
   version "2.7.3"
