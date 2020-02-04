@@ -1,9 +1,8 @@
 <script>
-	// implement grsmto/simplebar
-	import { onMount } from 'svelte';
+	import { onMount, afterUpdate } from 'svelte';
 
 	// Let's make the scrollbars pretty
-	import 'simplebar';
+	import SimpleBar from 'simplebar';
 	import './styles/global.css';
 	import './styles/main.scss';
 
@@ -26,6 +25,21 @@
 	let storage = null;
 	let packsSearch = null;
 	let stickerContainer = null;
+
+	let mainScrollBar;
+	let packsScrollBar;
+
+	afterUpdate(() => {
+		if (!mainScrollBar) {
+			const exists = document.getElementById('stickers');
+			if (exists) mainScrollBar = new SimpleBar(exists);
+		}
+
+		if (!packsScrollBar) {
+			const exists = document.getElementById('packsBar');
+			if (exists) packsScrollBar = new SimpleBar(exists);
+		}
+	});
 
 	const keepMaganeInPlace = () => {
 		const el = document.querySelector(elementToCheck);
@@ -193,6 +207,21 @@
 		setInterval(() => keepMaganeInPlace(), 500);
 		isThereTopBar = document.querySelector('html.platform-win');
 	});
+
+	const toggleStickerWindow = () => {
+		stickerWindowActive = !stickerWindowActive;
+		if (!stickerWindowActive) mainScrollBar = null;
+	};
+
+	const toggleStickerModal = () => {
+		isStickerAddModalActive = !isStickerAddModalActive;
+		if (!isStickerAddModalActive) packsScrollBar = null;
+	};
+
+	const activateTab = value => {
+		activeTab = value;
+		packsScrollBar = null;
+	};
 </script>
 
 <main>
@@ -200,7 +229,7 @@
 		style="top: { `${coords.top}px` }; left: { `${coords.left}px` }; display: { showIcon ? 'flex' : 'none' };">
 		<div class="channel-textarea-emoji channel-textarea-stickers"
 			class:active="{ stickerWindowActive }"
-			on:click="{ () => stickerWindowActive = !stickerWindowActive }"
+			on:click="{ () => toggleStickerWindow() }"
 			on:contextmenu|stopPropagation|preventDefault="{ () => grabPacks() }">
 			<div class="channel-textarea-stickers-content" />
 		</div>
@@ -209,7 +238,6 @@
 		<div class="stickerWindow">
 			<div id="stickers"
 				class="stickers"
-				data-simplebar
 				bind:this={ stickerContainer }>
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
@@ -262,7 +290,7 @@
 
 			<div class="packs">
 				<div class="pack"
-					on:click="{ () => isStickerAddModalActive = true }">
+					on:click="{ () => toggleStickerModal() }">
 					<div class="icon-plus" />
 				</div>
 				{ #if favoriteSticker && favoriteSticker.length }
@@ -281,18 +309,18 @@
 			{ #if isStickerAddModalActive }
 			<div class="stickersModal">
 				<div class="modal-close"
-					on:click="{ () => isStickerAddModalActive = !isStickerAddModalActive }"></div>
+					on:click="{ () => toggleStickerModal() }"></div>
 
 				<div class="modal-content">
 					<div class="stickersConfig">
 						<div class="tabs">
 							<div class="tab"
-								on:click="{ () => activeTab = 0 }"
+								on:click="{ () => activateTab(0) }"
 								class:is-active="{ activeTab === 0 }">
 								Installed
 							</div>
 							<div class="tab"
-								on:click="{ () => activeTab = 1 }"
+								on:click="{ () => activateTab(1) }"
 								class:is-active="{ activeTab === 1 }">
 								Packs
 							</div>
@@ -316,7 +344,8 @@
 							{ /each }
 						</div>
 						{ :else if activeTab === 1 }
-						<div class="tabContent" data-simplebar>
+						<div class="tabContent"
+							id="packsBar">
 							<input
 								on:keyup="{ filterPacks }"
 								bind:value={ packsSearch }
