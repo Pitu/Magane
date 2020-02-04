@@ -288,12 +288,12 @@
 						<div class="tabs">
 							<div class="tab"
 								on:click="{ () => activeTab = 0 }"
-								class:active="{ activeTab === 0 }">
+								class:is-active="{ activeTab === 0 }">
 								Installed
 							</div>
 							<div class="tab"
 								on:click="{ () => activeTab = 1 }"
-								class:active="{ activeTab === 1 }">
+								class:is-active="{ activeTab === 1 }">
 								Packs
 							</div>
 						</div>
