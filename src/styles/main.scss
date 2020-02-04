@@ -1,4 +1,8 @@
 div#magane {
+	$backgroundPrimary: var(--background-secondary);
+	$backgroundSecondary: var(--background-tertiary);
+	$textColor: var(--header-secondary);
+	$hoverColor: var(--interactive-active);
 	display: flex;
 	flex-direction: row;
 	height: 44px;
@@ -7,7 +11,7 @@ div#magane {
 
 	button, input, select, label, span, p, a, li, ul, div {
 		font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-		color: #d2d2d2;
+		color: $textColor;
 		font-weight: 400;
 		line-height: 1.5;
 		font-size: 16px;
@@ -51,7 +55,7 @@ div#magane {
 		right: 270px;
 		bottom: 82px;
 		position: fixed;
-		background: #202225;
+		background: $backgroundPrimary;
 		max-height: 600px;
 		overflow: hidden;
 		transition: all 0.2s ease;
@@ -78,7 +82,7 @@ div#magane {
 
 				span {
 					display: block;
-					color: #d2d2d2;
+					color: $textColor;
 					width: 100%;
 					cursor: auto;
 					padding-left: 10px;
@@ -110,7 +114,7 @@ div#magane {
 							transform: scale(1.25);
 							svg path {
 								transition: all 0.2s ease;
-								fill: white;
+								fill: $hoverColor;
 							}
 						}
 					}
@@ -135,7 +139,7 @@ div#magane {
 			bottom: 0;
 			width: 100%;
 			height: 50px;
-			background: #151617;
+			background: $backgroundSecondary;
 
 			div.pack {
 				display: block;
@@ -214,8 +218,9 @@ div#magane {
 			margin: 0 15px 10px;
 			padding: 5px 12px;
 			border-radius: 3px;
-			border: 1px solid #151617;
-			color: #151617;
+			border: 1px solid $backgroundPrimary;
+			background: $backgroundPrimary;
+			color: $textColor;
 		}
 
 		.modal-background {
@@ -236,7 +241,7 @@ div#magane {
 			height: 100%;
 			left: 0;
 			top: 0;
-			background: #151617;
+			background: $backgroundSecondary;
 			overflow: hidden;
 		}
 
@@ -250,7 +255,7 @@ div#magane {
 					text-align: center;
 
 					.tab {
-						color: #888;
+						color: $textColor;
 						display: inline-block;
 						border: none;
 						border-top: 0px transparent;
@@ -258,14 +263,14 @@ div#magane {
 						border-right: 0px transparent;
 						border-width: 1px;
 						border-style: solid;
-						border-bottom-color: #888;
+						border-bottom-color: $textColor;
 						padding: 20px;
 						cursor: pointer;
 
 						&:hover,
 						&.is-active {
-							border-bottom-color: #fff;
-							color: #fbfbfb;
+							border-bottom-color: $hoverColor;
+							color: $hoverColor;
 						}
 					}
 				}
@@ -326,11 +331,11 @@ div#magane {
 						span {
 							display: block;
 							width: 100%;
-							color: #989797;
+							color: $textColor;
 
 							&:nth-of-type(1) {
 								font-weight: bold;
-								color: #d2d2d2;
+								color: $textColor;
 							}
 						}
 					}
@@ -370,7 +375,7 @@ div#magane {
 
 			&:before,
 			&:after {
-				background-color: white;
+				background-color: $textColor;
 				content: "";
 				display: block;
 				left: 50%;
@@ -415,19 +420,17 @@ div#magane {
 		text-align: center;
 		white-space: nowrap;
 		border-color: transparent;
-		color: white;
-		background-color: #696080;
+		color: $textColor;
+		background-color: $backgroundPrimary;
 
 		&.is-danger {
-			background-color: #883030;
+			color: #f04747;
+			border-color: rgba(240,71,71,.3);
+			background: none;
 		}
 
 		&:hover, &.is-primary:hover {
-			background-color: #4a425f;
-		}
-
-		&.is-danger:hover {
-			background-color: #652525;
+			transform: scale3d(1.1, 1.1, 1.1);
 		}
 	}
 }
