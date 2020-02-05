@@ -30,6 +30,9 @@
 	let packsScrollBar;
 
 	afterUpdate(() => {
+		// Only do stuff if the Magane window is open
+		if (!stickerWindowActive) return;
+
 		if (!mainScrollBar) {
 			const exists = document.getElementById('stickers');
 			if (exists) mainScrollBar = new SimpleBar(exists);
@@ -209,18 +212,19 @@
 	});
 
 	const toggleStickerWindow = () => {
+		mainScrollBar = null;
 		stickerWindowActive = !stickerWindowActive;
-		if (!stickerWindowActive) mainScrollBar = null;
 	};
 
 	const toggleStickerModal = () => {
+		mainScrollBar = null;
+		packsScrollBar = null;
 		isStickerAddModalActive = !isStickerAddModalActive;
-		if (!isStickerAddModalActive) packsScrollBar = null;
 	};
 
 	const activateTab = value => {
-		activeTab = value;
 		packsScrollBar = null;
+		activeTab = value;
 	};
 </script>
 
@@ -327,7 +331,8 @@
 						</div>
 
 						{ #if activeTab === 0 }
-						<div class="tabContent">
+						<div class="tabContent"
+							id="packsBar">
 							{ #each subscribedPacks as pack }
 							<div class="pack">
 								<div class="preview"
