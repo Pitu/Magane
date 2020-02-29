@@ -26,6 +26,7 @@ div#magane {
 
 	div.channel-textarea-stickers {
 		display: flex;
+		align-items: center;
 		cursor: pointer;
 		filter: grayscale(100%);
 		transition: all 0.2s ease;
