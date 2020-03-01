@@ -23,7 +23,7 @@ export default {
 			preprocess: autoPreprocess()
 		}),
 		postcss({
-			extensions: [ '.css' ],
+			extensions: ['.css']
 		}),
 		resolve({
 			browser: true,
@@ -46,11 +46,6 @@ function serve() {
 		writeBundle() {
 			if (!started) {
 				started = true;
-
-				require('child_process').spawn('npm', ['run', 'start', '--', '--dev'], {
-					stdio: ['ignore', 'inherit', 'inherit'],
-					shell: true
-				});
 			}
 		}
 	};
