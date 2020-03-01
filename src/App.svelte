@@ -47,15 +47,17 @@
 	});
 
 	const keepMaganeInPlace = () => {
-		const el = document.querySelector(elementToCheck);
-		if (!el) {
-			if (showIcon) showIcon = false;
-			return;
-		}
-		if (!showIcon) showIcon = true;
-		const props = el.getBoundingClientRect();
-		coords.top = isThereTopBar ? props.top - 21 : props.top;
-		coords.left = props.left - 107;
+		setTimeout(() => {
+			const el = document.querySelector(elementToCheck);
+			if (!el) {
+				if (showIcon) showIcon = false;
+				return;
+			}
+			if (!showIcon) showIcon = true;
+			const props = el.getBoundingClientRect();
+			coords.top = isThereTopBar ? props.top - 21 : props.top;
+			coords.left = props.left - 107;
+		}, 0);
 	};
 
 	const waitForTextArea = () =>
