@@ -8,6 +8,8 @@
 
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
+	const selectorTextArea = 'div[class^=textArea] div[aria-multiline][contenteditable]';
+	let textArea = document.querySelector(selectorTextArea);
 	let showIcon = true;
 	let isThereTopBar = null;
 
@@ -55,6 +57,32 @@
 		coords.top = isThereTopBar ? props.top - 21 : props.top;
 		coords.left = props.left - 107;
 	};
+
+	const waitForTextArea = () =>
+		new Promise(resolve => {
+			(function pollForTextArea() {
+				textArea = document.querySelector(selectorTextArea);
+				if (textArea) return resolve();
+				setTimeout(pollForTextArea, 500);
+			})();
+		});
+		
+	const positionMagane = entries => {
+		for (const entry of entries) {
+			if (entry.contentRect) {
+				keepMaganeInPlace();
+				if (!entry.contentRect.width && !entry.contentRect.height) {
+					resizeObserver.unobserve(textArea)
+					waitForTextArea().then(() => {
+						resizeObserver.observe(textArea);
+						keepMaganeInPlace();
+					});
+				}
+			}
+		}
+	};
+
+	const resizeObserver = new ResizeObserver(positionMagane);
 
 	const checkAuth = async (token = storage.token) => {
 		if (storage.canCallAPI) return;
@@ -207,7 +235,8 @@
 		getLocalStorage();
 		checkAuth();
 		grabPacks();
-		setInterval(() => keepMaganeInPlace(), 500);
+		resizeObserver.observe(textArea);
+		keepMaganeInPlace();
 		isThereTopBar = document.querySelector('html.platform-win');
 	});
 
