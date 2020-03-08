@@ -60,15 +60,17 @@
 		}, 0);
 	};
 
-	const waitForTextArea = () =>
-		new Promise(resolve => {
-			(function pollForTextArea() {
+	const waitForTextArea = () => {
+		let pollForTextArea;
+		return new Promise(resolve => {
+			(pollForTextArea = () => {
 				textArea = document.querySelector(selectorTextArea);
 				if (textArea) return resolve();
 				setTimeout(pollForTextArea, 500);
 			})();
 		});
-		
+	};
+
 	const positionMagane = entries => {
 		for (const entry of entries) {
 			if (entry.contentRect) {
