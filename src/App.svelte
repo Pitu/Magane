@@ -76,9 +76,9 @@
 			if (entry.contentRect) {
 				keepMaganeInPlace();
 				if (!entry.contentRect.width && !entry.contentRect.height) {
-					resizeObserver.unobserve(textArea)
+					resizeObserver.unobserve(textArea); // eslint-disable-line no-use-before-define
 					waitForTextArea().then(() => {
-						resizeObserver.observe(textArea);
+						resizeObserver.observe(textArea); // eslint-disable-line no-use-before-define
 						keepMaganeInPlace();
 					});
 				}
