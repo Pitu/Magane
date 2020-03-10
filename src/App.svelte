@@ -8,6 +8,8 @@
 
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
+	const selectorTextArea = 'div[class^=textArea] div[aria-multiline][contenteditable]';
+	let textArea = document.querySelector(selectorTextArea);
 	let showIcon = true;
 	let isThereTopBar = null;
 
@@ -45,16 +47,46 @@
 	});
 
 	const keepMaganeInPlace = () => {
-		const el = document.querySelector(elementToCheck);
-		if (!el) {
-			if (showIcon) showIcon = false;
-			return;
-		}
-		if (!showIcon) showIcon = true;
-		const props = el.getBoundingClientRect();
-		coords.top = isThereTopBar ? props.top - 21 : props.top;
-		coords.left = props.left - 107;
+		setTimeout(() => {
+			const el = document.querySelector(elementToCheck);
+			if (!el) {
+				if (showIcon) showIcon = false;
+				return;
+			}
+			if (!showIcon) showIcon = true;
+			const props = el.getBoundingClientRect();
+			coords.top = isThereTopBar ? props.top - 21 : props.top;
+			coords.left = props.left - 107;
+		}, 0);
 	};
+
+	const waitForTextArea = () => {
+		let pollForTextArea;
+		return new Promise(resolve => {
+			(pollForTextArea = () => {
+				textArea = document.querySelector(selectorTextArea);
+				if (textArea) return resolve();
+				setTimeout(pollForTextArea, 500);
+			})();
+		});
+	};
+
+	const positionMagane = entries => {
+		for (const entry of entries) {
+			if (entry.contentRect) {
+				keepMaganeInPlace();
+				if (!entry.contentRect.width && !entry.contentRect.height) {
+					resizeObserver.unobserve(textArea); // eslint-disable-line no-use-before-define
+					waitForTextArea().then(() => {
+						resizeObserver.observe(textArea); // eslint-disable-line no-use-before-define
+						keepMaganeInPlace();
+					});
+				}
+			}
+		}
+	};
+
+	const resizeObserver = new ResizeObserver(positionMagane);
 
 	const checkAuth = async (token = storage.token) => {
 		if (storage.canCallAPI) return;
@@ -207,7 +239,8 @@
 		getLocalStorage();
 		checkAuth();
 		grabPacks();
-		setInterval(() => keepMaganeInPlace(), 500);
+		resizeObserver.observe(textArea);
+		keepMaganeInPlace();
 		isThereTopBar = document.querySelector('html.platform-win');
 	});
 
@@ -235,7 +268,7 @@
 			class:active="{ stickerWindowActive }"
 			on:click="{ () => toggleStickerWindow() }"
 			on:contextmenu|stopPropagation|preventDefault="{ () => grabPacks() }">
-			<div class="channel-textarea-stickers-content" />
+			<img class="channel-textarea-stickers-content" src="https://discordapp.com/assets/a42df564f00ed8bbca652dc9345d3834.svg" alt="Magane menu button">
 		</div>
 
 		{ #if stickerWindowActive }
