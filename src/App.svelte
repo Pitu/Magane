@@ -27,6 +27,7 @@
 	let storage = null;
 	let packsSearch = null;
 	let stickerContainer = null;
+	let resizeObserver;
 
 	let mainScrollBar;
 	let packsScrollBar;
@@ -56,7 +57,7 @@
 			if (!showIcon) showIcon = true;
 			const props = el.getBoundingClientRect();
 			coords.top = isThereTopBar ? props.top - 21 : props.top;
-			coords.left = props.left - 107;
+			coords.left = props.left - 100;
 		}, 0);
 	};
 
@@ -71,24 +72,21 @@
 		});
 	};
 
-	const positionMagane = entries => {
+	const positionMagane = async entries => {
 		for (const entry of entries) {
-			if (entry.contentRect) {
-				keepMaganeInPlace();
-				if (!entry.contentRect.width && !entry.contentRect.height) {
-					resizeObserver.unobserve(textArea); // eslint-disable-line no-use-before-define
-					waitForTextArea().then(() => {
-						resizeObserver.observe(textArea); // eslint-disable-line no-use-before-define
-						keepMaganeInPlace();
-					});
-				}
-			}
+			if (!entry.contentRect) return;
+			keepMaganeInPlace();
+			if (entry.contentRect.width || entry.contentRect.height) return;
+
+			resizeObserver.unobserve(textArea);
+			await waitForTextArea();
+			resizeObserver.observe(textArea);
+			keepMaganeInPlace();
 		}
 	};
 
-	const resizeObserver = new ResizeObserver(positionMagane);
-
 	const checkAuth = async (token = storage.token) => {
+		// No need if we are already authed
 		if (storage.canCallAPI) return;
 		if (typeof token !== 'string') throw new Error('Not a token, buddy.');
 		token = token.replace(/"/ig, '');
@@ -119,7 +117,7 @@
 	const getLocalStorage = () => {
 		const localStorageIframe = document.createElement('iframe');
 		localStorageIframe.id = 'localStorageIframe';
-		storage = document.body.appendChild(localStorageIframe).contentWindow.localStorage;
+		storage = document.body.appendChild(localStorageIframe).contentWindow.frames.localStorage;
 	};
 
 	const saveToLocalStorage = (key, payload) => {
@@ -239,6 +237,8 @@
 		getLocalStorage();
 		checkAuth();
 		grabPacks();
+		resizeObserver = new ResizeObserver(positionMagane);
+		await waitForTextArea();
 		resizeObserver.observe(textArea);
 		keepMaganeInPlace();
 		isThereTopBar = document.querySelector('html.platform-win');
