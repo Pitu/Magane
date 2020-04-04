@@ -244,9 +244,21 @@
 		isThereTopBar = document.querySelector('html.platform-win');
 	});
 
+	const maganeBlurHandler = e => {
+		if (!document.querySelector('#maganeContainer').contains(e.target)) {
+			// eslint-disable-next-line no-use-before-define
+			toggleStickerWindow();
+		}
+	};
+
 	const toggleStickerWindow = () => {
 		mainScrollBar = null;
 		stickerWindowActive = !stickerWindowActive;
+		if (stickerWindowActive) {
+			document.addEventListener('click', maganeBlurHandler);
+		} else {
+			document.removeEventListener('click', maganeBlurHandler);
+		}
 	};
 
 	const toggleStickerModal = () => {
