@@ -245,9 +245,17 @@
 	});
 
 	const maganeBlurHandler = e => {
-		if (!document.querySelector('#maganeContainer').contains(e.target)) {
-			// eslint-disable-next-line no-use-before-define
-			toggleStickerWindow();
+		const stickerWindow = document.querySelector('#magane .stickerWindow');
+		if (stickerWindow) {
+			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
+			if (
+				!document.querySelector('#magane img').isSameNode(e.target) &&
+				!((e.clientX <= x + width && e.clientX >= x) &&
+				(e.clientY <= y + height && e.clientY >= y))
+			) {
+				// eslint-disable-next-line no-use-before-define
+				toggleStickerWindow();
+			}
 		}
 	};
 
