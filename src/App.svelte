@@ -117,35 +117,35 @@
 
 	const checkAuth = async (token = storage.token) => {
 		// No need if we are already authed
-		if (storage.canCallAPI)
-			return toastSuccess('Magane initialized. You can now start sending stickers!');
-		if (typeof token !== 'string')
-			throw new Error('Not a token, buddy.');
+		if (storage.canCallAPI) return;
+		if (typeof token !== 'string') throw new Error('Not a token, buddy.');
 		token = token.replace(/"/ig, '');
 		token = token.replace(/^Bot\s*/i, '');
 		const gateway = await fetch('https://discordapp.com/api/v7/gateway');
 		const gatewayJson = await gateway.json();
 		const wss = new WebSocket(`${gatewayJson.url}/?encoding=json&v6`);
-		wss.onerror = error => console.error(error);
-		wss.onmessage = message => {
-			try {
-				const json = JSON.parse(message.data);
-				storage.canCallAPI = true;
-				json.op === 0 && json.t === 'READY' && wss.close();
-				json.op === 10 && wss.send(JSON.stringify({
-					op: 2,
-					d: {
-						token,
-						properties: { $browser: 'b1nzy is a meme' },
-						large_threshold: 50
-					}
-				}));
-				toastSuccess('Magane initialized. You can now start sending stickers!');
-			} catch (error) {
-				console.error(error);
-				toastError('Magane failed to initialize. Please check the console for errors.');
-			}
-		};
+		await new Promise((resolve, reject) => {
+			wss.onerror = error => reject(error);
+			wss.onmessage = message => {
+				try {
+					const json = JSON.parse(message.data);
+					storage.canCallAPI = true;
+					json.op === 0 && json.t === 'READY' && wss.close();
+					json.op === 10 && wss.send(JSON.stringify({
+						op: 2,
+						d: {
+							token,
+							properties: { $browser: 'b1nzy is a meme' },
+							large_threshold: 50
+						}
+					}));
+					resolve();
+				} catch (error) {
+					console.error(error);
+					reject(error);
+				}
+			};
+		});
 	};
 
 	const getLocalStorage = () => {
@@ -277,16 +277,22 @@
 	};
 
 	onMount(async () => {
-		console.log('[MAGANE] > mounted on DOM');
-		toastInfo('Initializing Magane\u2026');
-		getLocalStorage();
-		checkAuth();
-		grabPacks();
-		resizeObserver = new ResizeObserver(positionMagane);
-		await waitForTextArea();
-		resizeObserver.observe(textArea);
-		keepMaganeInPlace();
-		isThereTopBar = document.querySelector('html.platform-win');
+		try {
+			console.log('[MAGANE] > mounted on DOM');
+			toastInfo('Initializing Magane\u2026');
+			getLocalStorage();
+			await checkAuth();
+			await grabPacks();
+			toastSuccess('Magane initialized. You can start sending stickers now!');
+			resizeObserver = new ResizeObserver(positionMagane);
+			await waitForTextArea();
+			resizeObserver.observe(textArea);
+			keepMaganeInPlace();
+			isThereTopBar = document.querySelector('html.platform-win');
+		} catch (error) {
+			console.error(error);
+			toastError('Unexpected errors occurred when initializing Magane. Check your console for details.');
+		}
 	});
 
 	const maganeBlurHandler = e => {
@@ -356,6 +362,7 @@
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
+							title="Unfavorite"
 							on:click="{ () => unfavoriteSticker(sticker.pack, sticker.id) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
 								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
@@ -379,6 +386,7 @@
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
 						<div class="addFavorite"
+							title="Favorite"
 							on:click="{ () => favoriteSticker(pack.id, sticker) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
 								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>

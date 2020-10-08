@@ -1,38 +1,48 @@
 //META{"name":"magane"}*//
 const magane = function() {};
 magane.prototype.vars = {
-	id: 'magane-script',
+	className: 'magane-script',
 	src: 'http://localhost:10001/magane.js',
 	unloadIds: [
 		'maganeContainer',
 		'localStorageIframe'
-	]
+	],
+	styleRegex: /^\/\*\*\* Magane \*\*\*\//
 };
 magane.prototype.start = function() {
-	return magane.prototype.load();
-};
-magane.prototype.load = function() {
 	// Try to unload first.
 	magane.prototype.unload();
 	const element = document.createElement('script');
-	element.id = magane.prototype.vars.id;
+	element.className = magane.prototype.vars.className;
 	element.setAttribute('src', magane.prototype.vars.src);
-	element.dataset.timestamp = Date.now();
 	document.head.appendChild(element);
-	console.log(`[MAGANE-BD] > appendChild(): #${magane.prototype.vars.id}`);
+	console.log(`[MAGANE-BD] > appendChild(): .${magane.prototype.vars.className}`);
 };
-magane.prototype.unload = function() {
-	const ids = magane.prototype.vars.unloadIds.concat([magane.prototype.vars.id]);
-	for (const id of ids) {
+magane.prototype.load = function() {};
+magane.prototype.unload = function() {};
+magane.prototype.stop = function() {
+	// Destroy styles
+	for (const style of document.head.getElementsByTagName('style')) {
+		if (style.getAttribute('type') === 'text/css') {
+			if (magane.prototype.vars.styleRegex.test(style.innerText)) {
+				style.parentNode.removeChild(style);
+				console.log(`[MAGANE-BD] > removeChild(): ${magane.prototype.vars.styleRegex.toString()}`);
+			}
+		}
+	}
+	// Destroy elements
+	for (const id of magane.prototype.vars.unloadIds) {
 		const element = document.getElementById(id);
 		if (element) {
 			element.parentNode.removeChild(element);
 			console.log(`[MAGANE-BD] > removeChild(): #${id}`);
 		}
 	}
-};
-magane.prototype.stop = function() {
-	return magane.prototype.unload();
+	// Destroy script tags
+	const elements = document.head.getElementsByClassName(magane.prototype.vars.className);
+	for (const element of elements) {
+		element.parentNode.removeChild(element);
+	}
 };
 magane.prototype.getSettingsPanel = function() {};
 magane.prototype.getName = function() { return 'Magane (DEV)'; };

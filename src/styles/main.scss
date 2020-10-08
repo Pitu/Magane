@@ -1,3 +1,4 @@
+/*** Magane ***/
 div#magane {
 	$backgroundPrimary: var(--background-secondary);
 	$backgroundSecondary: var(--background-tertiary);
@@ -107,21 +108,32 @@ div#magane {
 							transform: scale(1.25);
 							svg path {
 								transition: all 0.2s ease;
-								fill: $hoverColor;
 							}
 						}
 					}
 					div.addFavorite {
 						bottom: 0;
+						&:hover {
+							svg path {
+								fill: #2ECC71;
+							}
+						}
 					}
 					div.deleteFavorite {
 						top: 0px;
 						transform: rotateZ(45deg);
+						&:hover {
+							transform: scale(1.25) rotateZ(45deg);
+							svg path {
+								fill: #F04747;
+							}
+						}
 					}
 
 					&:hover div.addFavorite,
 					&:hover div.deleteFavorite {
 						display: block;
+						cursor: pointer;
 					}
 				}
 			}
@@ -417,9 +429,9 @@ div#magane {
 		background-color: $backgroundPrimary;
 
 		&.is-danger {
-			color: #f04747;
+			color: #ffffff;
 			border-color: rgba(240,71,71,.3);
-			background: none;
+			background: #f04747;
 		}
 
 		&:hover, &.is-primary:hover {
