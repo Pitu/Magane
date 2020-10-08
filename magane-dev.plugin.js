@@ -2,7 +2,11 @@
 const magane = function() {};
 magane.prototype.vars = {
 	id: 'magane-script',
-	src: 'http://localhost:10001/magane.js'
+	src: 'http://localhost:10001/magane.js',
+	unloadIds: [
+		'maganeContainer',
+		'localStorageIframe'
+	]
 };
 magane.prototype.start = function() {
 	return magane.prototype.load();
@@ -15,13 +19,16 @@ magane.prototype.load = function() {
 	element.setAttribute('src', magane.prototype.vars.src);
 	element.dataset.timestamp = Date.now();
 	document.head.appendChild(element);
-	console.log('[MAGANE-BD] > appendChild()');
+	console.log(`[MAGANE-BD] > appendChild(): #${magane.prototype.vars.id}`);
 };
 magane.prototype.unload = function() {
-	const element = document.getElementById(magane.prototype.vars.id);
-	if (element) {
-		document.head.removeChild(element);
-		console.log('[MAGANE-BD] > removeChild()');
+	const ids = magane.prototype.vars.unloadIds.concat([magane.prototype.vars.id]);
+	for (const id of ids) {
+		const element = document.getElementById(id);
+		if (element) {
+			element.parentNode.removeChild(element);
+			console.log(`[MAGANE-BD] > removeChild(): #${id}`);
+		}
 	}
 };
 magane.prototype.stop = function() {

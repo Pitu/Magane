@@ -32,6 +32,36 @@
 	let mainScrollBar;
 	let packsScrollBar;
 
+	const toast = (message, options) => {
+		if (BdApi && typeof BdApi.showToast === 'function')
+			return BdApi.showToast(message, options);
+
+		// Fallback if not in BetterDiscord
+		if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type))
+			options.type = 'log';
+		return console[options.type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', content);
+	}
+
+	const toastInfo = (message, options = {}) => {
+		options.type = 'info';
+		return toast(message, options);
+	}
+
+	const toastSuccess = (message, options = {}) => {
+		options.type = 'success';
+		return toast(message, options);
+	}
+
+	const toastError = (message, options = {}) => {
+		options.type = 'error';
+		return toast(message, options);
+	}
+
+	const toastWarn = (message, options = {}) => {
+		options.type = 'warn';
+		return toast(message, options);
+	}
+
 	afterUpdate(() => {
 		// Only do stuff if the Magane window is open
 		if (!stickerWindowActive) return;
@@ -87,8 +117,10 @@
 
 	const checkAuth = async (token = storage.token) => {
 		// No need if we are already authed
-		if (storage.canCallAPI) return;
-		if (typeof token !== 'string') throw new Error('Not a token, buddy.');
+		if (storage.canCallAPI)
+			return toastSuccess('Magane initialized. You can now start sending stickers!');
+		if (typeof token !== 'string')
+			throw new Error('Not a token, buddy.');
 		token = token.replace(/"/ig, '');
 		token = token.replace(/^Bot\s*/i, '');
 		const gateway = await fetch('https://discordapp.com/api/v7/gateway');
@@ -108,16 +140,23 @@
 						large_threshold: 50
 					}
 				}));
+				toastSuccess('Magane initialized. You can now start sending stickers!');
 			} catch (error) {
 				console.error(error);
+				toastError('Magane failed to initialize. Please check the console for errors.');
 			}
 		};
 	};
 
 	const getLocalStorage = () => {
-		const localStorageIframe = document.createElement('iframe');
-		localStorageIframe.id = 'localStorageIframe';
-		storage = document.body.appendChild(localStorageIframe).contentWindow.frames.localStorage;
+		const id = 'localStorageIframe';
+		let element = document.getElementById(id);
+		if (!element) {
+			element = document.createElement('iframe');
+			element.id = id;
+			document.body.appendChild(element);
+		}
+		storage = element.contentWindow.frames.localStorage;
 	};
 
 	const saveToLocalStorage = (key, payload) => {
@@ -183,9 +222,12 @@
 
 	const sendSticker = async (pack, id, token = storage.token) => {
 		const channel = window.location.href.split('/').slice(-1)[0];
-		if (onCooldown) return;
+		if (onCooldown)
+			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
 		onCooldown = true;
-		stickerWindowActive = false;
+		// I personally don't like the sticker window closing after sending one
+		// stickerWindowActive = false;
+		toast('Sending sticker\u2026');
 		const response = await fetch(`${baseURL}${pack}/${id}`, { cache: 'force-cache' });
 		const myBlob = await response.blob();
 		const formData = new FormData();
@@ -196,8 +238,10 @@
 			headers: { Authorization: token },
 			method: 'POST',
 			body: formData
+		}).then(() => {
+			toastSuccess('Sticker sent!');
+			onCooldown = false;
 		});
-		setTimeout(() => onCooldown = false, 1000);
 	};
 
 	const favoriteSticker = (pack, id) => {
@@ -234,6 +278,7 @@
 
 	onMount(async () => {
 		console.log('[MAGANE] > mounted on DOM');
+		toastInfo('Initializing Magane\u2026');
 		getLocalStorage();
 		checkAuth();
 		grabPacks();
