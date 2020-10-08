@@ -18,7 +18,7 @@
 	let isStickerAddModalActive = false;
 	let activeTab = 0;
 	let favoriteStickers = [];
-	let availablePacks = [];
+	let availablePacks = new Map();
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
@@ -32,6 +32,10 @@
 	let mainScrollBar;
 	let packsScrollBar;
 
+	const log = (message, type = 'log') => {
+		return console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
+	}
+
 	const toast = (message, options) => {
 		if (BdApi && typeof BdApi.showToast === 'function')
 			return BdApi.showToast(message, options);
@@ -39,7 +43,7 @@
 		// Fallback if not in BetterDiscord
 		if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type))
 			options.type = 'log';
-		return console[options.type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', content);
+		return log(message, options.type);
 	}
 
 	const toastInfo = (message, options = {}) => {
@@ -163,12 +167,60 @@
 		storage.setItem(key, JSON.stringify(payload));
 	};
 
+	const deletePack = (pack) => {
+		// TODO
+		if (!pack && !pack.startsWith('startswith-') && !pack.startsWith('custom-')) {
+			return `Pack ID must start with either "startswith-" or "custom-"`;
+		}
+
+		const availablePacks = storage.getItem('magane.available');
+		if (availablePacks) {
+			try {
+				availablePacks = JSON.parse(availablePacks);
+			} catch (ex) {
+				// Do nothing
+			}
+		}
+
+		const index = availablePacks.findIndex(e => e.id === pack);
+		if (index === -1) return `Unable to find pack with ID ${pack}`;
+
+		// Force unsubscribe
+		unsubscribeToPack(id);
+
+		availablePacks.splice(index, 1);
+		saveToLocalStorage('magane.available', availablePacks);
+		if (pack.startsWith('startswith-') || pack.startsWith('custom-')) {
+			delete localPacks[pack];
+		}
+		return `Removed pack with ID ${pack} (old index: ${index})`;
+	};
+
 	const grabPacks = async () => {
 		const response = await fetch('https://magane.moe/api/packs');
 		const packs = await response.json();
 		baseURL = packs.baseURL;
-		availablePacks = packs.packs;
-		filteredPacks = availablePacks;
+
+		const storedAvailPacks = storage.getItem('magane.available');
+		if (storedAvailPacks) {
+			try {
+				const availPacks = JSON.parse(storedAvailPacks);
+				for (let i = availPacks.length - 1; i >= 0; i--) {
+					log(`Adding custom pack: ${availPacks[i].id}\u2026`);
+					availPacks[i].nameLower = packs.packs[i].name.toLowerCase();
+					availablePacks.set(availPacks[i].id, availPacks[i]);
+				}
+			} catch (ex) {
+				// Do nothing
+			}
+		}
+
+		for (let i = packs.packs.length - 1; i >= 0; i--) {
+			packs.packs[i].nameLower = packs.packs[i].name.toLowerCase()
+			availablePacks.set(packs.packs[i].id, packs.packs[i]);
+		}
+
+		filteredPacks = Array.from(availablePacks.values());
 
 		const subbedPacks = storage.getItem('magane.subscribed');
 		if (subbedPacks) {
@@ -220,20 +272,61 @@
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
 	};
 
+	const formatUrl = (pack, id) => {
+		let url;
+		if (pack.startsWith('startswith-')) {
+			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
+			if (id === 'tab_on.png') {
+				url = template.replace(/%id%/g, pack.split('-')[1]);
+			} else {
+				url = template.replace(/%id%/g, id.split('.')[0]);
+			}
+			if (this.localPacks[pack].animated) {
+				url = url.replace('sticker.png', 'sticker_animation.png');
+			}
+		} else if (pack.startsWith('custom-')) {
+			const template = this.localPacks[pack].template;
+			if (id === 'tab_on.png') {
+				const first = this.localPacks[pack].files[0];
+				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, first);
+			} else {
+				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
+			}
+		} else {
+			url = `${baseURL}${pack}/${id}`;
+		}
+		return url;
+	}
+
 	const sendSticker = async (pack, id, token = storage.token) => {
-		const channel = window.location.href.split('/').slice(-1)[0];
 		if (onCooldown)
 			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
+
 		onCooldown = true;
 		// I personally don't like the sticker window closing after sending one
 		// stickerWindowActive = false;
+
 		toast('Sending sticker\u2026');
-		const response = await fetch(`${baseURL}${pack}/${id}`, { cache: 'force-cache' });
+		const url = formatUrl(pack, id);
+		log(`Fetching sticker: ${url}`);
+		const response = await fetch(url, { cache: 'force-cache' });
 		const myBlob = await response.blob();
+
+		let filename = id;
+		if (url.includes('sticker_animation.png')) {
+			filename = `${id.split('.')[0]}.gif`;
+		}
+		if (pack.startsWith('custom-')) {
+			// Obfuscate file name of custom packs by using timestamp
+			filename = `${Date.now().toString().slice(-7)}.${id.split('.')[1]}`;
+		}
 		const formData = new FormData();
-		formData.append('file', myBlob, id);
+		formData.append('file', myBlob, filename);
+
+		log(`Sending\u2026`);
 		token = token.replace(/"/ig, '');
 		token = token.replace(/^Bot\s*/i, '');
+		const channel = window.location.href.split('/').slice(-1)[0];
 		fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
 			headers: { Authorization: token },
 			method: 'POST',
@@ -251,7 +344,9 @@
 
 		const favorite = { pack, id };
 		favoriteStickers = [...favoriteStickers, favorite];
+
 		saveToLocalStorage('magane.favorites', favoriteStickers);
+		toastSuccess('Added sticker to favorites.');
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -270,10 +365,20 @@
 		}
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
+		toastInfo('Unfavorited sticker.');
 	};
 
 	const filterPacks = () => {
-		filteredPacks = availablePacks.filter(pack => pack.name.toLowerCase().indexOf(event.target.value.toLowerCase()) >= 0);
+		const query = event.target.value.trim().toLowerCase();
+		if (query) {
+			filteredPacks = [];
+			availablePacks.forEach((pack, id) => {
+				if (pack.nameLower.indexOf(query) >= 0 || id.indexOf(query) >= 0)
+					filteredPacks.push(pack);
+			})
+		} else {
+			filteredPacks = Array.from(availablePacks.values());
+		}
 	};
 
 	onMount(async () => {
