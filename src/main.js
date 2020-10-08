@@ -4,7 +4,10 @@ const searchForElement = '[class*=baseLayer] > [class*=container] > [class*=base
 const prepareDOM = () => {
 	console.log('[MAGANE] > checkDOM()');
 	let maganeContainer = document.getElementById('maganeContainer');
-	if (maganeContainer) return;
+	if (maganeContainer) {
+		maganeContainer.parentNode.removeChild(maganeContainer);
+		console.log('[MAGANE] > removeChild()');
+	}
 
 	const appendableElement = document.querySelector(searchForElement);
 	if (!appendableElement) {
