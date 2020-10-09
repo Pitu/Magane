@@ -21,6 +21,10 @@ magane.prototype.start = function() {
 magane.prototype.load = function() {};
 magane.prototype.unload = function() {};
 magane.prototype.stop = function() {
+	// Destroy APIs
+	if (typeof window.magane !== 'undefined') {
+		delete window.magane;
+	}
 	// Destroy styles
 	for (const style of document.head.getElementsByTagName('style')) {
 		if (style.getAttribute('type') === 'text/css') {

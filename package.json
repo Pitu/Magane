@@ -30,12 +30,16 @@
     "rollup-plugin-terser": "^5.1.2",
     "simplebar": "^5.1.0",
     "svelte": "^3.0.0",
-    "svelte-preprocess": "^3.3.0"
+    "svelte-preprocess": "^3.3.0",
+    "svelte-scrollto": "^0.2.0"
   },
   "eslintConfig": {
     "extends": "aqua/svelte",
     "env": {
       "browser": true
+    },
+    "rules": {
+      "semi": "error"
     },
     "overrides": [
       {

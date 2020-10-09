@@ -73,14 +73,23 @@ div#magane {
 				flex-flow: wrap;
 				justify-content: center;
 				padding: 25px;
+				width: 100%;
+				box-sizing: border-box;
 
 				span {
-					display: block;
 					color: $textColor;
 					width: 100%;
 					cursor: auto;
 					padding-left: 10px;
 					margin: 10px 0px;
+
+					.counts {
+						padding-left: 0;
+					}
+
+					.counts span {
+						padding: 0 0.5em;
+					}
 				}
 
 				div.sticker {
@@ -282,6 +291,7 @@ div#magane {
 
 				div.tabContent {
 					height: 525px !important;
+					overflow-y: auto;
 				}
 
 				div.pack {
@@ -333,7 +343,7 @@ div#magane {
 						flex: 1;
 						padding: 14px;
 
-						span {
+						> span {
 							display: block;
 							width: 100%;
 							color: $textColor;
@@ -341,6 +351,16 @@ div#magane {
 							&:nth-of-type(1) {
 								font-weight: bold;
 								color: $textColor;
+							}
+
+							.appendix span {
+								&:nth-of-type(1) {
+									padding: 0 0.5em;
+								}
+
+								&:nth-of-type(2) {
+									user-select: text;
+								}
 							}
 						}
 					}
