@@ -557,6 +557,9 @@
 		}
 	};
 
+	const formatStickersCount = count =>
+		`<span class="counts"><span>–</span>${count} sticker${count === 1 ? '' : 's'}</span>`;
+
 	const formatPackAppendix = id => {
 		let tmp = '';
 		if (id.startsWith('startswith-')) {
@@ -644,7 +647,7 @@
 				{ /if }
 				{ #if favoriteStickers && favoriteStickers.length }
 				<div class="pack">
-					<span id="pfavorites">Favorites<span class="counts"><span>–</span>{ favoriteStickers.length } sticker{ favoriteStickers.length === 1 ? '' : 's' }</span></span>
+					<span id="pfavorites">Favorites{ @html formatStickersCount(favoriteStickers.length) }</span>
 					{ #each favoriteStickers as sticker, i }
 					<div class="sticker">
 						<img
@@ -668,7 +671,7 @@
 
 				{ #each subscribedPacks as pack, i }
 				<div class="pack">
-					<span id="p{pack.id}">{ pack.name }<span class="counts"><span>–</span>{ pack.files.length } sticker{ pack.files.length === 1 ? '' : 's' }</span></span>
+					<span id="p{pack.id}">{ pack.name }{ @html formatStickersCount(pack.files.length) }</span>
 
 					{ #each pack.files as sticker, i }
 					<div class="sticker">
