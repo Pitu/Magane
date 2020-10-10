@@ -87,10 +87,8 @@
 
 	afterUpdate(() => {
 		// Only do stuff if the Magane window is open
-		if (!stickerWindowActive) {
-			// eslint-disable-next-line no-useless-return
-			return;
-		}
+		// eslint-disable-next-line no-useless-return
+		if (!stickerWindowActive) return;
 
 		/*
 		// FIXME: Bugged with dynamically modified lists
@@ -170,7 +168,6 @@
 					}));
 					resolve();
 				} catch (error) {
-					console.error(error);
 					reject(error);
 				}
 			};
@@ -178,14 +175,9 @@
 	};
 
 	const getLocalStorage = () => {
-		const id = 'localStorageIframe';
-		let element = document.getElementById(id);
-		if (!element) {
-			element = document.createElement('iframe');
-			element.id = id;
-			document.body.appendChild(element);
-		}
-		storage = element.contentWindow.frames.localStorage;
+		const localStorageIframe = document.createElement('iframe');
+		localStorageIframe.id = 'localStorageIframe';
+		storage = document.body.appendChild(localStorageIframe).contentWindow.frames.localStorage;
 	};
 
 	const saveToLocalStorage = (key, payload) => {
@@ -197,25 +189,28 @@
 		const packs = await response.json();
 		baseURL = packs.baseURL;
 
+		// Load local packs first to have them always before built-in packs
 		const storedLocalPacks = storage.getItem('magane.available');
 		if (storedLocalPacks) {
 			try {
 				const availLocalPacks = JSON.parse(storedLocalPacks);
 
 				// This logic is necessary since the old data, prior to the new master rebase,
-				// would also store remote built-in packs in local storage.
+				// would also store remote built-in packs in local storage (no idea why).
 				const filteredLocalPacks = availLocalPacks.filter(p =>
 					p.id.startsWith('startswith-') || p.id.startsWith('custom-'));
 				if (availLocalPacks.length !== filteredLocalPacks.length) {
 					saveToLocalStorage('magane.available', filteredLocalPacks);
 				}
 
+				// Store local packs data in an ID-indexed Object for faster get's in formatURL()
 				filteredLocalPacks.forEach(pack => {
 					localPacks[pack.id] = pack;
 				});
 				availablePacks.push(...filteredLocalPacks);
 			} catch (ex) {
 				console.error(ex);
+				// Do nothing
 			}
 		}
 
@@ -237,6 +232,7 @@
 				});
 			} catch (ex) {
 				console.error(ex);
+				// Do nothing
 			}
 		}
 
@@ -259,13 +255,13 @@
 					});
 			} catch (ex) {
 				console.error(ex);
+				// Do nothing
 			}
 		}
 	};
 
 	const subscribeToPack = pack => {
 		if (subscribedPacks.includes(pack)) return;
-
 		subscribedPacks = [...subscribedPacks, pack];
 		subscribedPacksSimple = [...subscribedPacksSimple, pack.id];
 
@@ -295,6 +291,10 @@
 	const formatUrl = (pack, id) => {
 		let url;
 		if (pack.startsWith('startswith-')) {
+			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
+			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
+			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
+			// In comparison, Magane's general resolution is 180p (height)
 			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
 			if (id === 'tab_on.png') {
 				url = template.replace(/%id%/g, pack.split('-')[1]);
@@ -329,36 +329,43 @@
 		onCooldown = true;
 		// stickerWindowActive = false;
 
-		toast('Sending sticker\u2026');
-		const url = formatUrl(pack, id);
-		log(`Fetching sticker: ${url}`);
-		const response = await fetch(url, { cache: 'force-cache' });
-		const myBlob = await response.blob();
+		try {
+			toast('Sending sticker\u2026');
+			const channel = window.location.href.split('/').slice(-1)[0];
 
-		let filename = id;
-		if (url.includes('sticker_animation.png')) {
-			filename = `${id.split('.')[0]}.gif`;
-		}
-		if (pack.startsWith('custom-')) {
-			// Obfuscate file name of custom packs by using timestamp
-			filename = `${Date.now().toString().slice(-7)}.${id.split('.')[1]}`;
-		}
+			const url = formatUrl(pack, id);
+			log(`Fetching sticker from remote: ${url}`);
+			const response = await fetch(url, { cache: 'force-cache' });
+			const myBlob = await response.blob();
 
-		const formData = new FormData();
-		formData.append('file', myBlob, filename);
+			let filename = id;
+			if (pack.startsWith('startswith-') && url.includes('sticker_animation.png')) {
+				// FIXME: Discord no longer animates APNGs renamed to GIFs
+				filename = `${id.split('.')[0]}.gif`;
+				toastWarn('Animated stickers from LINE Store currently cannot be animated!');
+			} else if (pack.startsWith('custom-')) {
+				// Obfuscate file name of stickers from custom packs
+				filename = `${Date.now().toString().slice(-7)}.${id.split('.')[1]}`;
+			}
 
-		log(`Sending\u2026`);
-		token = token.replace(/"/ig, '');
-		token = token.replace(/^Bot\s*/i, '');
-		const channel = window.location.href.split('/').slice(-1)[0];
-		fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
-			headers: { Authorization: token },
-			method: 'POST',
-			body: formData
-		}).then(() => {
+			const formData = new FormData();
+			formData.append('file', myBlob, filename);
+
+			log(`Sending sticker\u2026`);
+			token = token.replace(/"/ig, '');
+			token = token.replace(/^Bot\s*/i, '');
+			await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
+				headers: { Authorization: token },
+				method: 'POST',
+				body: formData
+			});
 			toastSuccess('Sticker sent!');
-			onCooldown = false;
-		});
+		} catch (error) {
+			console.error(error);
+			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
+		}
+
+		onCooldown = false;
 	};
 
 	const favoriteSticker = (pack, id) => {
@@ -377,7 +384,6 @@
 
 		const favorite = { pack, id };
 		favoriteStickers = [...favoriteStickers, favorite];
-
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
 		toastSuccess('Added sticker to favorites.', { nolog: true });
@@ -408,6 +414,8 @@
 	};
 
 	const filterPacks = () => {
+		// Use value from packsSearch var instead of event
+		// to allow this function to be called from other actions.
 		const query = typeof packsSearch === 'string' && packsSearch.trim().toLowerCase();
 		if (query) {
 			filteredPacks = availablePacks.filter(pack =>
@@ -446,7 +454,6 @@
 	};
 
 	window.magane.appendPack = (title, firstid, count, animated, _) => {
-		// Fail-safe, since this may happen often
 		if (_) {
 			throw new Error('This function expects only 4 parameters. Were you looking for appendCustomPack()?');
 		}
@@ -467,7 +474,6 @@
 	};
 
 	window.magane.appendCustomPack = (title, id, count, animated, template) => {
-		// https://github.com/BobbyWibowo/Magane/blob/master/HOWTO.md#maganeappendcustompacktitle-id-count-animated-template
 		if (!template) {
 			throw new Error('Missing URL template.');
 		}
@@ -575,7 +581,7 @@
 			isThereTopBar = document.querySelector('html.platform-win');
 		} catch (error) {
 			console.error(error);
-			toastError('Unexpected errors occurred when initializing Magane. Check your console for details.');
+			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
 	});
 
