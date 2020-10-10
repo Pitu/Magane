@@ -225,6 +225,7 @@
 				for (const subbedPacks of subscribedPacks) {
 					subscribedPacksSimple.push(subbedPacks.id);
 				}
+				// Prioritize data of subscribed packs
 				subscribedPacks.forEach(pack => {
 					if (pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')) {
 						localPacks[pack.id] = pack;
@@ -418,6 +419,7 @@
 		// to allow this function to be called from other actions.
 		const query = typeof packsSearch === 'string' && packsSearch.trim().toLowerCase();
 		if (query) {
+			// Allow searching by IDs too
 			filteredPacks = availablePacks.filter(pack =>
 				pack.name.toLowerCase().indexOf(query) >= 0 || pack.id.indexOf(query) >= 0);
 		} else {
