@@ -56,6 +56,8 @@
 			return BdApi.showToast(message, options);
 		}
 
+		if (options.nolog) return;
+
 		// Fallback if not in BetterDiscord
 		if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type)) {
 			options.type = 'log';
@@ -211,13 +213,14 @@
 				filteredLocalPacks.forEach(pack => {
 					localPacks[pack.id] = pack;
 				});
-				availablePacks = availablePacks.concat(filteredLocalPacks);
+				availablePacks.push(...filteredLocalPacks);
 			} catch (ex) {
 				console.error(ex);
 			}
 		}
 
-		availablePacks = availablePacks.concat(packs.packs);
+		availablePacks.push(...packs.packs);
+		availablePacks = availablePacks;
 		filteredPacks = availablePacks;
 
 		const subbedPacks = storage.getItem('magane.subscribed');
@@ -267,7 +270,7 @@
 		subscribedPacksSimple = [...subscribedPacksSimple, pack.id];
 
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		console.log(`[MAGANE] > Subscribed to pack > ${pack.name}`);
+		log(`Subscribed to pack > ${pack.name}`);
 	};
 
 	const unsubscribeToPack = pack => {
@@ -282,7 +285,7 @@
 				subscribedPacks = subscribedPacks;
 				subscribedPacksSimple = subscribedPacksSimple;
 
-				console.log(`[MAGANE] > Unsubscribed from pack > ${pack.name}`);
+				log(`Unsubscribed from pack > ${pack.name}`);
 			}
 		}
 
@@ -324,7 +327,6 @@
 		}
 
 		onCooldown = true;
-		// I personally don't like the sticker window closing after sending one
 		// stickerWindowActive = false;
 
 		toast('Sending sticker\u2026');
@@ -377,7 +379,8 @@
 		favoriteStickers = [...favoriteStickers, favorite];
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
-		toastSuccess('Added sticker to favorites.');
+		log(`Favorited sticker > ${id} of pack ${pack}`);
+		toastSuccess('Added sticker to favorites.', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -400,7 +403,8 @@
 		}
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
-		toastInfo('Unfavorited sticker.');
+		log(`Unfavorited sticker > ${id} of pack ${pack}`);
+		toastInfo('Unfavorited sticker.', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -434,7 +438,7 @@
 				availablePacks = availablePacks;
 				filterPacks();
 
-				return `Added a new pack with ID ${id}`;
+				return log(`Added a new pack with ID ${id}`);
 			} catch (ex) {
 				throw ex;
 			}
@@ -498,6 +502,12 @@
 					throw new Error(`Unable to find pack with ID ${id}`);
 				}
 
+				// Force unfavorite stickers
+				const favedStickers = favoriteStickers.filter(s => s.pack === id);
+				if (favedStickers.length) {
+					favedStickers.forEach(s => unfavoriteSticker(id, s.id));
+				}
+
 				// Force unsubscribe
 				const subbedPack = subscribedPacks.find(p => p.id === id);
 				if (subbedPack)	{
@@ -514,7 +524,7 @@
 					filterPacks();
 				}
 
-				return `Removed pack with ID ${id} (old index: ${index})`;
+				return log(`Removed pack with ID ${id} (old index: ${index})`);
 			} catch (ex) {
 				throw ex;
 			}
@@ -552,7 +562,7 @@
 
 	onMount(async () => {
 		try {
-			console.log('[MAGANE] > mounted on DOM');
+			log('Mounted on DOM');
 			toastInfo('Initializing Magane\u2026');
 			getLocalStorage();
 			await checkAuth();

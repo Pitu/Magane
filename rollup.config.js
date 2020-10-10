@@ -44,12 +44,10 @@ export default {
 			}
 		}),
 		!production && livereload('public'),
-		!production && Boolean(process.env.BD_PLUGIN_PATH) && command(
-			`/usr/bin/touch "${process.env.BD_PLUGIN_PATH}"`,
-			{
+		!production && Boolean(process.env.BD_PLUGIN_PATH) &&
+			command(`/usr/bin/touch "${process.env.BD_PLUGIN_PATH}"`, {
 				wait: true
-			}
-		),
+			}),
 		production && terser()
 	],
 	watch: {

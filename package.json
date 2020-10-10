@@ -49,15 +49,6 @@
         "env": {
           "node": true
         }
-      },
-      {
-        "files": [
-          "*.plugin.js"
-        ],
-        "rules": {
-          "func-names": "off",
-          "spaced-comment": "off"
-        }
       }
     ]
   }
