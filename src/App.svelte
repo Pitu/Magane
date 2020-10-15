@@ -761,14 +761,14 @@
 							{ /each }
 						</div>
 						{ :else if activeTab === 1 }
+						<input
+							on:keyup="{ filterPacks }"
+							bind:value={ packsSearch }
+							class="inputQuery"
+							type="text"
+							placeholder="Search" />
 						<div class="tabContent"
 							id="packsBar">
-							<input
-								on:keyup="{ filterPacks }"
-								bind:value={ packsSearch }
-								class="inputQuery"
-								type="text"
-								placeholder="Search" />
 							{ #each filteredPacks as pack }
 							<div class="pack">
 								<div class="preview"
