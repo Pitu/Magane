@@ -2,9 +2,20 @@
 	import { onMount, afterUpdate } from 'svelte';
 
 	// Let's make the scrollbars pretty
-	import SimpleBar from 'simplebar';
+	// FIXME: Bugged with dynamically modified lists
+	// import SimpleBar from 'simplebar';
+	import * as animateScroll from 'svelte-scrollto';
+	import * as eases from 'svelte/easing';
 	import './styles/global.css';
 	import './styles/main.scss';
+
+	animateScroll.setGlobalOptions({
+		delay: 250,
+		easing: eases.cubicOut
+	});
+
+	// APIs
+	window.magane = {};
 
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
@@ -18,10 +29,12 @@
 	let isStickerAddModalActive = false;
 	let activeTab = 0;
 	let favoriteStickers = [];
+	const favoriteStickersData = {};
 	let availablePacks = [];
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
+	const localPacks = {};
 
 	let onCooldown = false;
 	let storage = null;
@@ -29,13 +42,56 @@
 	let stickerContainer = null;
 	let resizeObserver;
 
+	/* eslint-disable no-unused-vars */
 	let mainScrollBar;
 	let packsScrollBar;
+	/* eslint-enable no-unused-vars */
+
+	const log = (message, type = 'log') =>
+		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
+
+	const toast = (message, options) => {
+		/* global BdApi */
+		if (BdApi && typeof BdApi.showToast === 'function') {
+			return BdApi.showToast(message, options);
+		}
+
+		if (options.nolog) return;
+
+		// Fallback if not in BetterDiscord
+		if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type)) {
+			options.type = 'log';
+		}
+		return log(message, options.type);
+	};
+
+	const toastInfo = (message, options = {}) => {
+		options.type = 'info';
+		return toast(message, options);
+	};
+
+	const toastSuccess = (message, options = {}) => {
+		options.type = 'success';
+		return toast(message, options);
+	};
+
+	const toastError = (message, options = {}) => {
+		options.type = 'error';
+		return toast(message, options);
+	};
+
+	const toastWarn = (message, options = {}) => {
+		options.type = 'warn';
+		return toast(message, options);
+	};
 
 	afterUpdate(() => {
 		// Only do stuff if the Magane window is open
+		// eslint-disable-next-line no-useless-return
 		if (!stickerWindowActive) return;
 
+		/*
+		// FIXME: Bugged with dynamically modified lists
 		if (!mainScrollBar) {
 			const exists = document.getElementById('stickers');
 			if (exists) mainScrollBar = new SimpleBar(exists);
@@ -45,6 +101,7 @@
 			const exists = document.getElementById('packsBar');
 			if (exists) packsScrollBar = new SimpleBar(exists);
 		}
+		*/
 	});
 
 	const keepMaganeInPlace = () => {
@@ -94,24 +151,27 @@
 		const gateway = await fetch('https://discordapp.com/api/v7/gateway');
 		const gatewayJson = await gateway.json();
 		const wss = new WebSocket(`${gatewayJson.url}/?encoding=json&v6`);
-		wss.onerror = error => console.error(error);
-		wss.onmessage = message => {
-			try {
-				const json = JSON.parse(message.data);
-				storage.canCallAPI = true;
-				json.op === 0 && json.t === 'READY' && wss.close();
-				json.op === 10 && wss.send(JSON.stringify({
-					op: 2,
-					d: {
-						token,
-						properties: { $browser: 'b1nzy is a meme' },
-						large_threshold: 50
-					}
-				}));
-			} catch (error) {
-				console.error(error);
-			}
-		};
+		await new Promise((resolve, reject) => {
+			wss.onerror = error => reject(error);
+			wss.onmessage = message => {
+				try {
+					const json = JSON.parse(message.data);
+					storage.canCallAPI = true;
+					json.op === 0 && json.t === 'READY' && wss.close();
+					json.op === 10 && wss.send(JSON.stringify({
+						op: 2,
+						d: {
+							token,
+							properties: { $browser: 'b1nzy is a meme' },
+							large_threshold: 50
+						}
+					}));
+					resolve();
+				} catch (error) {
+					reject(error);
+				}
+			};
+		});
 	};
 
 	const getLocalStorage = () => {
@@ -128,7 +188,34 @@
 		const response = await fetch('https://magane.moe/api/packs');
 		const packs = await response.json();
 		baseURL = packs.baseURL;
-		availablePacks = packs.packs;
+
+		// Load local packs first to have them always before built-in packs
+		const storedLocalPacks = storage.getItem('magane.available');
+		if (storedLocalPacks) {
+			try {
+				const availLocalPacks = JSON.parse(storedLocalPacks);
+
+				// This logic is necessary since the old data, prior to the new master rebase,
+				// would also store remote built-in packs in local storage (no idea why).
+				const filteredLocalPacks = availLocalPacks.filter(p =>
+					p.id.startsWith('startswith-') || p.id.startsWith('custom-'));
+				if (availLocalPacks.length !== filteredLocalPacks.length) {
+					saveToLocalStorage('magane.available', filteredLocalPacks);
+				}
+
+				// Store local packs data in an ID-indexed Object for faster get's in formatURL()
+				filteredLocalPacks.forEach(pack => {
+					localPacks[pack.id] = pack;
+				});
+				availablePacks.push(...filteredLocalPacks);
+			} catch (ex) {
+				console.error(ex);
+				// Do nothing
+			}
+		}
+
+		availablePacks.push(...packs.packs);
+		availablePacks = availablePacks;
 		filteredPacks = availablePacks;
 
 		const subbedPacks = storage.getItem('magane.subscribed');
@@ -138,7 +225,14 @@
 				for (const subbedPacks of subscribedPacks) {
 					subscribedPacksSimple.push(subbedPacks.id);
 				}
+				// Prioritize data of subscribed packs
+				subscribedPacks.forEach(pack => {
+					if (pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')) {
+						localPacks[pack.id] = pack;
+					}
+				});
 			} catch (ex) {
+				console.error(ex);
 				// Do nothing
 			}
 		}
@@ -146,8 +240,22 @@
 		const favStickers = storage.getItem('magane.favorites');
 		if (favStickers) {
 			try {
-				favoriteStickers = JSON.parse(favStickers);
+				favoriteStickers = JSON.parse(favStickers)
+					.filter(sticker => {
+						if (favoriteStickersData[sticker.pack])	{
+							return true;
+						}
+						const index = availablePacks.findIndex(p => p.id === sticker.pack);
+						if (index !== 1) {
+							// Simple caching of pack names, for tooltips
+							favoriteStickersData[sticker.pack] = {
+								name: availablePacks[index].name
+							};
+							return true;
+						}
+					});
 			} catch (ex) {
+				console.error(ex);
 				// Do nothing
 			}
 		}
@@ -159,7 +267,7 @@
 		subscribedPacksSimple = [...subscribedPacksSimple, pack.id];
 
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		console.log(`[MAGANE] > Subscribed to pack > ${pack.name}`);
+		log(`Subscribed to pack > ${pack.name}`);
 	};
 
 	const unsubscribeToPack = pack => {
@@ -174,40 +282,112 @@
 				subscribedPacks = subscribedPacks;
 				subscribedPacksSimple = subscribedPacksSimple;
 
-				console.log(`[MAGANE] > Unsubscribed from pack > ${pack.name}`);
+				log(`Unsubscribed from pack > ${pack.name}`);
 			}
 		}
 
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
 	};
 
+	const formatUrl = (pack, id) => {
+		let url;
+		if (pack.startsWith('startswith-')) {
+			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
+			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
+			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
+			// In comparison, Magane's general resolution is 180p (height)
+			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
+			if (id === 'tab_on.png') {
+				url = template.replace(/%id%/g, pack.split('-')[1]);
+			} else {
+				url = template.replace(/%id%/g, id.split('.')[0]);
+			}
+			if (localPacks[pack].animated) {
+				url = url.replace('sticker.png', 'sticker_animation.png');
+			}
+		} else if (pack.startsWith('custom-')) {
+			const template = localPacks[pack].template;
+			if (id === 'tab_on.png') {
+				const first = localPacks[pack].files[0];
+				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, first);
+			} else {
+				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
+			}
+		} else {
+			url = `${baseURL}${pack}/${id}`;
+			if (id !== 'tab_on.png') {
+				url.replace('.png', '_key.png');
+			}
+		}
+		return url;
+	};
+
 	const sendSticker = async (pack, id, token = storage.token) => {
-		const channel = window.location.href.split('/').slice(-1)[0];
-		if (onCooldown) return;
+		if (onCooldown) {
+			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
+		}
+
 		onCooldown = true;
-		stickerWindowActive = false;
-		const response = await fetch(`${baseURL}${pack}/${id}`, { cache: 'force-cache' });
-		const myBlob = await response.blob();
-		const formData = new FormData();
-		formData.append('file', myBlob, id);
-		token = token.replace(/"/ig, '');
-		token = token.replace(/^Bot\s*/i, '');
-		fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
-			headers: { Authorization: token },
-			method: 'POST',
-			body: formData
-		});
-		setTimeout(() => onCooldown = false, 1000);
+		// stickerWindowActive = false;
+
+		try {
+			toast('Sending sticker\u2026');
+			const channel = window.location.href.split('/').slice(-1)[0];
+
+			const url = formatUrl(pack, id);
+			log(`Fetching sticker from remote: ${url}`);
+			const response = await fetch(url, { cache: 'force-cache' });
+			const myBlob = await response.blob();
+
+			let filename = id;
+			if (pack.startsWith('startswith-') && url.includes('sticker_animation.png')) {
+				// FIXME: Discord no longer animates APNGs renamed to GIFs
+				filename = `${id.split('.')[0]}.gif`;
+				toastWarn('Animated stickers from LINE Store currently cannot be animated!');
+			} else if (pack.startsWith('custom-')) {
+				// Obfuscate file name of stickers from custom packs
+				filename = `${Date.now().toString().slice(-7)}.${id.split('.')[1]}`;
+			}
+
+			const formData = new FormData();
+			formData.append('file', myBlob, filename);
+
+			log(`Sending sticker\u2026`);
+			token = token.replace(/"/ig, '');
+			token = token.replace(/^Bot\s*/i, '');
+			await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
+				headers: { Authorization: token },
+				method: 'POST',
+				body: formData
+			});
+			toastSuccess('Sticker sent!');
+		} catch (error) {
+			console.error(error);
+			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
+		}
+
+		onCooldown = false;
 	};
 
 	const favoriteSticker = (pack, id) => {
 		for (const favorite of favoriteStickers) {
-			if (favorite.id === id) return;
+			if (favorite.id === id) {
+				return toastError('You already have this sticker in your favorites.');
+			}
+		}
+
+		if (!favoriteStickersData[pack]) {
+			const data = subscribedPacks.find(p => p.id === pack);
+			favoriteStickersData[pack] = {
+				name: data && data.name
+			};
 		}
 
 		const favorite = { pack, id };
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
+		log(`Favorited sticker > ${id} of pack ${pack}`);
+		toastSuccess('Added sticker to favorites.', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -225,23 +405,189 @@
 			}
 		}
 
+		if (!favoriteStickers.some(s => s.pack === pack)) {
+			delete favoriteStickersData[pack];
+		}
+
 		saveToLocalStorage('magane.favorites', favoriteStickers);
+		log(`Unfavorited sticker > ${id} of pack ${pack}`);
+		toastInfo('Unfavorited sticker.', { nolog: true });
 	};
 
 	const filterPacks = () => {
-		filteredPacks = availablePacks.filter(pack => pack.name.toLowerCase().indexOf(event.target.value.toLowerCase()) >= 0);
+		// Use value from packsSearch var instead of event
+		// to allow this function to be called from other actions.
+		const query = typeof packsSearch === 'string' && packsSearch.trim().toLowerCase();
+		if (query) {
+			// Allow searching by IDs too
+			filteredPacks = availablePacks.filter(pack =>
+				pack.name.toLowerCase().indexOf(query) >= 0 || pack.id.indexOf(query) >= 0);
+		} else {
+			filteredPacks = availablePacks;
+		}
+	};
+
+	const _appendPack = (id, e) => {
+		const storedLocalPacks = storage.getItem('magane.available');
+		if (storedLocalPacks) {
+			try {
+				const availLocalPacks = JSON.parse(storedLocalPacks);
+				const index = availLocalPacks.findIndex(p => p.id === id);
+				if (index >= 0) {
+					throw new Error(`Pack with ID ${id} already exist`);
+				}
+
+				if (id.startsWith('startswith-') || id.startsWith('custom-')) {
+					localPacks[id] = e;
+				}
+
+				availLocalPacks.unshift(e);
+				saveToLocalStorage('magane.available', availLocalPacks);
+
+				availablePacks.unshift(e);
+				availablePacks = availablePacks;
+				filterPacks();
+
+				return log(`Added a new pack with ID ${id}`);
+			} catch (ex) {
+				throw ex;
+			}
+		}
+	};
+
+	window.magane.appendPack = (title, firstid, count, animated, _) => {
+		if (_) {
+			throw new Error('This function expects only 4 parameters. Were you looking for appendCustomPack()?');
+		}
+
+		const mid = `startswith-${firstid}`;
+		const files = [];
+		for (let i = firstid; i < (firstid + count); i += 1) {
+			files.push(`${i}.png`);
+		}
+
+		return _appendPack(mid, {
+			name: title,
+			count: count,
+			id: mid,
+			animated: animated ? 1 : null,
+			files: files
+		});
+	};
+
+	window.magane.appendCustomPack = (title, id, count, animated, template) => {
+		if (!template) {
+			throw new Error('Missing URL template.');
+		}
+
+		const mid = `custom-${id}`;
+		const files = [];
+		for (let i = 1; i <= count; i += 1) {
+			files.push(i + (animated ? '.gif' : '.png'));
+		}
+
+		return _appendPack(mid, {
+			name: title,
+			count: count,
+			id: mid,
+			animated: animated ? 1 : null,
+			files: files,
+			template: template
+		});
+	};
+
+	window.magane.deletePack = id => {
+		if (!id && !id.startsWith('startswith-') && !id.startsWith('custom-')) {
+			throw new Error('Pack ID must start with either "startswith-" or "custom-".');
+		}
+
+		const storedLocalPacks = storage.getItem('magane.available');
+		if (storedLocalPacks) {
+			try {
+				const availLocalPacks = JSON.parse(storedLocalPacks);
+				const index = availLocalPacks.findIndex(p => p.id === id);
+				if (index === -1) {
+					throw new Error(`Unable to find pack with ID ${id}`);
+				}
+
+				// Force unfavorite stickers
+				const favedStickers = favoriteStickers.filter(s => s.pack === id);
+				if (favedStickers.length) {
+					favedStickers.forEach(s => unfavoriteSticker(id, s.id));
+				}
+
+				// Force unsubscribe
+				const subbedPack = subscribedPacks.find(p => p.id === id);
+				if (subbedPack)	{
+					unsubscribeToPack(subbedPack);
+				}
+
+				availLocalPacks.splice(index, 1);
+				saveToLocalStorage('magane.available', availLocalPacks);
+
+				const sharedIndex = availablePacks.findIndex(p => p.id === id);
+				if (sharedIndex !== -1) {
+					availablePacks.splice(sharedIndex, 1);
+					availablePacks = availablePacks;
+					filterPacks();
+				}
+
+				return log(`Removed pack with ID ${id} (old index: ${index})`);
+			} catch (ex) {
+				throw ex;
+			}
+		}
+	};
+
+	window.magane.searchPacks = keyword => {
+		if (!keyword) {
+			throw new Error('Keyword required');
+		}
+
+		keyword = keyword.toLowerCase();
+		const storedLocalPacks = storage.getItem('magane.available');
+		if (storedLocalPacks) {
+			try {
+				const availLocalPacks = JSON.parse(storedLocalPacks);
+				return availLocalPacks.filter(p =>
+					p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
+			} catch (ex) {
+				throw ex;
+			}
+		}
+	};
+
+	const formatStickersCount = count =>
+		`<span class="counts"><span>–</span>${count} sticker${count === 1 ? '' : 's'}</span>`;
+
+	const formatPackAppendix = id => {
+		let tmp = '';
+		if (id.startsWith('startswith-')) {
+			tmp = `LINE ${id.replace('startswith-', '')}`;
+		} else if (id.startsWith('custom-')) {
+			tmp = `Custom ${id.replace('custom-', '')}`;
+		}
+		if (!tmp) return '';
+		return `<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
 	};
 
 	onMount(async () => {
-		console.log('[MAGANE] > mounted on DOM');
-		getLocalStorage();
-		checkAuth();
-		grabPacks();
-		resizeObserver = new ResizeObserver(positionMagane);
-		await waitForTextArea();
-		resizeObserver.observe(textArea);
-		keepMaganeInPlace();
-		isThereTopBar = document.querySelector('html.platform-win');
+		try {
+			log('Mounted on DOM');
+			toastInfo('Initializing Magane\u2026');
+			getLocalStorage();
+			await checkAuth();
+			await grabPacks();
+			toastSuccess('Magane initialized. You can start sending stickers now!');
+			resizeObserver = new ResizeObserver(positionMagane);
+			await waitForTextArea();
+			resizeObserver.observe(textArea);
+			keepMaganeInPlace();
+			isThereTopBar = document.querySelector('html.platform-win');
+		} catch (error) {
+			console.error(error);
+			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
+		}
 	});
 
 	const maganeBlurHandler = e => {
@@ -301,16 +647,18 @@
 				{ /if }
 				{ #if favoriteStickers && favoriteStickers.length }
 				<div class="pack">
-					<span id="pfavorites">Favorites</span>
+					<span id="pfavorites">Favorites{ @html formatStickersCount(favoriteStickers.length) }</span>
 					{ #each favoriteStickers as sticker, i }
 					<div class="sticker">
 						<img
 							class="image"
-							src="{ `${baseURL}${sticker.pack}/${sticker.id.replace('.png', '_key.png')}` }"
+							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
+							title="{ favoriteStickersData[sticker.pack].name }"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
+							title="Unfavorite"
 							on:click="{ () => unfavoriteSticker(sticker.pack, sticker.id) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
 								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
@@ -323,17 +671,18 @@
 
 				{ #each subscribedPacks as pack, i }
 				<div class="pack">
-					<span id="p{pack.id}">{ pack.name }</span>
+					<span id="p{pack.id}">{ pack.name }{ @html formatStickersCount(pack.files.length) }</span>
 
 					{ #each pack.files as sticker, i }
 					<div class="sticker">
 						<img
 							class="image"
-							src="{ `${baseURL}${pack.id}/${sticker.replace('.png', '_key.png')}` }"
+							src="{ `${formatUrl(pack.id, sticker)}` }"
 							alt="{ pack.id } - { sticker }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
 						<div class="addFavorite"
+							title="Favorite"
 							on:click="{ () => favoriteSticker(pack.id, sticker) }">
 							<svg width="20" height="20" viewBox="0 0 24 24">
 								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
@@ -347,18 +696,28 @@
 
 			<div class="packs">
 				<div class="pack"
-					on:click="{ () => toggleStickerModal() }">
+					on:click="{ () => toggleStickerModal() }"
+					title="Manage subscribed packs" >
 					<div class="icon-plus" />
 				</div>
 				{ #if favoriteSticker && favoriteSticker.length }
-				<div class="pack">
+				<div class="pack"
+					on:click={ () => animateScroll.scrollTo({
+						element: '#pfavorites',
+						container: stickerContainer
+					}) }
+					title="Favorites" >
 					<div class="icon-favorite" />
 				</div>
 				{ /if }
 				{ #each subscribedPacks as pack, i }
 				<div class="pack"
-					on:click="{ () => stickerContainer.scrollTo }"
-					style="background-image: { `url(${baseURL}${pack.id}/tab_on.png)` }" />
+					on:click={ () => animateScroll.scrollTo({
+						element: `#p${pack.id}`,
+						container: stickerContainer
+					}) }
+					title="{ pack.name }"
+					style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
 				{ /each }
 			</div>
 
@@ -389,10 +748,10 @@
 							{ #each subscribedPacks as pack }
 							<div class="pack">
 								<div class="preview"
-									style="background-image: { `url(${baseURL}${pack.id}/${pack.files[0].replace('.png', '_key.png')})` }" />
+									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
 								<div class="info">
 									<span>{ pack.name }</span>
-									<span>{ pack.count } stickers</span>
+									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
 								</div>
 								<div class="action">
 									<button class="button is-danger"
@@ -402,21 +761,21 @@
 							{ /each }
 						</div>
 						{ :else if activeTab === 1 }
+						<input
+							on:keyup="{ filterPacks }"
+							bind:value={ packsSearch }
+							class="inputQuery"
+							type="text"
+							placeholder="Search" />
 						<div class="tabContent"
 							id="packsBar">
-							<input
-								on:keyup="{ filterPacks }"
-								bind:value={ packsSearch }
-								class="inputQuery"
-								type="text"
-								placeholder="Search" />
 							{ #each filteredPacks as pack }
 							<div class="pack">
 								<div class="preview"
-									style="background-image: { `url(${baseURL}${pack.id}/${pack.files[0].replace('.png', '_key.png')})` }" />
+									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
 								<div class="info">
 									<span>{ pack.name }</span>
-									<span>{ pack.count } stickers</span>
+									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
 								</div>
 								<div class="action">
 									{ #if subscribedPacksSimple.includes(pack.id) }
