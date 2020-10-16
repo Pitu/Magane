@@ -4,7 +4,6 @@
 	// Let's make the scrollbars pretty
 	import SimpleBar from '@woden/svelte-simplebar';
 	import * as animateScroll from 'svelte-scrollto';
-	import * as eases from 'svelte/easing';
 	import './styles/global.css';
 	import './styles/main.scss';
 
@@ -600,9 +599,7 @@
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id,
-			container: document.querySelector('#magane .stickers .simplebar-content-wrapper'),
-			delay: 250,
-			easing: eases.cubicOut
+			container: document.querySelector('#magane .stickers .simplebar-content-wrapper')
 		});
 	};
 </script>
