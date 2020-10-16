@@ -86,6 +86,13 @@
   dependencies:
     "@types/node" "*"
 
+"@woden/svelte-simplebar@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@woden/svelte-simplebar/-/svelte-simplebar-1.0.0.tgz#05df3326cc30b96e9cda2d5943b5e94ed97db4e7"
+  integrity sha512-YYr5JhmqNnNpk2E0Uf1nE8ObUmR072b175s1A3G5WTmeiyLfKbhmTYx2vfZh4vrljDtuWt1f+79e/s6ybrS4Eg==
+  dependencies:
+    simplebar "^5.1.0"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
