@@ -153,24 +153,20 @@ div#magane {
 			position: absolute;
 			bottom: 0;
 			width: 100%;
-			height: auto; /* accommodate scrollbar when required */
+			height: 50px;
 			background: $backgroundSecondary;
-			display: flex;
-			flex-direction: row;
-			overflow: auto hidden;
+			overflow: auto;
 
-			/* hacky countermeasure due to margin collapse */
-			&::before,
-			&::after {
-				content: '';
-				padding-left: 5px;
+			div.packs-wrapper {
+				white-space: nowrap;
+				float: left;
+				width: 100%;
 			}
 
 			div.pack {
-				flex: 0 0 auto;
+				display: inline-block;
 				height: 40px;
 				width: 40px;
-				float: left;
 				margin: 5px;
 				cursor: pointer;
 				background-position: center;
@@ -178,14 +174,6 @@ div#magane {
 				background-repeat: no-repeat;
 				transition: all 0.2s ease;
 				filter: grayscale(100%);
-
-				&:first-of-type {
-					margin-left: 0;
-				}
-
-				&:last-of-type {
-					margin-right: 0;
-				}
 
 				&:hover,
 				div.pack.active {
@@ -307,10 +295,12 @@ div#magane {
 
 				div.pack {
 					height: 75px;
-					width: calc(100% - 20px);
+					width: 600px; /* if not static, its width may flicker due to simplebar */
 					float: left;
 					display: flex;
-					margin: 5px 0 5px 20px;
+					padding: 0 20px;
+					box-sizing: border-box;
+					margin-bottom: 5px;
 
 					&:last-of-type {
 						margin-bottom: 0;
@@ -319,7 +309,7 @@ div#magane {
 					div.handle,
 					div.preview,
 					div.action {
-						flex: none;
+						flex: 0 0 auto;
 						width: 75px;
 						height: 75px;
 					}
@@ -346,11 +336,11 @@ div#magane {
 
 					div.action {
 						padding-top: 20px;
-						padding-left: 10px;
+						text-align: right;
 					}
 
 					div.info {
-						flex: 1;
+						flex: 1 1 auto;
 						padding: 14px;
 
 						> span {

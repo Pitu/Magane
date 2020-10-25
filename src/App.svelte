@@ -1,18 +1,11 @@
 <script>
-	import { onMount, afterUpdate } from 'svelte';
+	import { onMount /* , afterUpdate */ } from 'svelte';
 
 	// Let's make the scrollbars pretty
-	// FIXME: Bugged with dynamically modified lists
-	// import SimpleBar from 'simplebar';
+	import SimpleBar from '@woden/svelte-simplebar';
 	import * as animateScroll from 'svelte-scrollto';
-	import * as eases from 'svelte/easing';
 	import './styles/global.css';
 	import './styles/main.scss';
-
-	animateScroll.setGlobalOptions({
-		delay: 250,
-		easing: eases.cubicOut
-	});
 
 	// APIs
 	window.magane = {};
@@ -39,20 +32,14 @@
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
-	let stickerContainer = null;
 	let resizeObserver;
-
-	/* eslint-disable no-unused-vars */
-	let mainScrollBar;
-	let packsScrollBar;
-	/* eslint-enable no-unused-vars */
 
 	const log = (message, type = 'log') =>
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
 	const toast = (message, options) => {
 		/* global BdApi */
-		if (BdApi && typeof BdApi.showToast === 'function') {
+		if (typeof BdApi === 'object' && typeof BdApi.showToast === 'function') {
 			return BdApi.showToast(message, options);
 		}
 
@@ -85,24 +72,12 @@
 		return toast(message, options);
 	};
 
+	/*
 	afterUpdate(() => {
 		// Only do stuff if the Magane window is open
-		// eslint-disable-next-line no-useless-return
 		if (!stickerWindowActive) return;
-
-		/*
-		// FIXME: Bugged with dynamically modified lists
-		if (!mainScrollBar) {
-			const exists = document.getElementById('stickers');
-			if (exists) mainScrollBar = new SimpleBar(exists);
-		}
-
-		if (!packsScrollBar) {
-			const exists = document.getElementById('packsBar');
-			if (exists) packsScrollBar = new SimpleBar(exists);
-		}
-		*/
 	});
+	*/
 
 	const keepMaganeInPlace = () => {
 		setTimeout(() => {
@@ -331,7 +306,7 @@
 		// stickerWindowActive = false;
 
 		try {
-			toast('Sending sticker\u2026');
+			toast('Sending\u2026');
 			const channel = window.location.href.split('/').slice(-1)[0];
 
 			const url = formatUrl(pack, id);
@@ -352,7 +327,7 @@
 			const formData = new FormData();
 			formData.append('file', myBlob, filename);
 
-			log(`Sending sticker\u2026`);
+			log(`Sending\u2026`);
 			token = token.replace(/"/ig, '');
 			token = token.replace(/^Bot\s*/i, '');
 			await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
@@ -360,7 +335,7 @@
 				method: 'POST',
 				body: formData
 			});
-			toastSuccess('Sticker sent!');
+			toastSuccess('Sent!');
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
@@ -372,7 +347,7 @@
 	const favoriteSticker = (pack, id) => {
 		for (const favorite of favoriteStickers) {
 			if (favorite.id === id) {
-				return toastError('You already have this sticker in your favorites.');
+				return toastError('This sticker is already in your favorites.');
 			}
 		}
 
@@ -387,7 +362,7 @@
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
-		toastSuccess('Added sticker to favorites.', { nolog: true });
+		toastSuccess('Favorited!', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -411,7 +386,7 @@
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited sticker > ${id} of pack ${pack}`);
-		toastInfo('Unfavorited sticker.', { nolog: true });
+		toastInfo('Unfavorited!', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -574,11 +549,10 @@
 	onMount(async () => {
 		try {
 			log('Mounted on DOM');
-			toastInfo('Initializing Magane\u2026');
 			getLocalStorage();
 			await checkAuth();
 			await grabPacks();
-			toastSuccess('Magane initialized. You can start sending stickers now!');
+			toastSuccess('Magane initialized!');
 			resizeObserver = new ResizeObserver(positionMagane);
 			await waitForTextArea();
 			resizeObserver.observe(textArea);
@@ -606,7 +580,6 @@
 	};
 
 	const toggleStickerWindow = () => {
-		mainScrollBar = null;
 		stickerWindowActive = !stickerWindowActive;
 		if (stickerWindowActive) {
 			document.addEventListener('click', maganeBlurHandler);
@@ -616,14 +589,18 @@
 	};
 
 	const toggleStickerModal = () => {
-		mainScrollBar = null;
-		packsScrollBar = null;
 		isStickerAddModalActive = !isStickerAddModalActive;
 	};
 
 	const activateTab = value => {
-		packsScrollBar = null;
 		activeTab = value;
+	};
+
+	const scrollToStickers = id => {
+		animateScroll.scrollTo({
+			element: id,
+			container: document.querySelector('#magane .stickers .simplebar-content-wrapper')
+		});
 	};
 </script>
 
@@ -639,9 +616,7 @@
 
 		{ #if stickerWindowActive }
 		<div class="stickerWindow">
-			<div id="stickers"
-				class="stickers"
-				bind:this={ stickerContainer }>
+			<SimpleBar class="stickers" style="">
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				{ /if }
@@ -692,34 +667,30 @@
 					{ /each }
 				</div>
 				{ /each }
-			</div>
+			</SimpleBar>
 
-			<div class="packs">
-				<div class="pack"
-					on:click="{ () => toggleStickerModal() }"
-					title="Manage subscribed packs" >
-					<div class="icon-plus" />
+			<SimpleBar class="packs" style="">
+				<div class="packs-wrapper">
+					<div class="pack"
+						on:click="{ () => toggleStickerModal() }"
+						title="Manage subscribed packs" >
+						<div class="icon-plus" />
+					</div>
+					{ #if favoriteSticker && favoriteSticker.length }
+					<div class="pack"
+						on:click={ () => scrollToStickers('#pfavorites') }
+						title="Favorites" >
+						<div class="icon-favorite" />
+					</div>
+					{ /if }
+					{ #each subscribedPacks as pack, i }
+					<div class="pack"
+						on:click={ () => scrollToStickers(`#p${pack.id}`) }
+						title="{ pack.name }"
+						style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+					{ /each }
 				</div>
-				{ #if favoriteSticker && favoriteSticker.length }
-				<div class="pack"
-					on:click={ () => animateScroll.scrollTo({
-						element: '#pfavorites',
-						container: stickerContainer
-					}) }
-					title="Favorites" >
-					<div class="icon-favorite" />
-				</div>
-				{ /if }
-				{ #each subscribedPacks as pack, i }
-				<div class="pack"
-					on:click={ () => animateScroll.scrollTo({
-						element: `#p${pack.id}`,
-						container: stickerContainer
-					}) }
-					title="{ pack.name }"
-					style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
-				{ /each }
-			</div>
+			</SimpleBar>
 
 			<!-- Sticker add modal -->
 			{ #if isStickerAddModalActive }
@@ -743,8 +714,7 @@
 						</div>
 
 						{ #if activeTab === 0 }
-						<div class="tabContent"
-							id="packsBar">
+						<SimpleBar class="tabContent" style="">
 							{ #each subscribedPacks as pack }
 							<div class="pack">
 								<div class="preview"
@@ -759,7 +729,7 @@
 								</div>
 							</div>
 							{ /each }
-						</div>
+						</SimpleBar>
 						{ :else if activeTab === 1 }
 						<input
 							on:keyup="{ filterPacks }"
@@ -767,8 +737,7 @@
 							class="inputQuery"
 							type="text"
 							placeholder="Search" />
-						<div class="tabContent"
-							id="packsBar">
+						<SimpleBar class="tabContent" style="">
 							{ #each filteredPacks as pack }
 							<div class="pack">
 								<div class="preview"
@@ -788,7 +757,7 @@
 								</div>
 							</div>
 							{ /each }
-						</div>
+						</SimpleBar>
 						{ /if }
 					</div>
 				</div>
