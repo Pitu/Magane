@@ -330,12 +330,18 @@
 			log(`Sending\u2026`);
 			token = token.replace(/"/ig, '');
 			token = token.replace(/^Bot\s*/i, '');
-			await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
+			const res = await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
 				headers: { Authorization: token },
 				method: 'POST',
 				body: formData
 			});
-			toastSuccess('Sent!');
+			if (res.status === 200) {
+				toastSuccess('Sent!');
+			} else if (res.status === 403) {
+				toastError('Permission denied!');
+			} else {
+				toastError(`HTTP error ${res.status}!`);
+			}
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
