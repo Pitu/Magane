@@ -155,7 +155,7 @@ div#magane {
 			width: 100%;
 			height: 50px;
 			background: $backgroundSecondary;
-			overflow: auto;
+			overflow: auto hidden;
 
 			div.packs-wrapper {
 				white-space: nowrap;
