@@ -221,7 +221,7 @@
 							return true;
 						}
 						const index = availablePacks.findIndex(p => p.id === sticker.pack);
-						if (index !== 1) {
+						if (index !== -1) {
 							// Simple caching of pack names, for tooltips
 							favoriteStickersData[sticker.pack] = {
 								name: availablePacks[index].name
@@ -409,30 +409,33 @@
 	};
 
 	const _appendPack = (id, e) => {
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try {
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-				const index = availLocalPacks.findIndex(p => p.id === id);
-				if (index >= 0) {
-					throw new Error(`Pack with ID ${id} already exist`);
+		try {
+			let availLocalPacks = [];
+			const storedLocalPacks = storage.getItem('magane.available');
+			if (storedLocalPacks) {
+				availLocalPacks = JSON.parse(storedLocalPacks);
+				if (availLocalPacks) {
+					const index = availLocalPacks.findIndex(p => p.id === id);
+					if (index >= 0) {
+						throw new Error(`Pack with ID ${id} already exist`);
+					}
 				}
-
-				if (id.startsWith('startswith-') || id.startsWith('custom-')) {
-					localPacks[id] = e;
-				}
-
-				availLocalPacks.unshift(e);
-				saveToLocalStorage('magane.available', availLocalPacks);
-
-				availablePacks.unshift(e);
-				availablePacks = availablePacks;
-				filterPacks();
-
-				return log(`Added a new pack with ID ${id}`);
-			} catch (ex) {
-				throw ex;
 			}
+
+			if (id.startsWith('startswith-') || id.startsWith('custom-')) {
+				localPacks[id] = e;
+			}
+
+			availLocalPacks.unshift(e);
+			saveToLocalStorage('magane.available', availLocalPacks);
+
+			availablePacks.unshift(e);
+			availablePacks = availablePacks;
+			filterPacks();
+
+			return log(`Added a new pack with ID ${id}`);
+		} catch (ex) {
+			throw ex;
 		}
 	};
 
