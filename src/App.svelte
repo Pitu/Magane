@@ -1,5 +1,5 @@
 <script>
-	import { onMount /* , afterUpdate */ } from 'svelte';
+	import { onMount, afterUpdate } from 'svelte';
 
 	// Let's make the scrollbars pretty
 	import SimpleBar from '@woden/svelte-simplebar';
@@ -13,6 +13,8 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
 	const selectorTextArea = 'div[class^=textArea] div[aria-multiline][contenteditable]';
+	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
+	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
 	let showIcon = true;
 	let isThereTopBar = null;
@@ -28,6 +30,14 @@
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
 	const localPacks = {};
+
+	const stickerWindowScrolls = [
+		{ selector: selectorStickersContainer, type: 'scrollTop', position: 0 },
+		{ selector: '#magane .packs .simplebar-content-wrapper', type: 'scrollLeft', position: 0 }
+	];
+	const stickerModalScrolls = [0, 0];
+	let doStickerWindowScrolls = false;
+	let doStickerModalScrolls = false;
 
 	let onCooldown = false;
 	let storage = null;
@@ -71,13 +81,6 @@
 		options.type = 'warn';
 		return toast(message, options);
 	};
-
-	/*
-	afterUpdate(() => {
-		// Only do stuff if the Magane window is open
-		if (!stickerWindowActive) return;
-	});
-	*/
 
 	const keepMaganeInPlace = () => {
 		setTimeout(() => {
@@ -589,27 +592,91 @@
 		}
 	};
 
-	const toggleStickerWindow = () => {
-		stickerWindowActive = !stickerWindowActive;
-		if (stickerWindowActive) {
-			document.addEventListener('click', maganeBlurHandler);
-		} else {
-			document.removeEventListener('click', maganeBlurHandler);
+	const restoreStickerWindowScrolls = () => {
+		for (let i = 0; i < stickerWindowScrolls.length; i++) {
+			const element = document.querySelector(stickerWindowScrolls[i].selector);
+			if (element) {
+				element[stickerWindowScrolls[i].type] = stickerWindowScrolls[i].position;
+			}
 		}
 	};
 
+	const storeStickerWindowScrolls = () => {
+		for (let i = 0; i < stickerWindowScrolls.length; i++) {
+			const element = document.querySelector(stickerWindowScrolls[i].selector);
+			if (element) {
+				stickerWindowScrolls[i].position = element[stickerWindowScrolls[i].type];
+			}
+		}
+	};
+
+	const restoreStickerModalScrolls = () => {
+		const element = document.querySelector(selectorStickerModalContent);
+		if (element) {
+			element.scrollTop = stickerModalScrolls[activeTab];
+		}
+	};
+
+	const storeStickerModalScrolls = () => {
+		const element = document.querySelector(selectorStickerModalContent);
+		if (element) {
+			stickerModalScrolls[activeTab] = element.scrollTop;
+		}
+	};
+
+	afterUpdate(() => {
+		// Only do stuff if the Magane window is open
+		if (!stickerWindowActive) return;
+
+		if (doStickerWindowScrolls) {
+			restoreStickerWindowScrolls();
+			doStickerWindowScrolls = false;
+		}
+
+		if (doStickerModalScrolls) {
+			restoreStickerModalScrolls();
+			doStickerModalScrolls = false;
+		}
+	});
+
+	const toggleStickerWindow = () => {
+		const active = !stickerWindowActive;
+		if (active) {
+			document.addEventListener('click', maganeBlurHandler);
+			doStickerWindowScrolls = true;
+			if (isStickerAddModalActive) {
+				doStickerModalScrolls = true;
+			}
+		} else {
+			document.removeEventListener('click', maganeBlurHandler);
+			storeStickerWindowScrolls();
+			if (isStickerAddModalActive) {
+				storeStickerModalScrolls();
+			}
+		}
+		stickerWindowActive = active;
+	};
+
 	const toggleStickerModal = () => {
-		isStickerAddModalActive = !isStickerAddModalActive;
+		const active = !isStickerAddModalActive;
+		if (active) {
+			doStickerModalScrolls = true;
+		} else {
+			storeStickerModalScrolls();
+		}
+		isStickerAddModalActive = active;
 	};
 
 	const activateTab = value => {
+		storeStickerModalScrolls();
 		activeTab = value;
+		doStickerModalScrolls = true;
 	};
 
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id,
-			container: document.querySelector('#magane .stickers .simplebar-content-wrapper')
+			container: document.querySelector(selectorStickersContainer)
 		});
 	};
 </script>
