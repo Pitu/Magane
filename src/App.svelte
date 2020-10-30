@@ -828,6 +828,7 @@
 						<SimpleBar class="tabContent" style="">
 							{ #each subscribedPacks as pack, index }
 							<div class="pack">
+								{ #if subscribedPacks.length > 1 }
 								<div class="index">
 									<input
 										on:click="{ event => event.target.select() }"
@@ -837,6 +838,7 @@
 										data-pack={ pack.id }
 										value={ index } />
 								</div>
+								{ /if }
 								<div class="preview"
 									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
 								<div class="info">
