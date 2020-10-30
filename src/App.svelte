@@ -172,8 +172,9 @@
 
 				// This logic is necessary since the old data, prior to the new master rebase,
 				// would also store remote built-in packs in local storage (no idea why).
-				const filteredLocalPacks = availLocalPacks.filter(p =>
-					p.id.startsWith('startswith-') || p.id.startsWith('custom-'));
+				const filteredLocalPacks = availLocalPacks.filter(pack =>
+					typeof pack === 'object' && typeof pack.id !== 'undefined' &&
+					(pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')));
 				if (availLocalPacks.length !== filteredLocalPacks.length) {
 					saveToLocalStorage('magane.available', filteredLocalPacks);
 				}
@@ -220,7 +221,7 @@
 						if (favoriteStickersData[sticker.pack])	{
 							return true;
 						}
-						const index = availablePacks.findIndex(p => p.id === sticker.pack);
+						const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
 						if (index !== -1) {
 							// Simple caching of pack names, for tooltips
 							favoriteStickersData[sticker.pack] = {
