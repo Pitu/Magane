@@ -322,7 +322,7 @@
 				toastWarn('Animated stickers from LINE Store currently cannot be animated!');
 			} else if (pack.startsWith('custom-')) {
 				// Obfuscate file name of stickers from custom packs
-				filename = `${Date.now().toString().slice(-7)}.${id.split('.')[1]}`;
+				filename = `${Date.now().toString()}.${id.split('.')[1]}`;
 			}
 
 			const formData = new FormData();
