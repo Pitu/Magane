@@ -679,6 +679,40 @@
 			container: document.querySelector(selectorStickersContainer)
 		});
 	};
+
+	const movePack = event => {
+		const value = event.target.value.trim();
+		if (event.keyCode !== 13 || !value.length) return;
+
+		const newIndex = Number(value);
+		if (isNaN(newIndex) || newIndex < 0 || newIndex > subscribedPacks.length - 1) {
+			return toastError(`New index must be ≥ 0 and ≤ ${subscribedPacks.length - 1}!`);
+		}
+
+		const packId = event.target.dataset.pack;
+		if (typeof packId === 'undefined') return;
+
+		const oldIndex = subscribedPacks.findIndex(pack => pack.id === packId);
+		if (oldIndex === newIndex) return;
+
+		// Pull pack from its old index
+		const packData = subscribedPacks.splice(oldIndex, 1);
+		subscribedPacksSimple.splice(oldIndex, 1);
+
+		// Push pack to the new index
+		subscribedPacks.splice(newIndex, 0, packData[0]);
+		subscribedPacksSimple.splice(newIndex, 0, packData[0].id);
+
+		// Unfocus and restore input box
+		event.target.blur();
+		event.target.value = String(oldIndex);
+
+		// Update UI and storage
+		subscribedPacks = subscribedPacks;
+		subscribedPacksSimple = subscribedPacksSimple;
+		saveToLocalStorage('magane.subscribed', subscribedPacks);
+		toastSuccess(`Moved pack from index ${oldIndex} to ${newIndex}!`);
+	};
 </script>
 
 <main>
@@ -792,8 +826,17 @@
 
 						{ #if activeTab === 0 }
 						<SimpleBar class="tabContent" style="">
-							{ #each subscribedPacks as pack }
+							{ #each subscribedPacks as pack, index }
 							<div class="pack">
+								<div class="index">
+									<input
+										on:click="{ event => event.target.select() }"
+										on:keypress="{ movePack }"
+										class="inputPackIndex"
+										type="text"
+										data-pack={ pack.id }
+										value={ index } />
+								</div>
 								<div class="preview"
 									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
 								<div class="info">
