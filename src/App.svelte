@@ -1,5 +1,5 @@
 <script>
-	import { onMount /* , afterUpdate */ } from 'svelte';
+	import { onMount, afterUpdate } from 'svelte';
 
 	// Let's make the scrollbars pretty
 	import SimpleBar from '@woden/svelte-simplebar';
@@ -13,6 +13,8 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
 	const selectorTextArea = 'div[class^=textArea] div[aria-multiline][contenteditable]';
+	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
+	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
 	let showIcon = true;
 	let isThereTopBar = null;
@@ -28,6 +30,14 @@
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
 	const localPacks = {};
+
+	const stickerWindowScrolls = [
+		{ selector: selectorStickersContainer, type: 'scrollTop', position: 0 },
+		{ selector: '#magane .packs .simplebar-content-wrapper', type: 'scrollLeft', position: 0 }
+	];
+	const stickerModalScrolls = [0, 0];
+	let doStickerWindowScrolls = false;
+	let doStickerModalScrolls = false;
 
 	let onCooldown = false;
 	let storage = null;
@@ -71,13 +81,6 @@
 		options.type = 'warn';
 		return toast(message, options);
 	};
-
-	/*
-	afterUpdate(() => {
-		// Only do stuff if the Magane window is open
-		if (!stickerWindowActive) return;
-	});
-	*/
 
 	const keepMaganeInPlace = () => {
 		setTimeout(() => {
@@ -172,8 +175,9 @@
 
 				// This logic is necessary since the old data, prior to the new master rebase,
 				// would also store remote built-in packs in local storage (no idea why).
-				const filteredLocalPacks = availLocalPacks.filter(p =>
-					p.id.startsWith('startswith-') || p.id.startsWith('custom-'));
+				const filteredLocalPacks = availLocalPacks.filter(pack =>
+					typeof pack === 'object' && typeof pack.id !== 'undefined' &&
+					(pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')));
 				if (availLocalPacks.length !== filteredLocalPacks.length) {
 					saveToLocalStorage('magane.available', filteredLocalPacks);
 				}
@@ -220,8 +224,8 @@
 						if (favoriteStickersData[sticker.pack])	{
 							return true;
 						}
-						const index = availablePacks.findIndex(p => p.id === sticker.pack);
-						if (index !== 1) {
+						const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
+						if (index !== -1) {
 							// Simple caching of pack names, for tooltips
 							favoriteStickersData[sticker.pack] = {
 								name: availablePacks[index].name
@@ -321,7 +325,7 @@
 				toastWarn('Animated stickers from LINE Store currently cannot be animated!');
 			} else if (pack.startsWith('custom-')) {
 				// Obfuscate file name of stickers from custom packs
-				filename = `${Date.now().toString().slice(-7)}.${id.split('.')[1]}`;
+				filename = `${Date.now().toString()}.${id.split('.')[1]}`;
 			}
 
 			const formData = new FormData();
@@ -330,12 +334,18 @@
 			log(`Sending\u2026`);
 			token = token.replace(/"/ig, '');
 			token = token.replace(/^Bot\s*/i, '');
-			await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
+			const res = await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
 				headers: { Authorization: token },
 				method: 'POST',
 				body: formData
 			});
-			toastSuccess('Sent!');
+			if (res.status === 200) {
+				toastSuccess('Sent!');
+			} else if (res.status === 403) {
+				toastError('Permission denied!');
+			} else {
+				toastError(`HTTP error ${res.status}!`);
+			}
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
@@ -403,30 +413,33 @@
 	};
 
 	const _appendPack = (id, e) => {
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try {
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-				const index = availLocalPacks.findIndex(p => p.id === id);
-				if (index >= 0) {
-					throw new Error(`Pack with ID ${id} already exist`);
+		try {
+			let availLocalPacks = [];
+			const storedLocalPacks = storage.getItem('magane.available');
+			if (storedLocalPacks) {
+				availLocalPacks = JSON.parse(storedLocalPacks);
+				if (availLocalPacks) {
+					const index = availLocalPacks.findIndex(p => p.id === id);
+					if (index >= 0) {
+						throw new Error(`Pack with ID ${id} already exist`);
+					}
 				}
-
-				if (id.startsWith('startswith-') || id.startsWith('custom-')) {
-					localPacks[id] = e;
-				}
-
-				availLocalPacks.unshift(e);
-				saveToLocalStorage('magane.available', availLocalPacks);
-
-				availablePacks.unshift(e);
-				availablePacks = availablePacks;
-				filterPacks();
-
-				return log(`Added a new pack with ID ${id}`);
-			} catch (ex) {
-				throw ex;
 			}
+
+			if (id.startsWith('startswith-') || id.startsWith('custom-')) {
+				localPacks[id] = e;
+			}
+
+			availLocalPacks.unshift(e);
+			saveToLocalStorage('magane.available', availLocalPacks);
+
+			availablePacks.unshift(e);
+			availablePacks = availablePacks;
+			filterPacks();
+
+			return log(`Added a new pack with ID ${id}`);
+		} catch (ex) {
+			throw ex;
 		}
 	};
 
@@ -579,28 +592,126 @@
 		}
 	};
 
-	const toggleStickerWindow = () => {
-		stickerWindowActive = !stickerWindowActive;
-		if (stickerWindowActive) {
-			document.addEventListener('click', maganeBlurHandler);
-		} else {
-			document.removeEventListener('click', maganeBlurHandler);
+	const restoreStickerWindowScrolls = () => {
+		for (let i = 0; i < stickerWindowScrolls.length; i++) {
+			const element = document.querySelector(stickerWindowScrolls[i].selector);
+			if (element) {
+				element[stickerWindowScrolls[i].type] = stickerWindowScrolls[i].position;
+			}
 		}
 	};
 
+	const storeStickerWindowScrolls = () => {
+		for (let i = 0; i < stickerWindowScrolls.length; i++) {
+			const element = document.querySelector(stickerWindowScrolls[i].selector);
+			if (element) {
+				stickerWindowScrolls[i].position = element[stickerWindowScrolls[i].type];
+			}
+		}
+	};
+
+	const restoreStickerModalScrolls = () => {
+		const element = document.querySelector(selectorStickerModalContent);
+		if (element) {
+			element.scrollTop = stickerModalScrolls[activeTab];
+		}
+	};
+
+	const storeStickerModalScrolls = () => {
+		const element = document.querySelector(selectorStickerModalContent);
+		if (element) {
+			stickerModalScrolls[activeTab] = element.scrollTop;
+		}
+	};
+
+	afterUpdate(() => {
+		// Only do stuff if the Magane window is open
+		if (!stickerWindowActive) return;
+
+		if (doStickerWindowScrolls) {
+			restoreStickerWindowScrolls();
+			doStickerWindowScrolls = false;
+		}
+
+		if (doStickerModalScrolls) {
+			restoreStickerModalScrolls();
+			doStickerModalScrolls = false;
+		}
+	});
+
+	const toggleStickerWindow = () => {
+		const active = !stickerWindowActive;
+		if (active) {
+			document.addEventListener('click', maganeBlurHandler);
+			doStickerWindowScrolls = true;
+			if (isStickerAddModalActive) {
+				doStickerModalScrolls = true;
+			}
+		} else {
+			document.removeEventListener('click', maganeBlurHandler);
+			storeStickerWindowScrolls();
+			if (isStickerAddModalActive) {
+				storeStickerModalScrolls();
+			}
+		}
+		stickerWindowActive = active;
+	};
+
 	const toggleStickerModal = () => {
-		isStickerAddModalActive = !isStickerAddModalActive;
+		const active = !isStickerAddModalActive;
+		if (active) {
+			doStickerModalScrolls = true;
+		} else {
+			storeStickerModalScrolls();
+		}
+		isStickerAddModalActive = active;
 	};
 
 	const activateTab = value => {
+		storeStickerModalScrolls();
 		activeTab = value;
+		doStickerModalScrolls = true;
 	};
 
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id,
-			container: document.querySelector('#magane .stickers .simplebar-content-wrapper')
+			container: document.querySelector(selectorStickersContainer)
 		});
+	};
+
+	const movePack = event => {
+		const value = event.target.value.trim();
+		if (event.keyCode !== 13 || !value.length) return;
+
+		const newIndex = Number(value);
+		if (isNaN(newIndex) || newIndex < 0 || newIndex > subscribedPacks.length - 1) {
+			return toastError(`New index must be ≥ 0 and ≤ ${subscribedPacks.length - 1}!`);
+		}
+
+		const packId = event.target.dataset.pack;
+		if (typeof packId === 'undefined') return;
+
+		const oldIndex = subscribedPacks.findIndex(pack => pack.id === packId);
+		if (oldIndex === newIndex) return;
+
+		// Pull pack from its old index
+		const packData = subscribedPacks.splice(oldIndex, 1);
+		subscribedPacksSimple.splice(oldIndex, 1);
+
+		// Push pack to the new index
+		subscribedPacks.splice(newIndex, 0, packData[0]);
+		subscribedPacksSimple.splice(newIndex, 0, packData[0].id);
+
+		// Unfocus and restore input box
+		event.target.blur();
+		event.target.value = String(oldIndex);
+
+		// Update UI and storage
+		subscribedPacks = subscribedPacks;
+		subscribedPacksSimple = subscribedPacksSimple;
+		saveToLocalStorage('magane.subscribed', subscribedPacks);
+		toastSuccess(`Moved pack from index ${oldIndex} to ${newIndex}!`);
 	};
 </script>
 
@@ -715,8 +826,19 @@
 
 						{ #if activeTab === 0 }
 						<SimpleBar class="tabContent" style="">
-							{ #each subscribedPacks as pack }
+							{ #each subscribedPacks as pack, index }
 							<div class="pack">
+								{ #if subscribedPacks.length > 1 }
+								<div class="index">
+									<input
+										on:click="{ event => event.target.select() }"
+										on:keypress="{ movePack }"
+										class="inputPackIndex"
+										type="text"
+										data-pack={ pack.id }
+										value={ index } />
+								</div>
+								{ /if }
 								<div class="preview"
 									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
 								<div class="info">
