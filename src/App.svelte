@@ -47,7 +47,7 @@
 	const log = (message, type = 'log') =>
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
-	const toast = (message, options) => {
+	const toast = (message, options = {}) => {
 		/* global BdApi */
 		if (typeof BdApi === 'object' && typeof BdApi.showToast === 'function') {
 			return BdApi.showToast(message, options);
