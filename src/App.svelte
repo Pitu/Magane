@@ -30,6 +30,7 @@
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
 	const localPacks = {};
+	let linePackSearch = null;
 
 	const stickerWindowScrolls = [
 		{ selector: selectorStickersContainer, type: 'scrollTop', position: 0 },
@@ -413,7 +414,7 @@
 	};
 
 	const _appendPack = (id, e) => {
-		try {
+		try { // eslint-disable-line no-useless-catch
 			let availLocalPacks = [];
 			const storedLocalPacks = storage.getItem('magane.available');
 			if (storedLocalPacks) {
@@ -491,7 +492,7 @@
 
 		const storedLocalPacks = storage.getItem('magane.available');
 		if (storedLocalPacks) {
-			try {
+			try { // eslint-disable-line no-useless-catch
 				const availLocalPacks = JSON.parse(storedLocalPacks);
 				const index = availLocalPacks.findIndex(p => p.id === id);
 				if (index === -1) {
@@ -535,7 +536,7 @@
 		keyword = keyword.toLowerCase();
 		const storedLocalPacks = storage.getItem('magane.available');
 		if (storedLocalPacks) {
-			try {
+			try { // eslint-disable-line no-useless-catch
 				const availLocalPacks = JSON.parse(storedLocalPacks);
 				return availLocalPacks.filter(p =>
 					p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
@@ -713,6 +714,19 @@
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
 		toastSuccess(`Moved pack from index ${oldIndex} to ${newIndex}!`);
 	};
+
+	const parseLinePack = async () => {
+		if (!linePackSearch) return;
+		try { // eslint-disable-line no-useless-catch
+			const id = linePackSearch.match(/\d+/)[0];
+			const response = await fetch(`https://magane.moe/api/proxy/${id}`);
+			const props = await response.json();
+			linePackSearch = null;
+			return window.magane.appendPack(props.title, props.first, props.len, false);
+		} catch (error) {
+			throw error;
+		}
+	};
 </script>
 
 <main>
@@ -822,6 +836,11 @@
 								class:is-active="{ activeTab === 1 }">
 								Packs
 							</div>
+							<div class="tab"
+								on:click="{ () => activateTab(2) }"
+								class:is-active="{ activeTab === 2 }">
+								LINE
+							</div>
 						</div>
 
 						{ #if activeTab === 0 }
@@ -880,6 +899,17 @@
 							</div>
 							{ /each }
 						</SimpleBar>
+						{ :else if activeTab === 2 }
+						<div class="tabContent line-proxy">
+							<p>If you are looking for a sticker pack that is not provided by magane, you can go to the LINE store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
+							<input
+								bind:value={ linePackSearch }
+								class="inputQuery"
+								type="text"
+								placeholder="LINE Sticker Pack URL" />
+							<button class="button is-primary"
+								on:click="{ () => parseLinePack() }">Add</button>
+						</div>
 						{ /if }
 					</div>
 				</div>

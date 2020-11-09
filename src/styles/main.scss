@@ -303,6 +303,19 @@ div#magane {
 					height: 100%;
 					width: 100%;
 					overflow-y: auto;
+
+					&.line-proxy {
+						display: flex;
+						flex-direction: column;
+						justify-content: center;
+						align-items: center;
+
+						p {
+							padding: 2rem;
+							padding-top: 0;
+							margin-top: -5rem;
+						}
+					}
 				}
 
 				div.pack {
