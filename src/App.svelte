@@ -178,7 +178,7 @@
 				// would also store remote built-in packs in local storage (no idea why).
 				const filteredLocalPacks = availLocalPacks.filter(pack =>
 					typeof pack === 'object' && typeof pack.id !== 'undefined' &&
-					(pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')));
+					/^(startswith|emojis|custom)-/.test(pack.id));
 				if (availLocalPacks.length !== filteredLocalPacks.length) {
 					saveToLocalStorage('magane.available', filteredLocalPacks);
 				}
@@ -207,7 +207,7 @@
 				}
 				// Prioritize data of subscribed packs
 				subscribedPacks.forEach(pack => {
-					if (pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')) {
+					if (/^(startswith|emojis|custom)-/.test(pack.id)) {
 						localPacks[pack.id] = pack;
 					}
 				});
@@ -273,13 +273,12 @@
 		let url;
 		if (pack.startsWith('startswith-')) {
 			// LINE Store packs
-			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
 			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
+			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
 			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
-			// For comparison, Magane's built-in packs for sending and menu display are 180p and 100p respectively.
+			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
 			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true';
 			url = template.replace(/%id%/g, id.split('.')[0]);
-			// Use images.weserv.nl to have consistent resolutions as Magane's built-in packs
 			const height = sending ? '180p' : '100p';
 			if (localPacks[pack].animated) {
 				url = url.replace('sticker.png', 'sticker_animation.png');
@@ -288,6 +287,15 @@
 			} else {
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}`;
 			}
+		} else if (pack.startsWith('emojis-')) {
+			// LINE Store emojis
+			// 220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
+			// 154p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png
+			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
+			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png';
+			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
+			const height = sending ? '180p' : '100p';
+			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}`;
 		} else if (pack.startsWith('custom-')) {
 			// Custom packs
 			const template = localPacks[pack].template;
@@ -414,6 +422,10 @@
 
 	const _appendPack = (id, e) => {
 		try { // eslint-disable-line no-useless-catch
+			if (!e.count || !e.files.length) {
+				throw new Error('Invalid stickers count.');
+			}
+
 			let availLocalPacks = [];
 			const storedLocalPacks = storage.getItem('magane.available');
 			if (storedLocalPacks) {
@@ -426,7 +438,7 @@
 				}
 			}
 
-			if (id.startsWith('startswith-') || id.startsWith('custom-')) {
+			if (/^(startswith|emojis|custom)-/.test(id)) {
 				localPacks[id] = e;
 			}
 
@@ -437,7 +449,8 @@
 			availablePacks = availablePacks;
 			filterPacks();
 
-			return log(`Added a new pack with ID ${id}`);
+			log(`Added a new pack with ID ${id}`);
+			return true;
 		} catch (ex) {
 			throw ex;
 		}
@@ -448,6 +461,12 @@
 			throw new Error('This function expects only 4 parameters. Were you looking for appendCustomPack()?');
 		}
 
+		firstid = Number(firstid);
+		if (isNaN(firstid) || !isFinite(firstid) || firstid < 0) {
+			throw new Error('Invalid first ID.');
+		}
+
+		count = Math.max(Math.min(Number(count), 200), 0) || 0;
 		const mid = `startswith-${firstid}`;
 		const files = [];
 		for (let i = firstid; i < (firstid + count); i += 1) {
@@ -463,11 +482,32 @@
 		});
 	};
 
+	window.magane.appendEmojisPack = (title, id, count, _) => {
+		if (_) {
+			throw new Error('This function expects only 3 parameters.');
+		}
+
+		count = Math.max(Math.min(Number(count), 200), 0) || 0;
+		const mid = `emojis-${id}`;
+		const files = [];
+		for (let i = 0; i < count; i += 1) {
+			files.push(`${String(i + 1).padStart(3, '0')}.png`);
+		}
+
+		return _appendPack(mid, {
+			name: title,
+			count: count,
+			id: mid,
+			files: files
+		});
+	};
+
 	window.magane.appendCustomPack = (title, id, count, animated, template) => {
 		if (!template) {
 			throw new Error('Missing URL template.');
 		}
 
+		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
 		const files = [];
 		for (let i = 1; i <= count; i += 1) {
@@ -485,8 +525,8 @@
 	};
 
 	window.magane.deletePack = id => {
-		if (!id && !id.startsWith('startswith-') && !id.startsWith('custom-')) {
-			throw new Error('Pack ID must start with either "startswith-" or "custom-".');
+		if (!id && !/^(startswith|emojis|custom)-/.test(id)) {
+			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
 		const storedLocalPacks = storage.getItem('magane.available');
@@ -520,7 +560,8 @@
 					filterPacks();
 				}
 
-				return log(`Removed pack with ID ${id} (old index: ${index})`);
+				log(`Removed pack with ID ${id} (old index: ${index})`);
+				return true;
 			} catch (ex) {
 				throw ex;
 			}
@@ -552,6 +593,8 @@
 		let tmp = '';
 		if (id.startsWith('startswith-')) {
 			tmp = `LINE ${id.replace('startswith-', '')}`;
+		} else if (id.startsWith('emojis-')) {
+			tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
 		} else if (id.startsWith('custom-')) {
 			tmp = `Custom ${id.replace('custom-', '')}`;
 		}
@@ -716,14 +759,15 @@
 
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
-		try { // eslint-disable-line no-useless-catch
+		try {
 			const id = linePackSearch.match(/\d+/)[0];
 			const response = await fetch(`https://magane.moe/api/proxy/${id}`);
 			const props = await response.json();
 			linePackSearch = null;
 			return window.magane.appendPack(props.title, props.first, props.len, false);
 		} catch (error) {
-			throw error;
+			console.error(error);
+			toastError('Unexpected error occurred. Check your console for details.');
 		}
 	};
 </script>
