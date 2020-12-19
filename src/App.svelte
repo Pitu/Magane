@@ -242,7 +242,7 @@
 	};
 
 	const subscribeToPack = pack => {
-		if (subscribedPacks.includes(pack)) return;
+		if (subscribedPacks.findIndex(p => p.id === pack.id) !== -1) return;
 		subscribedPacks = [...subscribedPacks, pack];
 		subscribedPacksSimple = [...subscribedPacksSimple, pack.id];
 
@@ -251,8 +251,6 @@
 	};
 
 	const unsubscribeToPack = pack => {
-		if (!subscribedPacks.includes(pack)) return;
-
 		for (let i = 0; i < subscribedPacks.length; i++) {
 			if (subscribedPacks[i].id === pack.id) {
 				subscribedPacks.splice(i, 1);
@@ -263,10 +261,10 @@
 				subscribedPacksSimple = subscribedPacksSimple;
 
 				log(`Unsubscribed from pack > ${pack.name}`);
+				saveToLocalStorage('magane.subscribed', subscribedPacks);
+				return;
 			}
 		}
-
-		saveToLocalStorage('magane.subscribed', subscribedPacks);
 	};
 
 	const formatUrl = (pack, id, sending) => {
@@ -727,10 +725,11 @@
 		const value = event.target.value.trim();
 		if (event.keyCode !== 13 || !value.length) return;
 
-		const newIndex = Number(value);
-		if (isNaN(newIndex) || newIndex < 0 || newIndex > subscribedPacks.length - 1) {
-			return toastError(`New index must be ≥ 0 and ≤ ${subscribedPacks.length - 1}!`);
+		let newIndex = Number(value);
+		if (isNaN(newIndex) || newIndex < 1 || newIndex > subscribedPacks.length) {
+			return toastError(`New position must be ≥ 1 and ≤ ${subscribedPacks.length}!`);
 		}
+		newIndex--;
 
 		const packId = event.target.dataset.pack;
 		if (typeof packId === 'undefined') return;
@@ -754,7 +753,7 @@
 		subscribedPacks = subscribedPacks;
 		subscribedPacksSimple = subscribedPacksSimple;
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		toastSuccess(`Moved pack from index ${oldIndex} to ${newIndex}!`);
+		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}!`);
 	};
 
 	const parseLinePack = async () => {
@@ -888,7 +887,7 @@
 
 						{ #if activeTab === 0 }
 						<SimpleBar class="tabContent" style="">
-							{ #each subscribedPacks as pack, index }
+							{ #each subscribedPacks as pack, i (pack.id) }
 							<div class="pack">
 								{ #if subscribedPacks.length > 1 }
 								<div class="index">
@@ -898,7 +897,7 @@
 										class="inputPackIndex"
 										type="text"
 										data-pack={ pack.id }
-										value={ index } />
+										value={ i + 1 } />
 								</div>
 								{ /if }
 								<div class="preview"
