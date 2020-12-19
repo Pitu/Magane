@@ -759,7 +759,11 @@
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
 		try {
-			const id = linePackSearch.match(/\d+/)[0];
+			const match = linePackSearch.match(/^(https?:\/\/store\.line\.me\/stickershop\/product\/)?(\d+)/);
+			const id = Number(match[2]);
+			if (!match || isNaN(id) || !isFinite(id) || id < 0) {
+				return toastError('Unsupported LINE Store URL or ID.');
+			}
 			const response = await fetch(`https://magane.moe/api/proxy/${id}`);
 			const props = await response.json();
 			linePackSearch = null;
