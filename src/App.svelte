@@ -269,34 +269,34 @@
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
 	};
 
-	const formatUrl = (pack, id) => {
+	const formatUrl = (pack, id, sending) => {
 		let url;
 		if (pack.startsWith('startswith-')) {
+			// LINE Store packs
 			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
 			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
 			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
-			// In comparison, Magane's general resolution is 180p (height)
-			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
-			if (id === 'tab_on.png') {
-				url = template.replace(/%id%/g, pack.split('-')[1]);
-			} else {
-				url = template.replace(/%id%/g, id.split('.')[0]);
-			}
+			// For comparison, Magane's built-in packs for sending and menu display are 180p and 100p respectively.
+			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true';
+			url = template.replace(/%id%/g, id.split('.')[0]);
+			// Use images.weserv.nl to have consistent resolutions as Magane's built-in packs
+			const height = sending ? '180p' : '100p';
 			if (localPacks[pack].animated) {
 				url = url.replace('sticker.png', 'sticker_animation.png');
+				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}&output=gif`;
+			} else {
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}`;
 			}
 		} else if (pack.startsWith('custom-')) {
+			// Custom packs
 			const template = localPacks[pack].template;
-			if (id === 'tab_on.png') {
-				const first = localPacks[pack].files[0];
-				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, first);
-			} else {
-				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
-			}
+			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
 		} else {
+			// Magane's built-in packs
 			url = `${baseURL}${pack}/${id}`;
-			if (id !== 'tab_on.png') {
-				url.replace('.png', '_key.png');
+			if (!sending) {
+				url = url.replace(/\.(gif|png)$/i, '_key.$1');
 			}
 		}
 		return url;
@@ -314,15 +314,14 @@
 			toast('Sending\u2026');
 			const channel = window.location.href.split('/').slice(-1)[0];
 
-			const url = formatUrl(pack, id);
+			const url = formatUrl(pack, id, true);
 			log(`Fetching sticker from remote: ${url}`);
 			const response = await fetch(url, { cache: 'force-cache' });
 			const myBlob = await response.blob();
 
 			let filename = id;
-			if (pack.startsWith('startswith-') && url.includes('sticker_animation.png')) {
-				// FIXME: Discord no longer animates APNGs renamed to GIFs
-				filename = `${id.split('.')[0]}.gif`;
+			if (pack.startsWith('startswith-') && localPacks[pack].animated) {
+				filename = filename.replace(/\.png$/i, '.gif');
 				toastWarn('Animated stickers from LINE Store currently cannot be animated!');
 			} else if (pack.startsWith('custom-')) {
 				// Obfuscate file name of stickers from custom packs
