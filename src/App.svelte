@@ -941,6 +941,10 @@
 									<button class="button is-primary"
 										on:click="{ () => subscribeToPack(pack) }">Add</button>
 									{ /if }
+									{ #if localPacks[pack.id] }
+									<button class="button deletePack"
+										on:click="{ () => window.magane.deletePack(pack.id) }">X</button>
+									{ /if }
 								</div>
 							</div>
 							{ /each }

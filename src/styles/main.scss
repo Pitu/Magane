@@ -339,8 +339,27 @@ div#magane {
 					div.preview,
 					div.action {
 						flex: 0 0 auto;
-						width: 75px;
+						min-width: 75px;
 						height: 75px;
+
+						button.deletePack {
+							width: 31px;
+							color: transparent;
+
+							&::before {
+								background-image: url('/assets/9b1b76abb59b5c8a41daea1342f2138a.svg');
+								background-size: 75%;
+								background-repeat: no-repeat;
+								background-position: center;
+								filter: grayscale(100%) invert(1) brightness(1.25);
+								content: "";
+								position: absolute;
+								top: 0;
+								left: 0;
+								width: 100%;
+								height: 100%;
+							}
+						}
 					}
 
 					div.index {
