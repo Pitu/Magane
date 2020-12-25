@@ -178,7 +178,7 @@
 				// would also store remote built-in packs in local storage (no idea why).
 				const filteredLocalPacks = availLocalPacks.filter(pack =>
 					typeof pack === 'object' && typeof pack.id !== 'undefined' &&
-					(pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')));
+					/^(startswith|emojis|custom)-/.test(pack.id));
 				if (availLocalPacks.length !== filteredLocalPacks.length) {
 					saveToLocalStorage('magane.available', filteredLocalPacks);
 				}
@@ -207,7 +207,7 @@
 				}
 				// Prioritize data of subscribed packs
 				subscribedPacks.forEach(pack => {
-					if (pack.id.startsWith('startswith-') || pack.id.startsWith('custom-')) {
+					if (/^(startswith|emojis|custom)-/.test(pack.id)) {
 						localPacks[pack.id] = pack;
 					}
 				});
@@ -242,7 +242,7 @@
 	};
 
 	const subscribeToPack = pack => {
-		if (subscribedPacks.includes(pack)) return;
+		if (subscribedPacks.findIndex(p => p.id === pack.id) !== -1) return;
 		subscribedPacks = [...subscribedPacks, pack];
 		subscribedPacksSimple = [...subscribedPacksSimple, pack.id];
 
@@ -251,8 +251,6 @@
 	};
 
 	const unsubscribeToPack = pack => {
-		if (!subscribedPacks.includes(pack)) return;
-
 		for (let i = 0; i < subscribedPacks.length; i++) {
 			if (subscribedPacks[i].id === pack.id) {
 				subscribedPacks.splice(i, 1);
@@ -263,40 +261,48 @@
 				subscribedPacksSimple = subscribedPacksSimple;
 
 				log(`Unsubscribed from pack > ${pack.name}`);
+				saveToLocalStorage('magane.subscribed', subscribedPacks);
+				return;
 			}
 		}
-
-		saveToLocalStorage('magane.subscribed', subscribedPacks);
 	};
 
-	const formatUrl = (pack, id) => {
+	const formatUrl = (pack, id, sending) => {
 		let url;
 		if (pack.startsWith('startswith-')) {
-			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
+			// LINE Store packs
 			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
+			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
 			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
-			// In comparison, Magane's general resolution is 180p (height)
-			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
-			if (id === 'tab_on.png') {
-				url = template.replace(/%id%/g, pack.split('-')[1]);
-			} else {
-				url = template.replace(/%id%/g, id.split('.')[0]);
-			}
+			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
+			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true';
+			url = template.replace(/%id%/g, id.split('.')[0]);
+			const height = sending ? '180p' : '100p';
 			if (localPacks[pack].animated) {
-				url = url.replace('sticker.png', 'sticker_animation.png');
-			}
-		} else if (pack.startsWith('custom-')) {
-			const template = localPacks[pack].template;
-			if (id === 'tab_on.png') {
-				const first = localPacks[pack].files[0];
-				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, first);
+				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
+				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}&output=gif`;
 			} else {
-				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}`;
 			}
+		} else if (pack.startsWith('emojis-')) {
+			// LINE Store emojis
+			// 220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
+			// 154p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png
+			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
+			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png';
+			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
+			const height = sending ? '180p' : '100p';
+			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}`;
+		} else if (pack.startsWith('custom-')) {
+			// Custom packs
+			const template = localPacks[pack].template;
+			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
 		} else {
+			// Magane's built-in packs
 			url = `${baseURL}${pack}/${id}`;
-			if (id !== 'tab_on.png') {
-				url.replace('.png', '_key.png');
+			if (!sending) {
+				url = url.replace(/\.(gif|png)$/i, '_key.$1');
 			}
 		}
 		return url;
@@ -314,15 +320,14 @@
 			toast('Sending\u2026');
 			const channel = window.location.href.split('/').slice(-1)[0];
 
-			const url = formatUrl(pack, id);
+			const url = formatUrl(pack, id, true);
 			log(`Fetching sticker from remote: ${url}`);
 			const response = await fetch(url, { cache: 'force-cache' });
 			const myBlob = await response.blob();
 
 			let filename = id;
-			if (pack.startsWith('startswith-') && url.includes('sticker_animation.png')) {
-				// FIXME: Discord no longer animates APNGs renamed to GIFs
-				filename = `${id.split('.')[0]}.gif`;
+			if (pack.startsWith('startswith-') && localPacks[pack].animated) {
+				filename = filename.replace(/\.png$/i, '.gif');
 				toastWarn('Animated stickers from LINE Store currently cannot be animated!');
 			} else if (pack.startsWith('custom-')) {
 				// Obfuscate file name of stickers from custom packs
@@ -415,6 +420,10 @@
 
 	const _appendPack = (id, e) => {
 		try { // eslint-disable-line no-useless-catch
+			if (!e.count || !e.files.length) {
+				throw new Error('Invalid stickers count.');
+			}
+
 			let availLocalPacks = [];
 			const storedLocalPacks = storage.getItem('magane.available');
 			if (storedLocalPacks) {
@@ -427,7 +436,7 @@
 				}
 			}
 
-			if (id.startsWith('startswith-') || id.startsWith('custom-')) {
+			if (/^(startswith|emojis|custom)-/.test(id)) {
 				localPacks[id] = e;
 			}
 
@@ -438,7 +447,8 @@
 			availablePacks = availablePacks;
 			filterPacks();
 
-			return log(`Added a new pack with ID ${id}`);
+			log(`Added a new pack with ID ${id}`);
+			return true;
 		} catch (ex) {
 			throw ex;
 		}
@@ -449,6 +459,12 @@
 			throw new Error('This function expects only 4 parameters. Were you looking for appendCustomPack()?');
 		}
 
+		firstid = Number(firstid);
+		if (isNaN(firstid) || !isFinite(firstid) || firstid < 0) {
+			throw new Error('Invalid first ID.');
+		}
+
+		count = Math.max(Math.min(Number(count), 200), 0) || 0;
 		const mid = `startswith-${firstid}`;
 		const files = [];
 		for (let i = firstid; i < (firstid + count); i += 1) {
@@ -464,11 +480,32 @@
 		});
 	};
 
+	window.magane.appendEmojisPack = (title, id, count, _) => {
+		if (_) {
+			throw new Error('This function expects only 3 parameters.');
+		}
+
+		count = Math.max(Math.min(Number(count), 200), 0) || 0;
+		const mid = `emojis-${id}`;
+		const files = [];
+		for (let i = 0; i < count; i += 1) {
+			files.push(`${String(i + 1).padStart(3, '0')}.png`);
+		}
+
+		return _appendPack(mid, {
+			name: title,
+			count: count,
+			id: mid,
+			files: files
+		});
+	};
+
 	window.magane.appendCustomPack = (title, id, count, animated, template) => {
 		if (!template) {
 			throw new Error('Missing URL template.');
 		}
 
+		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
 		const files = [];
 		for (let i = 1; i <= count; i += 1) {
@@ -486,8 +523,8 @@
 	};
 
 	window.magane.deletePack = id => {
-		if (!id && !id.startsWith('startswith-') && !id.startsWith('custom-')) {
-			throw new Error('Pack ID must start with either "startswith-" or "custom-".');
+		if (!id && !/^(startswith|emojis|custom)-/.test(id)) {
+			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
 		const storedLocalPacks = storage.getItem('magane.available');
@@ -521,7 +558,8 @@
 					filterPacks();
 				}
 
-				return log(`Removed pack with ID ${id} (old index: ${index})`);
+				log(`Removed pack with ID ${id} (old index: ${index})`);
+				return true;
 			} catch (ex) {
 				throw ex;
 			}
@@ -553,6 +591,8 @@
 		let tmp = '';
 		if (id.startsWith('startswith-')) {
 			tmp = `LINE ${id.replace('startswith-', '')}`;
+		} else if (id.startsWith('emojis-')) {
+			tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
 		} else if (id.startsWith('custom-')) {
 			tmp = `Custom ${id.replace('custom-', '')}`;
 		}
@@ -685,10 +725,11 @@
 		const value = event.target.value.trim();
 		if (event.keyCode !== 13 || !value.length) return;
 
-		const newIndex = Number(value);
-		if (isNaN(newIndex) || newIndex < 0 || newIndex > subscribedPacks.length - 1) {
-			return toastError(`New index must be ≥ 0 and ≤ ${subscribedPacks.length - 1}!`);
+		let newIndex = Number(value);
+		if (isNaN(newIndex) || newIndex < 1 || newIndex > subscribedPacks.length) {
+			return toastError(`New position must be ≥ 1 and ≤ ${subscribedPacks.length}!`);
 		}
+		newIndex--;
 
 		const packId = event.target.dataset.pack;
 		if (typeof packId === 'undefined') return;
@@ -712,19 +753,33 @@
 		subscribedPacks = subscribedPacks;
 		subscribedPacksSimple = subscribedPacksSimple;
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		toastSuccess(`Moved pack from index ${oldIndex} to ${newIndex}!`);
+		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}!`);
 	};
 
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
-		try { // eslint-disable-line no-useless-catch
-			const id = linePackSearch.match(/\d+/)[0];
-			const response = await fetch(`https://magane.moe/api/proxy/${id}`);
-			const props = await response.json();
-			linePackSearch = null;
-			return window.magane.appendPack(props.title, props.first, props.len, false);
+		try {
+			const match = linePackSearch.match(/^(https?:\/\/store\.line\.me\/((sticker|emoji)shop)\/product\/)?([a-z0-9]+)/);
+			if (!match) return toastError('Unsupported LINE Store URL or ID.');
+			if (match[3] === 'emoji') {
+				// LINE Emojis will only work when using its full URL
+				const id = match[4];
+				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
+				const props = await response.json();
+				linePackSearch = null;
+				window.magane.appendEmojisPack(props.title, props.id, props.len);
+			} else {
+				// LINE Stickers work with either its full URL or just its ID
+				const id = Number(match[4]);
+				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
+				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
+				const props = await response.json();
+				linePackSearch = null;
+				window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
+			}
 		} catch (error) {
-			throw error;
+			console.error(error);
+			toastError('Unexpected error occurred. Check your console for details.');
 		}
 	};
 </script>
@@ -845,7 +900,7 @@
 
 						{ #if activeTab === 0 }
 						<SimpleBar class="tabContent" style="">
-							{ #each subscribedPacks as pack, index }
+							{ #each subscribedPacks as pack, i (pack.id) }
 							<div class="pack">
 								{ #if subscribedPacks.length > 1 }
 								<div class="index">
@@ -855,7 +910,7 @@
 										class="inputPackIndex"
 										type="text"
 										data-pack={ pack.id }
-										value={ index } />
+										value={ i + 1 } />
 								</div>
 								{ /if }
 								<div class="preview"
@@ -894,6 +949,10 @@
 									{ :else }
 									<button class="button is-primary"
 										on:click="{ () => subscribeToPack(pack) }">Add</button>
+									{ /if }
+									{ #if localPacks[pack.id] }
+									<button class="button deletePack"
+										on:click="{ () => window.magane.deletePack(pack.id) }"></button>
 									{ /if }
 								</div>
 							</div>

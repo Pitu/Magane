@@ -96,6 +96,7 @@ div#magane {
 				div.sticker {
 					display: flex;
 					align-items: center;
+					justify-content: center;
 					width: 100px;
 					height: 100px;
 					float: left;
@@ -103,7 +104,8 @@ div#magane {
 
 					.image {
 						cursor: pointer;
-						width: 100px;
+						max-height: 100%;
+						max-width: 100%;
 					}
 
 					div.addFavorite, div.deleteFavorite {
@@ -314,6 +316,7 @@ div#magane {
 							padding: 2rem;
 							padding-top: 0;
 							margin-top: -5rem;
+							user-select: text;
 						}
 					}
 				}
@@ -336,8 +339,35 @@ div#magane {
 					div.preview,
 					div.action {
 						flex: 0 0 auto;
-						width: 75px;
+						min-width: 75px;
 						height: 75px;
+
+						button.deletePack {
+							width: 36px;
+							height: 36px;
+
+							&:before,
+							&:after {
+								background-color: $textColor;
+								content: "";
+								display: block;
+								left: 50%;
+								position: absolute;
+								top: 50%;
+								transform: translateX(-50%) translateY(-50%) rotate(45deg);
+								transform-origin: center center;
+							}
+
+							&:before {
+								height: 2px;
+								width: 50%;
+							}
+
+							&:after {
+								height: 50%;
+								width: 2px;
+							}
+						}
 					}
 
 					div.index {
@@ -347,7 +377,7 @@ div#magane {
 
 					div.preview {
 						background-position: center;
-						background-size: cover;
+						background-size: contain;
 						background-repeat: no-repeat;
 					}
 
