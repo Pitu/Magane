@@ -279,7 +279,7 @@
 			url = template.replace(/%id%/g, id.split('.')[0]);
 			const height = sending ? '180p' : '100p';
 			if (localPacks[pack].animated) {
-				url = url.replace('sticker.png', 'sticker_animation.png');
+				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
 				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}&output=gif`;
 			} else {
@@ -759,15 +759,24 @@
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
 		try {
-			const match = linePackSearch.match(/^(https?:\/\/store\.line\.me\/stickershop\/product\/)?(\d+)/);
-			const id = Number(match[2]);
-			if (!match || isNaN(id) || !isFinite(id) || id < 0) {
-				return toastError('Unsupported LINE Store URL or ID.');
+			const match = linePackSearch.match(/^(https?:\/\/store\.line\.me\/((sticker|emoji)shop)\/product\/)?([a-z0-9]+)/);
+			if (!match) return toastError('Unsupported LINE Store URL or ID.');
+			if (match[3] === 'emoji') {
+				// LINE Emojis will only work when using its full URL
+				const id = match[4];
+				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
+				const props = await response.json();
+				linePackSearch = null;
+				window.magane.appendEmojisPack(props.title, props.id, props.len);
+			} else {
+				// LINE Stickers work with either its full URL or just its ID
+				const id = Number(match[4]);
+				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
+				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
+				const props = await response.json();
+				linePackSearch = null;
+				window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
 			}
-			const response = await fetch(`https://magane.moe/api/proxy/${id}`);
-			const props = await response.json();
-			linePackSearch = null;
-			return window.magane.appendPack(props.title, props.first, props.len, false);
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred. Check your console for details.');
@@ -943,7 +952,7 @@
 									{ /if }
 									{ #if localPacks[pack.id] }
 									<button class="button deletePack"
-										on:click="{ () => window.magane.deletePack(pack.id) }">X</button>
+										on:click="{ () => window.magane.deletePack(pack.id) }"></button>
 									{ /if }
 								</div>
 							</div>
