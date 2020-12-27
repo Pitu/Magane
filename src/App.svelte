@@ -274,26 +274,30 @@
 			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
 			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
 			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
+			// WARNING: Early packs (can confirm with packs that have their sticker IDs at 4 digits),
+			// do not have iPhone variants, so we will stick with Android variant, which is always available.
 			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
-			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true';
+			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
 			url = template.replace(/%id%/g, id.split('.')[0]);
-			const height = sending ? '180p' : '100p';
+			let append = sending ? '&h=180p' : '&h=100p';
 			if (localPacks[pack].animated) {
 				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
 				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
-				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}&output=gif`;
-			} else {
-				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}`;
+				append += '&output=gif';
 			}
+			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 		} else if (pack.startsWith('emojis-')) {
 			// LINE Store emojis
 			// 220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
 			// 154p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png
+			// WARNING: Stickers may actually have missing iPhone variants, so to be safe we will just use
+			// Android variant for emojis too. Plus, it probably makes more sense to have emojis smaller
+			// anyway (Android variant of emojis only go up to 154p).
 			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
-			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png';
+			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
-			const height = sending ? '180p' : '100p';
-			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}&h=${height}`;
+			const append = sending ? '' : '&h=100p';
+			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 		} else if (pack.startsWith('custom-')) {
 			// Custom packs
 			const template = localPacks[pack].template;
