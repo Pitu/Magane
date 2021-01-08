@@ -151,18 +151,28 @@ div#magane {
 			}
 		}
 
-		> div.packs {
+		div.bottom-toolbar {
 			position: absolute;
 			bottom: 0;
 			width: 100%;
 			height: 50px;
 			background: $backgroundSecondary;
+			display: flex;
+		}
+
+		div.packs {
+			flex: 1 0 auto;
 			overflow: auto hidden;
+
+			&.packs-controls {
+				flex-grow: 0;
+			}
 
 			div.packs-wrapper {
 				white-space: nowrap;
 				float: left;
 				width: 100%;
+				font-size: 0; /* quick hax to clear whitespace */
 			}
 
 			div.pack {
@@ -172,7 +182,7 @@ div#magane {
 				margin: 5px;
 				cursor: pointer;
 				background-position: center;
-				background-size: cover;
+				background-size: contain;
 				background-repeat: no-repeat;
 				transition: all 0.2s ease;
 				filter: grayscale(100%);
