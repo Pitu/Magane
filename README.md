@@ -16,7 +16,7 @@ You know how LINE and Telegram have this beautiful sticker system where you can 
 By injecting the script into Discord it will automatically pull a curated list of sticker packs from [lolisafe](https://lolisafe.moe) and add them to your Discord client. After that a heart button will appear in your message bar where you'll be able to see all the stickers!
 
 ### Can I make this permanent?
-You can! Currently the best way to get this up and running is by using [BetterDiscord](https://github.com/rauenzi/BetterDiscordApp/releases) . Make sure to head to the [Magane website](https://magane.moe) for instructions on how to install it:
+You can! Currently the best way to get this up and running is by using [BetterDiscord](https://github.com/rauenzi/BetterDiscordApp/releases) . Make sure to head to the [Magane website](https://magane.moe) for instructions on how to install it. If you have another injector already set up and running you could theoretically just feed it the Magane script and see if it works:
 ```
 https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.min.js
 ```
