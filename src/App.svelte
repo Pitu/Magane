@@ -269,7 +269,13 @@
 
 	const formatUrl = (pack, id, sending) => {
 		let url;
-		if (pack.startsWith('startswith-')) {
+		if (typeof pack === 'number') {
+			// Magane's built-in packs
+			url = `${baseURL}${pack}/${id}`;
+			if (!sending) {
+				url = url.replace(/\.(gif|png)$/i, '_key.$1');
+			}
+		} else if (pack.startsWith('startswith-')) {
 			// LINE Store packs
 			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
 			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
@@ -302,12 +308,6 @@
 			// Custom packs
 			const template = localPacks[pack].template;
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
-		} else {
-			// Magane's built-in packs
-			url = `${baseURL}${pack}/${id}`;
-			if (!sending) {
-				url = url.replace(/\.(gif|png)$/i, '_key.$1');
-			}
 		}
 		return url;
 	};
@@ -330,12 +330,14 @@
 			const myBlob = await response.blob();
 
 			let filename = id;
-			if (pack.startsWith('startswith-') && localPacks[pack].animated) {
-				filename = filename.replace(/\.png$/i, '.gif');
-				toastWarn('Animated stickers from LINE Store currently cannot be animated!');
-			} else if (pack.startsWith('custom-')) {
-				// Obfuscate file name of stickers from custom packs
-				filename = `${Date.now().toString()}.${id.split('.')[1]}`;
+			if (typeof pack === 'string') {
+				if (pack.startsWith('startswith-') && localPacks[pack].animated) {
+					filename = filename.replace(/\.png$/i, '.gif');
+					toastWarn('Animated stickers from LINE Store currently cannot be animated!');
+				} else if (pack.startsWith('custom-')) {
+					// Obfuscate file name of stickers from custom packs
+					filename = `${Date.now().toString()}.${id.split('.')[1]}`;
+				}
 			}
 
 			const formData = new FormData();
@@ -592,6 +594,8 @@
 		`<span class="counts"><span>–</span>${count} sticker${count === 1 ? '' : 's'}</span>`;
 
 	const formatPackAppendix = id => {
+		if (typeof id === 'number') return id
+
 		let tmp = '';
 		if (id.startsWith('startswith-')) {
 			tmp = `LINE ${id.replace('startswith-', '')}`;
@@ -600,7 +604,7 @@
 		} else if (id.startsWith('custom-')) {
 			tmp = `Custom ${id.replace('custom-', '')}`;
 		}
-		if (!tmp) return '';
+		if (!tmp) return id;
 		return `<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
 	};
 
