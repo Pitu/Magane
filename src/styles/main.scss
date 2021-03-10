@@ -55,6 +55,7 @@ div#magane {
 		overflow: hidden;
 		transition: all 0.2s ease;
 		border-radius: 4px;
+		box-shadow: var(--elevation-stroke),var(--elevation-high);
 
 		div.stickers {
 			overflow: auto;
