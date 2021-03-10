@@ -248,6 +248,7 @@
 
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
 		log(`Subscribed to pack > ${pack.name}`);
+		analyticsSubscribePack([pack.id]);
 	};
 
 	const unsubscribeToPack = pack => {
@@ -460,6 +461,36 @@
 		}
 	};
 
+	const analyticsSubscribePack = async(ids) => {
+		/*
+		const data = {
+			packs: ids.filter(id => typeof id === 'number')
+		};
+		const response = await fetch('https://magane.moe/api/packs/subscribe', {
+			method: 'POST',
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+  			},
+			mode: 'cors',
+			body: JSON.stringify(data)
+		});
+		*/
+	}
+
+	const sendSubscribedPacksOnce = async () => {
+		/*
+		if (storage.getItem('magane.alreadySentAnalyticsPacksOnce')) return;
+		let data = subscribedPacks.map(pack => pack.id);
+		try {
+			await analyticsSubscribePack(data);
+			storage.setItem('magane.alreadySentAnalyticsPacksOnce', true);
+		} catch (err) {
+			toastError('Unexpected error. Check your console for details.');
+		}
+		*/
+	}
+
 	window.magane.appendPack = (title, firstid, count, animated, _) => {
 		if (_) {
 			throw new Error('This function expects only 4 parameters. Were you looking for appendCustomPack()?');
@@ -620,6 +651,7 @@
 			resizeObserver.observe(textArea);
 			keepMaganeInPlace();
 			isThereTopBar = document.querySelector('html.platform-win');
+			sendSubscribedPacksOnce();
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
