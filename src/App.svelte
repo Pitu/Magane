@@ -419,7 +419,7 @@
 		if (query) {
 			// Allow searching by IDs too
 			filteredPacks = availablePacks.filter(pack =>
-				pack.name.toLowerCase().indexOf(query) >= 0 || pack.id.indexOf(query) >= 0);
+				pack.name.toLowerCase().indexOf(query) >= 0 || String(pack.id).indexOf(query) >= 0);
 		} else {
 			filteredPacks = availablePacks;
 		}
