@@ -248,7 +248,7 @@
 
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
 		log(`Subscribed to pack > ${pack.name}`);
-		analyticsSubscribePack([pack.id]);
+		// analyticsSubscribePack([pack.id]);
 	};
 
 	const unsubscribeToPack = pack => {
@@ -461,8 +461,8 @@
 		}
 	};
 
-	const analyticsSubscribePack = async(ids) => {
-		/*
+	/*
+	const analyticsSubscribePack = async ids => {
 		const data = {
 			packs: ids.filter(id => typeof id === 'number')
 		};
@@ -475,8 +475,7 @@
 			mode: 'cors',
 			body: JSON.stringify(data)
 		});
-		*/
-	}
+	};
 
 	const sendSubscribedPacksOnce = async () => {
 		/*
@@ -488,8 +487,38 @@
 		} catch (err) {
 			toastError('Unexpected error. Check your console for details.');
 		}
-		*/
-	}
+	};
+	*/
+
+	const migrateStringPackIds = async () => {
+		let dirty = false;
+		const favorites = JSON.parse(storage.getItem('magane.favorites'));
+		const subscribed = JSON.parse(storage.getItem('magane.subscribed'));
+
+		favorites.forEach(item => {
+			if (typeof item.pack === 'number') return;
+			const result = parseInt(item.pack, 10);
+			if (isNaN(item.pack)) return;
+			item.pack = result;
+			dirty = true;
+		});
+
+		subscribed.forEach(item => {
+			if (typeof item.id === 'number') return;
+			const result = parseInt(item.id, 10);
+			if (isNaN(item.id)) return;
+			item.id = result;
+			dirty = true;
+		});
+
+		if (dirty) {
+			toastInfo('Found packs/stickers to migrate, migrating now...');
+			storage.setItem('magane.favorites', JSON.stringify(favorites));
+			storage.setItem('magane.subscribed', JSON.stringify(subscribed));
+			await grabPacks();
+			toastSuccess('Migration successful');
+		}
+	};
 
 	window.magane.appendPack = (title, firstid, count, animated, _) => {
 		if (_) {
@@ -625,7 +654,7 @@
 		`<span class="counts"><span>–</span>${count} sticker${count === 1 ? '' : 's'}</span>`;
 
 	const formatPackAppendix = id => {
-		if (typeof id === 'number') return id
+		if (typeof id === 'number') return id;
 
 		let tmp = '';
 		if (id.startsWith('startswith-')) {
@@ -651,7 +680,8 @@
 			resizeObserver.observe(textArea);
 			keepMaganeInPlace();
 			isThereTopBar = document.querySelector('html.platform-win');
-			sendSubscribedPacksOnce();
+			// sendSubscribedPacksOnce();
+			migrateStringPackIds();
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
