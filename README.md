@@ -1,5 +1,5 @@
 <div align="center">
-	<img src="https://lolisafe.moe/88r6gPQS.png" />
+	<img src="https://chibisafe.moe/88r6gPQS.png" />
 </div>
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/kanadeko/Kuro/master/LICENSE)
@@ -10,10 +10,10 @@
 ### What does this do?
 You know how LINE and Telegram have this beautiful sticker system where you can send different reactions with just one click? This is a new approach at doing exactly that but on Discord!
 
-[It looks like this](https://lolisafe.moe/owdxQF9m.mp4)
+[It looks like this](https://chibisafe.moe/owdxQF9m.mp4)
 
 ### How even?
-By injecting the script into Discord it will automatically pull a curated list of sticker packs from [lolisafe](https://lolisafe.moe) and add them to your Discord client. After that a heart button will appear in your message bar where you'll be able to see all the stickers!
+By injecting the script into Discord it will automatically pull a curated list of sticker packs from [chibisafe](https://chibisafe.moe) and add them to your Discord client. After that a heart button will appear in your message bar where you'll be able to see all the stickers!
 
 ### Can I make this permanent?
 You can! Currently the best way to get this up and running is by using [BetterDiscord](https://github.com/rauenzi/BetterDiscordApp/releases) . Make sure to head to the [Magane website](https://magane.moe) for instructions on how to install it. If you have another injector already set up and running you could theoretically just feed it the Magane script and see if it works:

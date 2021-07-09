@@ -919,28 +919,35 @@
 				{ /each }
 			</SimpleBar>
 
-			<SimpleBar class="packs" style="">
-				<div class="packs-wrapper">
-					<div class="pack"
-						on:click="{ () => toggleStickerModal() }"
-						title="Manage subscribed packs" >
-						<div class="icon-plus" />
+			<div class="bottom-toolbar">
+				<div class="packs packs-controls">
+					<div class="packs-wrapper">
+						<div class="pack"
+							on:click="{ () => toggleStickerModal() }"
+							title="Manage subscribed packs" >
+							<div class="icon-plus" />
+						</div>
+						{ #if favoriteSticker && favoriteSticker.length }
+						<div class="pack"
+							on:click={ () => scrollToStickers('#pfavorites') }
+							title="Favorites" >
+							<div class="icon-favorite" />
+						</div>
+						{ /if }
 					</div>
-					{ #if favoriteSticker && favoriteSticker.length }
-					<div class="pack"
-						on:click={ () => scrollToStickers('#pfavorites') }
-						title="Favorites" >
-						<div class="icon-favorite" />
-					</div>
-					{ /if }
-					{ #each subscribedPacks as pack, i }
-					<div class="pack"
-						on:click={ () => scrollToStickers(`#p${pack.id}`) }
-						title="{ pack.name }"
-						style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
-					{ /each }
 				</div>
-			</SimpleBar>
+
+				<SimpleBar class="packs" style="">
+					<div class="packs-wrapper">
+						{ #each subscribedPacks as pack, i }
+						<div class="pack"
+							on:click={ () => scrollToStickers(`#p${pack.id}`) }
+							title="{ pack.name }"
+							style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+						{ /each }
+					</div>
+				</SimpleBar>
+			</div>
 
 			<!-- Sticker add modal -->
 			{ #if isStickerAddModalActive }
