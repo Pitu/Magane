@@ -13,7 +13,7 @@ const production = !process.env.ROLLUP_WATCH;
 export default {
 	input: 'src/main.js',
 	output: {
-		sourcemap: false,
+		sourcemap: true,
 		format: 'iife',
 		name: 'app',
 		file: production ? 'dist/magane.min.js' : 'dist-dev/magane.js'
