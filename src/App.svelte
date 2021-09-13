@@ -92,7 +92,7 @@
 			}
 			if (!showIcon) showIcon = true;
 			const props = el.getBoundingClientRect();
-			coords.top = isThereTopBar ? props.top - 20 : props.top - 1;
+			coords.top = isThereTopBar ? props.top - 22 : props.top + 1;
 			coords.left = props.left - 100;
 		}, 0);
 	};
