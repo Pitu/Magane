@@ -30,17 +30,14 @@ div#magane {
 		display: flex;
 		align-items: center;
 		cursor: pointer;
-		filter: grayscale(100%);
-		transition: all 0.2s ease;
 
 		 &:hover, &.active {
-			transform: scale(1.15);
-			filter: grayscale(0%);
+			filter: brightness(1.35);
 		}
 	}
 	img.channel-textarea-stickers-content {
-		width: 22px;
-		height: 22px;
+		width: 24px;
+		height: 24px;
 	}
 
 	div.stickerWindow {

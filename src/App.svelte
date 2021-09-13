@@ -92,7 +92,7 @@
 			}
 			if (!showIcon) showIcon = true;
 			const props = el.getBoundingClientRect();
-			coords.top = isThereTopBar ? props.top - 21 : props.top;
+			coords.top = isThereTopBar ? props.top - 20 : props.top - 1;
 			coords.left = props.left - 100;
 		}, 0);
 	};
@@ -861,7 +861,7 @@
 			class:active="{ stickerWindowActive }"
 			on:click="{ () => toggleStickerWindow() }"
 			on:contextmenu|stopPropagation|preventDefault="{ () => grabPacks() }">
-			<img class="channel-textarea-stickers-content" src="https://discord.com/assets/8544ea5ce32fd9e17df806eb1cfeab47.svg" alt="Magane menu button">
+			<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button">
 		</div>
 
 		{ #if stickerWindowActive }
