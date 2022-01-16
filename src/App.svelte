@@ -654,10 +654,10 @@
 		`<span class="counts"><span>–</span>${count} sticker${count === 1 ? '' : 's'}</span>`;
 
 	const formatPackAppendix = id => {
-		if (typeof id === 'number') return id;
-
 		let tmp = '';
-		if (id.startsWith('startswith-')) {
+		if (typeof id === 'number') {
+			tmp = `${id}`;
+		} else if (id.startsWith('startswith-')) {
 			tmp = `LINE ${id.replace('startswith-', '')}`;
 		} else if (id.startsWith('emojis-')) {
 			tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
