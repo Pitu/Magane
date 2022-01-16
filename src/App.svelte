@@ -654,17 +654,16 @@
 		`<span class="counts"><span>–</span>${count} sticker${count === 1 ? '' : 's'}</span>`;
 
 	const formatPackAppendix = id => {
-		let tmp = '';
-		if (typeof id === 'number') {
-			tmp = `${id}`;
-		} else if (id.startsWith('startswith-')) {
-			tmp = `LINE ${id.replace('startswith-', '')}`;
-		} else if (id.startsWith('emojis-')) {
-			tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
-		} else if (id.startsWith('custom-')) {
-			tmp = `Custom ${id.replace('custom-', '')}`;
+		let tmp = `${id}`;
+		if (typeof id === 'string') {
+			if (id.startsWith('startswith-')) {
+				tmp = `LINE ${id.replace('startswith-', '')}`;
+			} else if (id.startsWith('emojis-')) {
+				tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
+			} else if (id.startsWith('custom-')) {
+				tmp = `Custom ${id.replace('custom-', '')}`;
+			}
 		}
-		if (!tmp) return id;
 		return `<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
 	};
 
