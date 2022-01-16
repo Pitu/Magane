@@ -29,6 +29,7 @@
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
+	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
 
@@ -177,8 +178,9 @@
 				// This logic is necessary since the old data, prior to the new master rebase,
 				// would also store remote built-in packs in local storage (no idea why).
 				const filteredLocalPacks = availLocalPacks.filter(pack =>
-					typeof pack === 'object' && typeof pack.id !== 'undefined' &&
-					/^(startswith|emojis|custom)-/.test(pack.id));
+					typeof pack === 'object' &&
+					typeof pack.id !== 'undefined' &&
+					localPackIdRegex.test(pack.id));
 				if (availLocalPacks.length !== filteredLocalPacks.length) {
 					saveToLocalStorage('magane.available', filteredLocalPacks);
 				}
@@ -207,7 +209,7 @@
 				}
 				// Prioritize data of subscribed packs
 				subscribedPacks.forEach(pack => {
-					if (/^(startswith|emojis|custom)-/.test(pack.id)) {
+					if (localPackIdRegex.test(pack.id)) {
 						localPacks[pack.id] = pack;
 					}
 				});
@@ -443,7 +445,7 @@
 				}
 			}
 
-			if (/^(startswith|emojis|custom)-/.test(id)) {
+			if (localPackIdRegex.test(id)) {
 				localPacks[id] = e;
 			}
 
@@ -589,7 +591,7 @@
 	};
 
 	window.magane.deletePack = id => {
-		if (!id && !/^(startswith|emojis|custom)-/.test(id)) {
+		if (!id && !localPackIdRegex.test(id)) {
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
@@ -800,8 +802,9 @@
 		}
 		newIndex--;
 
-		const packId = event.target.dataset.pack;
+		let packId = event.target.dataset.pack;
 		if (typeof packId === 'undefined') return;
+		if (!localPackIdRegex.test(packId)) packId = Number(packId);
 
 		const oldIndex = subscribedPacks.findIndex(pack => pack.id === packId);
 		if (oldIndex === newIndex) return;
