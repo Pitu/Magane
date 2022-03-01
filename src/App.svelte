@@ -1,4 +1,5 @@
 <script>
+	/* global BdApi */
 	import { onMount, afterUpdate } from 'svelte';
 
 	// Let's make the scrollbars pretty
@@ -9,6 +10,7 @@
 
 	// APIs
 	window.magane = {};
+	const modules = {};
 
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
@@ -50,18 +52,13 @@
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
 	const toast = (message, options = {}) => {
-		/* global BdApi */
-		if (typeof BdApi === 'object' && typeof BdApi.showToast === 'function') {
-			return BdApi.showToast(message, options);
+		if (!options.nolog) {
+			if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type)) {
+				options.type = 'log';
+			}
+			log(message, options.type);
 		}
-
-		if (options.nolog) return;
-
-		// Fallback if not in BetterDiscord
-		if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type)) {
-			options.type = 'log';
-		}
-		return log(message, options.type);
+		BdApi.showToast(message, options);
 	};
 
 	const toastInfo = (message, options = {}) => {
@@ -122,36 +119,22 @@
 		}
 	};
 
-	const checkAuth = async (token = storage.token) => {
-		// No need if we are already authed
-		if (storage.canCallAPI) return;
-		if (typeof token !== 'string') throw new Error('Not a token, buddy.');
-		token = token.replace(/"/ig, '');
-		token = token.replace(/^Bot\s*/i, '');
-		const gateway = await fetch('https://discordapp.com/api/v7/gateway');
-		const gatewayJson = await gateway.json();
-		const wss = new WebSocket(`${gatewayJson.url}/?encoding=json&v6`);
-		await new Promise((resolve, reject) => {
-			wss.onerror = error => reject(error);
-			wss.onmessage = message => {
-				try {
-					const json = JSON.parse(message.data);
-					storage.canCallAPI = true;
-					json.op === 0 && json.t === 'READY' && wss.close();
-					json.op === 10 && wss.send(JSON.stringify({
-						op: 2,
-						d: {
-							token,
-							properties: { $browser: 'b1nzy is a meme' },
-							large_threshold: 50
-						}
-					}));
-					resolve();
-				} catch (error) {
-					reject(error);
-				}
-			};
-		});
+	const initModules = () => {
+		// Channel store & actions
+		modules.channelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
+		modules.selectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
+
+		// User store
+		modules.userStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
+
+		// Discord objects & utils
+		modules.discordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
+		modules.discordPermissions = modules.discordConstants.Permissions;
+		modules.permissions = BdApi.findModuleByProps('computePermissions');
+
+		// Misc
+		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
+		modules.serialize = BdApi.findModuleByProps('serialize', 'deserialize');
 	};
 
 	const getLocalStorage = () => {
@@ -315,7 +298,24 @@
 		return url;
 	};
 
-	const sendSticker = async (pack, id, token = storage.token) => {
+	const getTextArea = () => {
+		const element = document.querySelector('[class^=channelTextArea-]');
+		let cursor = element[Object.keys(element).find(key =>
+			key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))];
+		while (
+			!(
+				cursor.stateNode &&
+				cursor.stateNode.constructor &&
+				cursor.stateNode.constructor.displayName ===
+					'ChannelTextAreaForm'
+			)
+		) {
+			cursor = cursor.return;
+		}
+		return cursor;
+	};
+
+	const sendSticker = async (pack, id) => {
 		if (onCooldown) {
 			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
 		}
@@ -324,13 +324,20 @@
 		// stickerWindowActive = false;
 
 		try {
-			toast('Sending\u2026');
-			const channel = window.location.href.split('/').slice(-1)[0];
+			const userId = modules.userStore.getCurrentUser().id;
+			const channelId = modules.selectedChannelStore.getChannelId();
+			const channel = modules.channelStore.getChannel(channelId);
+			if (channel.guild_id && !modules.permissions.can(modules.discordPermissions.ATTACH_FILES, userId, channel)) {
+				onCooldown = false;
+				return toastError('You do not have permission to attach files in this channel!');
+			}
+
+			toast('Sending\u2026', { nolog: true });
 
 			const url = formatUrl(pack, id, true);
 			log(`Fetching sticker from remote: ${url}`);
 			const response = await fetch(url, { cache: 'force-cache' });
-			const myBlob = await response.blob();
+			const myBlob = await response.arrayBuffer();
 
 			let filename = id;
 			if (typeof pack === 'string') {
@@ -343,24 +350,25 @@
 				}
 			}
 
-			const formData = new FormData();
-			formData.append('file', myBlob, filename);
+			// NOTE: Buffer is Node API, but it is perfectly usable in Discord-context (Electron thing?)
+			const file = new File([Buffer.from(myBlob)], filename);
 
 			log(`Sending\u2026`);
-			token = token.replace(/"/ig, '');
-			token = token.replace(/^Bot\s*/i, '');
-			const res = await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
-				headers: { Authorization: token },
-				method: 'POST',
-				body: formData
+			const textArea = getTextArea();
+			const messageContent = textArea.stateNode.state.textValue ||
+				document.querySelector('[class^=textArea-] span').innerText;
+			modules.messageUpload.upload(channelId, file, 0, {
+				content: messageContent,
+				tts: false
 			});
-			if (res.status === 200) {
-				toastSuccess('Sent!');
-			} else if (res.status === 403) {
-				toastError('Permission denied!');
-			} else {
-				toastError(`HTTP error ${res.status}!`);
-			}
+
+			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
+			const clearedState = {
+				textValue: '',
+				richValue: modules.serialize.deserialize('')
+			};
+			textArea.stateNode.setState(clearedState);
+			document.querySelector('[class^=channelTextArea-]').__reactFiber$.return.return.return.return.return.return.stateNode.setState(clearedState);
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
@@ -670,10 +678,14 @@
 	};
 
 	onMount(async () => {
+		if (typeof BdApi !== 'object') {
+			return log('This plugin does not work outside of BetterDiscord!', 'error');
+		}
+
 		try {
 			log('Mounted on DOM');
+			initModules();
 			getLocalStorage();
-			await checkAuth();
 			await grabPacks();
 			toastSuccess('Magane initialized!');
 			resizeObserver = new ResizeObserver(positionMagane);
