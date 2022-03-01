@@ -53,10 +53,8 @@
 
 	const toast = (message, options = {}) => {
 		if (!options.nolog) {
-			if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type)) {
-				options.type = 'log';
-			}
-			log(message, options.type);
+			const type = ['log', 'info', 'warn', 'error'].includes(options.type) ? options.type : 'log';
+			log(message, type);
 		}
 		BdApi.showToast(message, options);
 	};
