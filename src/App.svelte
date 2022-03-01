@@ -678,12 +678,8 @@
 	};
 
 	onMount(async () => {
-		if (typeof BdApi !== 'object') {
-			return log('This plugin does not work outside of BetterDiscord!', 'error');
-		}
-
-		try {
 			log('Mounted on DOM');
+		try {
 			initModules();
 			getLocalStorage();
 			await grabPacks();

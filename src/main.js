@@ -22,4 +22,8 @@ const prepareDOM = () => {
 	});
 };
 
-prepareDOM();
+if (typeof BdApi === 'object') {
+	prepareDOM();
+} else {
+	console.error('This plugin does not work outside of BetterDiscord!');
+}
