@@ -327,7 +327,10 @@
 			const userId = modules.userStore.getCurrentUser().id;
 			const channelId = modules.selectedChannelStore.getChannelId();
 			const channel = modules.channelStore.getChannel(channelId);
-			if (channel.guild_id && !modules.permissions.can(modules.discordPermissions.ATTACH_FILES, userId, channel)) {
+			if (channel.guild_id && (
+				!modules.permissions.can(modules.discordPermissions.ATTACH_FILES, userId, channel) ||
+				!modules.permissions.can(modules.discordPermissions.SEND_MESSAGES, userId, channel)
+			)) {
 				onCooldown = false;
 				return toastError('You do not have permission to attach files in this channel!');
 			}
