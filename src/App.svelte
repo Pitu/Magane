@@ -14,7 +14,7 @@
 
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
-	const selectorTextArea = 'div[class^=textArea] div[aria-multiline][contenteditable]';
+	const selectorTextArea = '[class^=channelTextArea-]';
 	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
 	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
@@ -298,9 +298,8 @@
 		return url;
 	};
 
-	const getTextArea = () => {
-		const element = document.querySelector('[class^=channelTextArea-]');
-		let cursor = element[Object.keys(element).find(key =>
+	const getTextAreaInstance = () => {
+		let cursor = textArea[Object.keys(textArea).find(key =>
 			key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))];
 		while (
 			!(
@@ -357,8 +356,8 @@
 			const file = new File([Buffer.from(myBlob)], filename);
 
 			log(`Sending\u2026`);
-			const textArea = getTextArea();
-			const messageContent = textArea.stateNode.state.textValue ||
+			const textAreaInstance = getTextAreaInstance();
+			const messageContent = textAreaInstance.stateNode.state.textValue ||
 				document.querySelector('[class^=textArea-] span').innerText;
 			modules.messageUpload.upload(channelId, file, 0, {
 				content: messageContent,
@@ -366,7 +365,7 @@
 			});
 
 			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
-			textArea.stateNode.setState({
+			textAreaInstance.stateNode.setState({
 				textValue: '',
 				richValue: modules.serialize.deserialize('')
 			});
