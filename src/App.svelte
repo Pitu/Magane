@@ -363,12 +363,10 @@
 			});
 
 			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
-			const clearedState = {
+			textArea.stateNode.setState({
 				textValue: '',
 				richValue: modules.serialize.deserialize('')
-			};
-			textArea.stateNode.setState(clearedState);
-			document.querySelector('[class^=channelTextArea-]').__reactFiber$.return.return.return.return.return.return.stateNode.setState(clearedState);
+			});
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
@@ -678,7 +676,7 @@
 	};
 
 	onMount(async () => {
-			log('Mounted on DOM');
+		log('Mounted on DOM');
 		try {
 			initModules();
 			getLocalStorage();
