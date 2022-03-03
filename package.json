@@ -40,7 +40,8 @@
   "eslintConfig": {
     "extends": "aqua/svelte",
     "env": {
-      "browser": true
+      "browser": true,
+      "node": true
     },
     "rules": {
       "semi": "error"

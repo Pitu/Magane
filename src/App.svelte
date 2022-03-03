@@ -1,4 +1,5 @@
 <script>
+	/* global BdApi */
 	import { onMount, afterUpdate } from 'svelte';
 
 	// Let's make the scrollbars pretty
@@ -9,10 +10,11 @@
 
 	// APIs
 	window.magane = {};
+	const modules = {};
 
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
-	const selectorTextArea = 'div[class^=textArea] div[aria-multiline][contenteditable]';
+	const selectorTextArea = '[class^=channelTextArea-]';
 	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
 	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
@@ -29,6 +31,7 @@
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
+	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
 
@@ -49,18 +52,11 @@
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
 	const toast = (message, options = {}) => {
-		/* global BdApi */
-		if (typeof BdApi === 'object' && typeof BdApi.showToast === 'function') {
-			return BdApi.showToast(message, options);
+		if (!options.nolog) {
+			const type = ['log', 'info', 'warn', 'error'].includes(options.type) ? options.type : 'log';
+			log(message, type);
 		}
-
-		if (options.nolog) return;
-
-		// Fallback if not in BetterDiscord
-		if (!options.type || !['log', 'info', 'warn', 'error'].includes(options.type)) {
-			options.type = 'log';
-		}
-		return log(message, options.type);
+		BdApi.showToast(message, options);
 	};
 
 	const toastInfo = (message, options = {}) => {
@@ -121,36 +117,22 @@
 		}
 	};
 
-	const checkAuth = async (token = storage.token) => {
-		// No need if we are already authed
-		if (storage.canCallAPI) return;
-		if (typeof token !== 'string') throw new Error('Not a token, buddy.');
-		token = token.replace(/"/ig, '');
-		token = token.replace(/^Bot\s*/i, '');
-		const gateway = await fetch('https://discordapp.com/api/v7/gateway');
-		const gatewayJson = await gateway.json();
-		const wss = new WebSocket(`${gatewayJson.url}/?encoding=json&v6`);
-		await new Promise((resolve, reject) => {
-			wss.onerror = error => reject(error);
-			wss.onmessage = message => {
-				try {
-					const json = JSON.parse(message.data);
-					storage.canCallAPI = true;
-					json.op === 0 && json.t === 'READY' && wss.close();
-					json.op === 10 && wss.send(JSON.stringify({
-						op: 2,
-						d: {
-							token,
-							properties: { $browser: 'b1nzy is a meme' },
-							large_threshold: 50
-						}
-					}));
-					resolve();
-				} catch (error) {
-					reject(error);
-				}
-			};
-		});
+	const initModules = () => {
+		// Channel store & actions
+		modules.channelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
+		modules.selectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
+
+		// User store
+		modules.userStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
+
+		// Discord objects & utils
+		modules.discordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
+		modules.discordPermissions = modules.discordConstants.Permissions;
+		modules.permissions = BdApi.findModuleByProps('computePermissions');
+
+		// Misc
+		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
+		modules.serialize = BdApi.findModuleByProps('serialize', 'deserialize');
 	};
 
 	const getLocalStorage = () => {
@@ -177,8 +159,9 @@
 				// This logic is necessary since the old data, prior to the new master rebase,
 				// would also store remote built-in packs in local storage (no idea why).
 				const filteredLocalPacks = availLocalPacks.filter(pack =>
-					typeof pack === 'object' && typeof pack.id !== 'undefined' &&
-					/^(startswith|emojis|custom)-/.test(pack.id));
+					typeof pack === 'object' &&
+					typeof pack.id !== 'undefined' &&
+					localPackIdRegex.test(pack.id));
 				if (availLocalPacks.length !== filteredLocalPacks.length) {
 					saveToLocalStorage('magane.available', filteredLocalPacks);
 				}
@@ -207,7 +190,7 @@
 				}
 				// Prioritize data of subscribed packs
 				subscribedPacks.forEach(pack => {
-					if (/^(startswith|emojis|custom)-/.test(pack.id)) {
+					if (localPackIdRegex.test(pack.id)) {
 						localPacks[pack.id] = pack;
 					}
 				});
@@ -313,7 +296,23 @@
 		return url;
 	};
 
-	const sendSticker = async (pack, id, token = storage.token) => {
+	const getTextAreaInstance = () => {
+		let cursor = textArea[Object.keys(textArea).find(key =>
+			key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))];
+		while (
+			!(
+				cursor.stateNode &&
+				cursor.stateNode.constructor &&
+				cursor.stateNode.constructor.displayName ===
+					'ChannelTextAreaForm'
+			)
+		) {
+			cursor = cursor.return;
+		}
+		return cursor;
+	};
+
+	const sendSticker = async (pack, id) => {
 		if (onCooldown) {
 			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
 		}
@@ -322,43 +321,52 @@
 		// stickerWindowActive = false;
 
 		try {
-			toast('Sending\u2026');
-			const channel = window.location.href.split('/').slice(-1)[0];
+			const userId = modules.userStore.getCurrentUser().id;
+			const channelId = modules.selectedChannelStore.getChannelId();
+			const channel = modules.channelStore.getChannel(channelId);
+			if (channel.guild_id && (
+				!modules.permissions.can(modules.discordPermissions.ATTACH_FILES, userId, channel) ||
+				!modules.permissions.can(modules.discordPermissions.SEND_MESSAGES, userId, channel)
+			)) {
+				onCooldown = false;
+				return toastError('You do not have permission to attach files in this channel.');
+			}
+
+			toast('Sending\u2026', { nolog: true });
 
 			const url = formatUrl(pack, id, true);
 			log(`Fetching sticker from remote: ${url}`);
 			const response = await fetch(url, { cache: 'force-cache' });
-			const myBlob = await response.blob();
+			const myBlob = await response.arrayBuffer();
 
 			let filename = id;
 			if (typeof pack === 'string') {
 				if (pack.startsWith('startswith-') && localPacks[pack].animated) {
 					filename = filename.replace(/\.png$/i, '.gif');
-					toastWarn('Animated stickers from LINE Store currently cannot be animated!');
+					toastWarn('Animated stickers from LINE Store currently cannot be animated.');
 				} else if (pack.startsWith('custom-')) {
 					// Obfuscate file name of stickers from custom packs
 					filename = `${Date.now().toString()}.${id.split('.')[1]}`;
 				}
 			}
 
-			const formData = new FormData();
-			formData.append('file', myBlob, filename);
+			// NOTE: Buffer is Node API, but it is perfectly usable in Discord-context (Electron thing?)
+			const file = new File([Buffer.from(myBlob)], filename);
 
 			log(`Sending\u2026`);
-			token = token.replace(/"/ig, '');
-			token = token.replace(/^Bot\s*/i, '');
-			const res = await fetch(`https://discordapp.com/api/channels/${channel}/messages`, {
-				headers: { Authorization: token },
-				method: 'POST',
-				body: formData
+			const textAreaInstance = getTextAreaInstance();
+			const messageContent = textAreaInstance.stateNode.state.textValue ||
+				document.querySelector('[class^=textArea-] span').innerText;
+			modules.messageUpload.upload(channelId, file, 0, {
+				content: messageContent,
+				tts: false
 			});
-			if (res.status === 200) {
-				toastSuccess('Sent!');
-			} else if (res.status === 403) {
-				toastError('Permission denied!');
-			} else {
-				toastError(`HTTP error ${res.status}!`);
-			}
+
+			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
+			textAreaInstance.stateNode.setState({
+				textValue: '',
+				richValue: modules.serialize.deserialize('')
+			});
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
@@ -385,7 +393,7 @@
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
-		toastSuccess('Favorited!', { nolog: true });
+		toastSuccess('Favorited', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -409,7 +417,7 @@
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited sticker > ${id} of pack ${pack}`);
-		toastInfo('Unfavorited!', { nolog: true });
+		toastInfo('Unfavorited', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -443,7 +451,7 @@
 				}
 			}
 
-			if (/^(startswith|emojis|custom)-/.test(id)) {
+			if (localPackIdRegex.test(id)) {
 				localPacks[id] = e;
 			}
 
@@ -589,7 +597,7 @@
 	};
 
 	window.magane.deletePack = id => {
-		if (!id && !/^(startswith|emojis|custom)-/.test(id)) {
+		if (!id && !localPackIdRegex.test(id)) {
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
@@ -654,27 +662,26 @@
 		`<span class="counts"><span>–</span>${count} sticker${count === 1 ? '' : 's'}</span>`;
 
 	const formatPackAppendix = id => {
-		if (typeof id === 'number') return id;
-
-		let tmp = '';
-		if (id.startsWith('startswith-')) {
-			tmp = `LINE ${id.replace('startswith-', '')}`;
-		} else if (id.startsWith('emojis-')) {
-			tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
-		} else if (id.startsWith('custom-')) {
-			tmp = `Custom ${id.replace('custom-', '')}`;
+		let tmp = `${id}`;
+		if (typeof id === 'string') {
+			if (id.startsWith('startswith-')) {
+				tmp = `LINE ${id.replace('startswith-', '')}`;
+			} else if (id.startsWith('emojis-')) {
+				tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
+			} else if (id.startsWith('custom-')) {
+				tmp = `Custom ${id.replace('custom-', '')}`;
+			}
 		}
-		if (!tmp) return id;
 		return `<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
 	};
 
 	onMount(async () => {
+		log('Mounted on DOM');
 		try {
-			log('Mounted on DOM');
+			initModules();
 			getLocalStorage();
-			await checkAuth();
 			await grabPacks();
-			toastSuccess('Magane initialized!');
+			toastSuccess('Magane initialized.');
 			resizeObserver = new ResizeObserver(positionMagane);
 			await waitForTextArea();
 			resizeObserver.observe(textArea);
@@ -801,8 +808,9 @@
 		}
 		newIndex--;
 
-		const packId = event.target.dataset.pack;
+		let packId = event.target.dataset.pack;
 		if (typeof packId === 'undefined') return;
+		if (!localPackIdRegex.test(packId)) packId = Number(packId);
 
 		const oldIndex = subscribedPacks.findIndex(pack => pack.id === packId);
 		if (oldIndex === newIndex) return;
