@@ -329,7 +329,7 @@
 				!modules.permissions.can(modules.discordPermissions.SEND_MESSAGES, userId, channel)
 			)) {
 				onCooldown = false;
-				return toastError('You do not have permission to attach files in this channel!');
+				return toastError('You do not have permission to attach files in this channel.');
 			}
 
 			toast('Sending\u2026', { nolog: true });
@@ -343,7 +343,7 @@
 			if (typeof pack === 'string') {
 				if (pack.startsWith('startswith-') && localPacks[pack].animated) {
 					filename = filename.replace(/\.png$/i, '.gif');
-					toastWarn('Animated stickers from LINE Store currently cannot be animated!');
+					toastWarn('Animated stickers from LINE Store currently cannot be animated.');
 				} else if (pack.startsWith('custom-')) {
 					// Obfuscate file name of stickers from custom packs
 					filename = `${Date.now().toString()}.${id.split('.')[1]}`;
@@ -393,7 +393,7 @@
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
-		toastSuccess('Favorited!', { nolog: true });
+		toastSuccess('Favorited', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -417,7 +417,7 @@
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited sticker > ${id} of pack ${pack}`);
-		toastInfo('Unfavorited!', { nolog: true });
+		toastInfo('Unfavorited', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -681,7 +681,7 @@
 			initModules();
 			getLocalStorage();
 			await grabPacks();
-			toastSuccess('Magane initialized!');
+			toastSuccess('Magane initialized.');
 			resizeObserver = new ResizeObserver(positionMagane);
 			await waitForTextArea();
 			resizeObserver.observe(textArea);
