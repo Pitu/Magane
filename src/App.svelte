@@ -132,7 +132,7 @@
 
 		// Misc
 		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
-		modules.serialize = BdApi.findModuleByProps('serialize', 'deserialize');
+		modules.richUtils = BdApi.findModuleByProps('toRichValue', 'createEmptyState');
 	};
 
 	const getLocalStorage = () => {
@@ -365,7 +365,7 @@
 			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
 			textAreaInstance.stateNode.setState({
 				textValue: '',
-				richValue: modules.serialize.deserialize('')
+				richValue: modules.richUtils.toRichValue('')
 			});
 		} catch (error) {
 			console.error(error);
