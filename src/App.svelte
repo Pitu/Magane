@@ -373,9 +373,12 @@
 			const textAreaInstance = getTextAreaInstance();
 			const messageContent = textAreaInstance.stateNode.state.textValue ||
 				document.querySelector('[class^=textArea-] span').innerText;
-			modules.messageUpload.upload(channelId, file, 0, {
-				content: messageContent,
-				tts: false
+			modules.messageUpload.upload({
+				channelId,
+				file,
+				message: {
+					content: messageContent
+				}
 			});
 
 			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
