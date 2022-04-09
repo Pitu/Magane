@@ -128,7 +128,8 @@
 		// Discord objects & utils
 		modules.discordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
 		modules.discordPermissions = modules.discordConstants.Permissions;
-		modules.permissions = BdApi.findModuleByProps('computePermissions');
+		modules.permissionRoleUtils = BdApi.findModuleByProps('can', 'ALLOW', 'DENY');
+		modules.computePermissions = BdApi.findModuleByProps('computePermissions');
 
 		// Misc
 		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
@@ -312,6 +313,21 @@
 		return cursor;
 	};
 
+	const hasPermissions = (permissions, user, context) => {
+		if (!user) return false;
+		// Always true in non-guild channels (e.g. DMs)
+		if (!permissions || !context.guild_id) return true;
+		permissions = Array.isArray(permissions) ? permissions : [permissions];
+		for (const permission of permissions) {
+			// Fallback of the old method as it appeared to be a rolling update
+			if (!modules.permissionRoleUtils.can({ permission, user, context }) &&
+				!modules.computePermissions.can(permission, user, context)) {
+				return false;
+			}
+		}
+		return true;
+	};
+
 	const sendSticker = async (pack, id) => {
 		if (onCooldown) {
 			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
@@ -324,10 +340,10 @@
 			const userId = modules.userStore.getCurrentUser().id;
 			const channelId = modules.selectedChannelStore.getChannelId();
 			const channel = modules.channelStore.getChannel(channelId);
-			if (channel.guild_id && (
-				!modules.permissions.can(modules.discordPermissions.ATTACH_FILES, userId, channel) ||
-				!modules.permissions.can(modules.discordPermissions.SEND_MESSAGES, userId, channel)
-			)) {
+			if (!hasPermissions([
+				modules.discordPermissions.ATTACH_FILES,
+				modules.discordPermissions.SEND_MESSAGES
+			], userId, channel)) {
 				onCooldown = false;
 				return toastError('You do not have permission to attach files in this channel.');
 			}
@@ -357,9 +373,12 @@
 			const textAreaInstance = getTextAreaInstance();
 			const messageContent = textAreaInstance.stateNode.state.textValue ||
 				document.querySelector('[class^=textArea-] span').innerText;
-			modules.messageUpload.upload(channelId, file, 0, {
-				content: messageContent,
-				tts: false
+			modules.messageUpload.upload({
+				channelId,
+				file,
+				message: {
+					content: messageContent
+				}
 			});
 
 			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
