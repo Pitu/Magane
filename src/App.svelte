@@ -412,7 +412,7 @@
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
-		toastSuccess('Favorited', { nolog: true });
+		toastSuccess('Favorited.', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -436,7 +436,7 @@
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited sticker > ${id} of pack ${pack}`);
-		toastInfo('Unfavorited', { nolog: true });
+		toastInfo('Unfavorited.', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -543,7 +543,7 @@
 			storage.setItem('magane.favorites', JSON.stringify(favorites));
 			storage.setItem('magane.subscribed', JSON.stringify(subscribed));
 			await grabPacks();
-			toastSuccess('Migration successful');
+			toastSuccess('Migration successful.');
 		}
 	};
 
@@ -823,7 +823,7 @@
 
 		let newIndex = Number(value);
 		if (isNaN(newIndex) || newIndex < 1 || newIndex > subscribedPacks.length) {
-			return toastError(`New position must be ≥ 1 and ≤ ${subscribedPacks.length}!`);
+			return toastError(`New position must be ≥ 1 and ≤ ${subscribedPacks.length}.`);
 		}
 		newIndex--;
 
@@ -850,7 +850,7 @@
 		subscribedPacks = subscribedPacks;
 		subscribedPacksSimple = subscribedPacksSimple;
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}!`);
+		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}.`);
 	};
 
 	const parseLinePack = async () => {
