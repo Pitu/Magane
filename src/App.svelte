@@ -1064,7 +1064,7 @@
 						</SimpleBar>
 						{ :else if activeTab === 2 }
 						<div class="tabContent line-proxy">
-							<p>If you are looking for a sticker pack that is not provided by magane, you can go to the LINE store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
+							<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
 							<input
 								bind:value={ linePackSearch }
 								class="inputQuery"
