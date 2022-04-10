@@ -2,7 +2,7 @@
 
 name: Release
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
@@ -23,12 +23,12 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repo
         uses: actions/checkout@v2
-      
+
       - name: Install Node v14
         uses: actions/setup-node@v1
         with:
           node-version: 14
-          
+
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
@@ -49,4 +49,4 @@ jobs:
       - uses: EndBug/add-and-commit@v6
         with:
           branch: master
-          message: 'Deploy new dist file'
+          message: 'dist: deploy new dist file'
