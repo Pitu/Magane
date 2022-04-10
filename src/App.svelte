@@ -48,6 +48,13 @@
 	let packsSearch = null;
 	let resizeObserver;
 
+	// NOTE: For the time being only used to limit keys in replace/export database functions
+	const allowedStorageKeys = [
+		'magane.available',
+		'magane.subscribed',
+		'magane.favorites'
+	];
+
 	const log = (message, type = 'log') =>
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
@@ -412,7 +419,7 @@
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
-		toastSuccess('Favorited', { nolog: true });
+		toastSuccess('Favorited.', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -436,7 +443,7 @@
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited sticker > ${id} of pack ${pack}`);
-		toastInfo('Unfavorited', { nolog: true });
+		toastInfo('Unfavorited.', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -453,39 +460,35 @@
 	};
 
 	const _appendPack = (id, e) => {
-		try { // eslint-disable-line no-useless-catch
-			if (!e.count || !e.files.length) {
-				throw new Error('Invalid stickers count.');
-			}
+		if (!e.count || !e.files.length) {
+			throw new Error('Invalid stickers count.');
+		}
 
-			let availLocalPacks = [];
-			const storedLocalPacks = storage.getItem('magane.available');
-			if (storedLocalPacks) {
-				availLocalPacks = JSON.parse(storedLocalPacks);
-				if (availLocalPacks) {
-					const index = availLocalPacks.findIndex(p => p.id === id);
-					if (index >= 0) {
-						throw new Error(`Pack with ID ${id} already exist`);
-					}
+		let availLocalPacks = [];
+		const storedLocalPacks = storage.getItem('magane.available');
+		if (storedLocalPacks) {
+			availLocalPacks = JSON.parse(storedLocalPacks);
+			if (availLocalPacks) {
+				const index = availLocalPacks.findIndex(p => p.id === id);
+				if (index >= 0) {
+					throw new Error(`Pack with ID ${id} already exist`);
 				}
 			}
-
-			if (localPackIdRegex.test(id)) {
-				localPacks[id] = e;
-			}
-
-			availLocalPacks.unshift(e);
-			saveToLocalStorage('magane.available', availLocalPacks);
-
-			availablePacks.unshift(e);
-			availablePacks = availablePacks;
-			filterPacks();
-
-			log(`Added a new pack with ID ${id}`);
-			return true;
-		} catch (ex) {
-			throw ex;
 		}
+
+		if (localPackIdRegex.test(id)) {
+			localPacks[id] = e;
+		}
+
+		availLocalPacks.unshift(e);
+		saveToLocalStorage('magane.available', availLocalPacks);
+
+		availablePacks.unshift(e);
+		availablePacks = availablePacks;
+		filterPacks();
+
+		log(`Added a new pack with ID ${id}`);
+		return e;
 	};
 
 	/*
@@ -543,7 +546,7 @@
 			storage.setItem('magane.favorites', JSON.stringify(favorites));
 			storage.setItem('magane.subscribed', JSON.stringify(subscribed));
 			await grabPacks();
-			toastSuccess('Migration successful');
+			toastSuccess('Migration successful.');
 		}
 	};
 
@@ -823,7 +826,7 @@
 
 		let newIndex = Number(value);
 		if (isNaN(newIndex) || newIndex < 1 || newIndex > subscribedPacks.length) {
-			return toastError(`New position must be ≥ 1 and ≤ ${subscribedPacks.length}!`);
+			return toastError(`New position must be ≥ 1 and ≤ ${subscribedPacks.length}.`);
 		}
 		newIndex--;
 
@@ -850,7 +853,7 @@
 		subscribedPacks = subscribedPacks;
 		subscribedPacksSimple = subscribedPacksSimple;
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}!`);
+		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}.`);
 	};
 
 	const parseLinePack = async () => {
@@ -858,13 +861,15 @@
 		try {
 			const match = linePackSearch.match(/^(https?:\/\/store\.line\.me\/((sticker|emoji)shop)\/product\/)?([a-z0-9]+)/);
 			if (!match) return toastError('Unsupported LINE Store URL or ID.');
+			toast('Loading pack information\u2026', { nolog: true });
+			let stored;
 			if (match[3] === 'emoji') {
 				// LINE Emojis will only work when using its full URL
 				const id = match[4];
 				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
 				const props = await response.json();
 				linePackSearch = null;
-				window.magane.appendEmojisPack(props.title, props.id, props.len);
+				stored = window.magane.appendEmojisPack(props.title, props.id, props.len);
 			} else {
 				// LINE Stickers work with either its full URL or just its ID
 				const id = Number(match[4]);
@@ -872,12 +877,100 @@
 				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
 				const props = await response.json();
 				linePackSearch = null;
-				window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
+				stored = window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
 			}
+			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred. Check your console for details.');
 		}
+	};
+
+	const onReplaceDatabaseChange = event => {
+		const file = event.target.files[0];
+		if (!file) return false;
+
+		const reader = new FileReader();
+		reader.onload = e => {
+			// Reset selected file in the hidden input
+			event.target.value = '';
+
+			let result;
+			try {
+				result = JSON.parse(e.target.result);
+			} catch (error) {
+				toastError('The selected file is not a valid JSON file.');
+			}
+
+			const content = ['This database contains the following data:'];
+			let c = 0;
+			for (const key of allowedStorageKeys) {
+				const len = result[key] ? result[key].length : 0;
+				content.push(`${key} has ${len} item${'' ? len === 1 : 's'}`);
+				c++;
+			}
+
+			if (c === 0) {
+				return toastError('The selected file does not have valid magane storage keys.');
+			}
+
+			content.push('Please continue only if you trust this database file.');
+			BdApi.showConfirmationModal(
+				'Replace Database',
+				content,
+				{
+					confirmText: 'Replace',
+					cancelText: 'Cancel',
+					danger: true,
+					onConfirm: () => {
+						for (const key of allowedStorageKeys) {
+							saveToLocalStorage(key, result[key] || []);
+						}
+						BdApi.showConfirmationModal(
+							'Reload Now',
+							'Please reload Discord immediately (Ctrl + R) to complete Magane database replacement.',
+							{
+								cancelText: 'Later',
+								onConfirm: () => window.location.reload()
+							}
+						);
+					}
+				}
+			);
+		};
+
+		log(`Reading ${file.name}\u2026`);
+		reader.readAsText(file);
+	};
+
+	const replaceDatabase = () => {
+		const element = document.getElementById('replaceDatabaseInput');
+		element.click();
+	};
+
+	const exportDatabase = () => {
+		const element = document.createElement('a');
+		let hrefUrl = '';
+
+		try {
+			toast('Exporting database\u2026');
+			const database = {};
+			for (const key of allowedStorageKeys) {
+				database[key] = JSON.parse(storage.getItem(key));
+			}
+			const dbString = JSON.stringify(database);
+			const blob = new Blob([dbString]);
+			hrefUrl = window.URL.createObjectURL(blob);
+			element.href = hrefUrl;
+			element.download = `magane.database.${new Date().toISOString()}.json`;
+			element.click();
+		} catch (error) {
+			console.error(error);
+			toastError('Unexpected error occurred. Check your console for details.');
+		}
+
+		element.remove();
+		if (hrefUrl) window.URL.revokeObjectURL(hrefUrl);
 	};
 </script>
 
@@ -1000,6 +1093,11 @@
 								class:is-active="{ activeTab === 2 }">
 								LINE
 							</div>
+							<div class="tab"
+								on:click="{ () => activateTab(3) }"
+								class:is-active="{ activeTab === 3 }">
+								Misc
+							</div>
 						</div>
 
 						{ #if activeTab === 0 }
@@ -1064,7 +1162,7 @@
 						</SimpleBar>
 						{ :else if activeTab === 2 }
 						<div class="tabContent line-proxy">
-							<p>If you are looking for a sticker pack that is not provided by magane, you can go to the LINE store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
+							<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
 							<input
 								bind:value={ linePackSearch }
 								class="inputQuery"
@@ -1073,6 +1171,27 @@
 							<button class="button is-primary"
 								on:click="{ () => parseLinePack() }">Add</button>
 						</div>
+						{ :else if activeTab === 3 }
+						<SimpleBar class="tabContent misc" style="">
+							<div class="section database">
+								<p class="section-title">Database</p>
+								<p>
+									<input
+										id="replaceDatabaseInput"
+										type="file"
+										style="display: none"
+										accept="application/JSON"
+										on:click="{ event => event.stopPropagation() }"
+										on:change="{ onReplaceDatabaseChange }" />
+									<button class="button is-danger has-width-full"
+										on:click="{ () => replaceDatabase() }">Replace Database</button>
+								</p>
+								<p>
+									<button class="button is-primary has-width-full"
+										on:click="{ () => exportDatabase() }">Export Database</button>
+								</p>
+							</div>
+						</SimpleBar>
 						{ /if }
 					</div>
 				</div>
