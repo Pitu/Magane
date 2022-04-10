@@ -1178,8 +1178,8 @@
 								<p>
 									<input
 										id="replaceDatabaseInput"
-										class="visually-hidden"
 										type="file"
+										style="display: none"
 										accept="application/JSON"
 										on:click="{ event => event.stopPropagation() }"
 										on:change="{ onReplaceDatabaseChange }" />
