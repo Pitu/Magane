@@ -453,39 +453,35 @@
 	};
 
 	const _appendPack = (id, e) => {
-		try { // eslint-disable-line no-useless-catch
-			if (!e.count || !e.files.length) {
-				throw new Error('Invalid stickers count.');
-			}
+		if (!e.count || !e.files.length) {
+			throw new Error('Invalid stickers count.');
+		}
 
-			let availLocalPacks = [];
-			const storedLocalPacks = storage.getItem('magane.available');
-			if (storedLocalPacks) {
-				availLocalPacks = JSON.parse(storedLocalPacks);
-				if (availLocalPacks) {
-					const index = availLocalPacks.findIndex(p => p.id === id);
-					if (index >= 0) {
-						throw new Error(`Pack with ID ${id} already exist`);
-					}
+		let availLocalPacks = [];
+		const storedLocalPacks = storage.getItem('magane.available');
+		if (storedLocalPacks) {
+			availLocalPacks = JSON.parse(storedLocalPacks);
+			if (availLocalPacks) {
+				const index = availLocalPacks.findIndex(p => p.id === id);
+				if (index >= 0) {
+					throw new Error(`Pack with ID ${id} already exist`);
 				}
 			}
-
-			if (localPackIdRegex.test(id)) {
-				localPacks[id] = e;
-			}
-
-			availLocalPacks.unshift(e);
-			saveToLocalStorage('magane.available', availLocalPacks);
-
-			availablePacks.unshift(e);
-			availablePacks = availablePacks;
-			filterPacks();
-
-			log(`Added a new pack with ID ${id}`);
-			return true;
-		} catch (ex) {
-			throw ex;
 		}
+
+		if (localPackIdRegex.test(id)) {
+			localPacks[id] = e;
+		}
+
+		availLocalPacks.unshift(e);
+		saveToLocalStorage('magane.available', availLocalPacks);
+
+		availablePacks.unshift(e);
+		availablePacks = availablePacks;
+		filterPacks();
+
+		log(`Added a new pack with ID ${id}`);
+		return e;
 	};
 
 	/*
@@ -858,13 +854,15 @@
 		try {
 			const match = linePackSearch.match(/^(https?:\/\/store\.line\.me\/((sticker|emoji)shop)\/product\/)?([a-z0-9]+)/);
 			if (!match) return toastError('Unsupported LINE Store URL or ID.');
+			toast('Loading pack information\u2026', { nolog: true });
+			let stored;
 			if (match[3] === 'emoji') {
 				// LINE Emojis will only work when using its full URL
 				const id = match[4];
 				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
 				const props = await response.json();
 				linePackSearch = null;
-				window.magane.appendEmojisPack(props.title, props.id, props.len);
+				stored = window.magane.appendEmojisPack(props.title, props.id, props.len);
 			} else {
 				// LINE Stickers work with either its full URL or just its ID
 				const id = Number(match[4]);
@@ -872,7 +870,14 @@
 				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
 				const props = await response.json();
 				linePackSearch = null;
-				window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
+				stored = window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
+			}
+			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
+		} catch (error) {
+			console.error(error);
+			toastError('Unexpected error occurred. Check your console for details.');
+		}
+	};
 			}
 		} catch (error) {
 			console.error(error);
