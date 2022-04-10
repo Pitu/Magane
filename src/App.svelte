@@ -48,6 +48,13 @@
 	let packsSearch = null;
 	let resizeObserver;
 
+	// NOTE: For the time being only used to limit keys in replace/export database functions
+	const allowedStorageKeys = [
+		'magane.available',
+		'magane.subscribed',
+		'magane.favorites'
+	];
+
 	const log = (message, type = 'log') =>
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
@@ -878,11 +885,92 @@
 			toastError('Unexpected error occurred. Check your console for details.');
 		}
 	};
+
+	const onReplaceDatabaseChange = event => {
+		const file = event.target.files[0];
+		if (!file) return false;
+
+		const reader = new FileReader();
+		reader.onload = e => {
+			// Reset selected file in the hidden input
+			event.target.value = '';
+
+			let result;
+			try {
+				result = JSON.parse(e.target.result);
+			} catch (error) {
+				toastError('The selected file is not a valid JSON file.');
 			}
+
+			const content = ['This database contains the following data:'];
+			let c = 0;
+			for (const key of allowedStorageKeys) {
+				const len = result[key] ? result[key].length : 0;
+				content.push(`${key} has ${len} item${'' ? len === 1 : 's'}`);
+				c++;
+			}
+
+			if (c === 0) {
+				return toastError('The selected file does not have valid magane storage keys.');
+			}
+
+			content.push('Please continue only if you trust this database file.');
+			BdApi.showConfirmationModal(
+				'Replace Database',
+				content,
+				{
+					confirmText: 'Replace',
+					cancelText: 'Cancel',
+					danger: true,
+					onConfirm: () => {
+						for (const key of allowedStorageKeys) {
+							saveToLocalStorage(key, result[key] || []);
+						}
+						BdApi.showConfirmationModal(
+							'Reload Now',
+							'Please reload Discord immediately (Ctrl + R) to complete Magane database replacement.',
+							{
+								cancelText: 'Later',
+								onConfirm: () => window.location.reload()
+							}
+						);
+					}
+				}
+			);
+		};
+
+		log(`Reading ${file.name}\u2026`);
+		reader.readAsText(file);
+	};
+
+	const replaceDatabase = () => {
+		const element = document.getElementById('replaceDatabaseInput');
+		element.click();
+	};
+
+	const exportDatabase = () => {
+		const element = document.createElement('a');
+		let hrefUrl = '';
+
+		try {
+			toast('Exporting database\u2026');
+			const database = {};
+			for (const key of allowedStorageKeys) {
+				database[key] = JSON.parse(storage.getItem(key));
+			}
+			const dbString = JSON.stringify(database);
+			const blob = new Blob([dbString]);
+			hrefUrl = window.URL.createObjectURL(blob);
+			element.href = hrefUrl;
+			element.download = `magane.database.${new Date().toISOString()}.json`;
+			element.click();
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred. Check your console for details.');
 		}
+
+		element.remove();
+		if (hrefUrl) window.URL.revokeObjectURL(hrefUrl);
 	};
 </script>
 
@@ -1005,6 +1093,11 @@
 								class:is-active="{ activeTab === 2 }">
 								LINE
 							</div>
+							<div class="tab"
+								on:click="{ () => activateTab(3) }"
+								class:is-active="{ activeTab === 3 }">
+								Misc
+							</div>
 						</div>
 
 						{ #if activeTab === 0 }
@@ -1078,6 +1171,27 @@
 							<button class="button is-primary"
 								on:click="{ () => parseLinePack() }">Add</button>
 						</div>
+						{ :else if activeTab === 3 }
+						<SimpleBar class="tabContent misc" style="">
+							<div class="section database">
+								<p class="section-title">Database</p>
+								<p>
+									<input
+										id="replaceDatabaseInput"
+										class="visually-hidden"
+										type="file"
+										accept="application/JSON"
+										on:click="{ event => event.stopPropagation() }"
+										on:change="{ onReplaceDatabaseChange }" />
+									<button class="button is-danger has-width-full"
+										on:click="{ () => replaceDatabase() }">Replace Database</button>
+								</p>
+								<p>
+									<button class="button is-primary has-width-full"
+										on:click="{ () => exportDatabase() }">Export Database</button>
+								</p>
+							</div>
+						</SimpleBar>
 						{ /if }
 					</div>
 				</div>

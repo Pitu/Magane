@@ -327,6 +327,18 @@ div#magane {
 							user-select: text;
 						}
 					}
+
+					&.misc {
+						margin: 0 5px 10px;
+
+						.section {
+							padding: 5px 12px;
+
+							.section-title {
+								font-weight: 800;
+							}
+						}
+					}
 				}
 
 				div.pack {
@@ -527,6 +539,10 @@ div#magane {
 
 		&:hover, &.is-primary:hover {
 			transform: scale3d(1.1, 1.1, 1.1);
+		}
+
+		&.has-width-full {
+			width: 100%;
 		}
 	}
 }
