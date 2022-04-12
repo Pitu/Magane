@@ -15,6 +15,7 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
 	const selectorTextArea = '[class^=channelTextArea-]';
+	const selectorTextAreaInput = '[class^=channelTextArea-] span';
 	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
 	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
@@ -377,9 +378,17 @@
 			const file = new File([Buffer.from(myBlob)], filename);
 
 			log(`Sending\u2026`);
+
+			let messageContent = '';
 			const textAreaInstance = getTextAreaInstance();
-			const messageContent = textAreaInstance.stateNode.state.textValue ||
-				document.querySelector('[class^=textArea-] span').innerText;
+			if (textAreaInstance) {
+				messageContent = textAreaInstance.stateNode.state.textValue;
+			} else {
+				log('Unable to fetch text area of chat input, sending sticker as is\u2026', 'warn');
+				const element = document.querySelector(selectorTextAreaInput);
+				if (element) messageContent = element.innerText;
+			}
+
 			modules.messageUpload.upload({
 				channelId,
 				file,
@@ -389,10 +398,12 @@
 			});
 
 			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
-			textAreaInstance.stateNode.setState({
-				textValue: '',
-				richValue: modules.richUtils.toRichValue('')
-			});
+			if (textAreaInstance) {
+				textAreaInstance.stateNode.setState({
+					textValue: '',
+					richValue: modules.richUtils.toRichValue('')
+				});
+			}
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
