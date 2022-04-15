@@ -15,7 +15,6 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
 	const selectorTextArea = '[class^=channelTextArea-]';
-	const selectorTextAreaInput = '[class^=channelTextArea-] span';
 	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
 	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
@@ -384,9 +383,10 @@
 			if (textAreaInstance) {
 				messageContent = textAreaInstance.stateNode.state.textValue;
 			} else {
-				log('Unable to fetch text area of chat input, sending sticker as is\u2026', 'warn');
-				const element = document.querySelector(selectorTextAreaInput);
-				if (element) messageContent = element.innerText;
+				log('Unable to fetch text area of chat input, attempting workaround\u2026', 'warn');
+				let element = textArea.querySelector('span');
+				if (!element) element = textArea;
+				messageContent = element.innerText;
 			}
 
 			modules.messageUpload.upload({
