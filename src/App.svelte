@@ -48,7 +48,9 @@
 	let packsSearch = null;
 	let resizeObserver;
 
-	const settings = {};
+	const settings = {
+		closeWindowOnSend: false
+	};
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
 	const allowedStorageKeys = [
@@ -364,7 +366,6 @@
 		}
 
 		onCooldown = true;
-		// stickerWindowActive = false;
 
 		try {
 			const userId = modules.userStore.getCurrentUser().id;
@@ -379,6 +380,9 @@
 			}
 
 			toast('Sending\u2026', { nolog: true });
+			if (settings.closeWindowOnSend) {
+				stickerWindowActive = false;
+			}
 
 			const url = formatUrl(pack, id, true);
 			log(`Fetching sticker from remote: ${url}`);
@@ -1253,18 +1257,16 @@
 						</div>
 						{ :else if activeTab === 3 }
 						<SimpleBar class="tabContent misc" style="">
-							<!--
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
 								<p>
 									<input
-										name="name"
+										name="closeWindowOnSend"
 										type="checkbox"
-										bind:checked={ settings.name } />
-									<label for="name">Option description</label>
+										bind:checked={ settings.closeWindowOnSend } />
+									<label for="closeWindowOnSend">Close window when sending a sticker</label>
 								</p>
 							</div>
-							-->
 							<div class="section database">
 								<p class="section-title">Database</p>
 								<p>
