@@ -49,6 +49,7 @@
 	let resizeObserver;
 
 	const settings = {
+		disableToasts: false,
 		closeWindowOnSend: false,
 		disableDownscale: false
 	};
@@ -65,11 +66,13 @@
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
 	const toast = (message, options = {}) => {
-		if (!options.nolog) {
+		if (!options.nolog || settings.disableToasts) {
 			const type = ['log', 'info', 'warn', 'error'].includes(options.type) ? options.type : 'log';
 			log(message, type);
 		}
-		BdApi.showToast(message, options);
+		if (!settings.disableToasts) {
+			BdApi.showToast(message, options);
+		}
 	};
 
 	const toastInfo = (message, options = {}) => {
@@ -1264,6 +1267,13 @@
 						<SimpleBar class="tabContent misc" style="">
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
+								<p>
+									<input
+										name="disableToasts"
+										type="checkbox"
+										bind:checked={ settings.disableToasts } />
+									<label for="disableToasts">Disable Toasts</label>
+								</p>
 								<p>
 									<input
 										name="closeWindowOnSend"
