@@ -910,32 +910,63 @@
 			try {
 				result = JSON.parse(e.target.result);
 			} catch (error) {
+				console.error(error);
 				toastError('The selected file is not a valid JSON file.');
 			}
 
-			const content = ['This database contains the following data:'];
-			let c = 0;
+			// This accepts Discord's Markdown
+			let content = 'This database contains the following data:';
+
+			const valid = [];
+			const invalid = [];
 			for (const key of allowedStorageKeys) {
-				const len = result[key] ? result[key].length : 0;
-				content.push(`${key} has ${len} item${'' ? len === 1 : 's'}`);
-				c++;
+				if (typeof (result[key]) === 'undefined' || result[key] === null) {
+					invalid.push(key);
+				} else {
+					let len = null;
+					if (Array.isArray(result[key])) {
+						len = result[key].length;
+					} else {
+						try {
+							len = Object.keys(result[key]).length;
+						} catch (ex) {
+							// Do nothing (any other non {}-object values)
+						}
+					}
+
+					let append = '';
+					if (len !== null) {
+						append = ` has **${len}** item${len === 1 ? '' : 's'}`;
+					}
+
+					content += `\n**${key}**${append}`;
+					valid.push(key);
+				}
 			}
 
-			if (c === 0) {
-				return toastError('The selected file does not have valid magane storage keys.');
+			if (!valid.length) {
+				content = '**This is an empty database file.**';
 			}
 
-			content.push('Please continue only if you trust this database file.');
+			if (invalid.length) {
+				content += `\nThese missing or invalid field${invalid.length === 1 ? '' : 's'} **will be removed**:`;
+				content += `\n${invalid.join('\n')}`;
+			}
+
+			content += '\n**Please continue only if you trust this database file.**';
 			BdApi.showConfirmationModal(
 				'Replace Database',
-				content,
+				content.replace(/\n/g, '\n\n'), // Markdown, so we do double \n for new line
 				{
 					confirmText: 'Replace',
 					cancelText: 'Cancel',
 					danger: true,
 					onConfirm: () => {
-						for (const key of allowedStorageKeys) {
-							saveToLocalStorage(key, result[key] || []);
+						for (const key of valid) {
+							saveToLocalStorage(key, result[key]);
+						}
+						for (const key of invalid) {
+							storage.removeItem(key);
 						}
 						BdApi.showConfirmationModal(
 							'Reload Now',
@@ -967,7 +998,10 @@
 			toast('Exporting database\u2026');
 			const database = {};
 			for (const key of allowedStorageKeys) {
-				database[key] = JSON.parse(storage.getItem(key));
+				const data = storage.getItem(key);
+				if (data !== null) {
+					database[key] = JSON.parse(data);
+				}
 			}
 			const dbString = JSON.stringify(database);
 			const blob = new Blob([dbString]);
