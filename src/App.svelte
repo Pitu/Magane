@@ -23,8 +23,9 @@
 
 	let baseURL = '';
 	let stickerWindowActive = false;
-	let isStickerAddModalActive = false;
-	let activeTab = 0;
+	let stickerAddModalActive = false;
+	const stickerAddModalTabsInit = {};
+	let activeTab = null;
 	let favoriteStickers = [];
 	const favoriteStickersData = {};
 	let availablePacks = [];
@@ -389,7 +390,8 @@
 
 			toast('Sending\u2026', { nolog: true });
 			if (settings.closeWindowOnSend) {
-				stickerWindowActive = false;
+				// eslint-disable-next-line no-use-before-define
+				toggleStickerWindow(false);
 			}
 
 			const url = formatUrl(pack, id, true);
@@ -750,12 +752,12 @@
 			getLocalStorage();
 			loadSettings();
 			await grabPacks();
-			toastSuccess('Magane initialized.');
 			resizeObserver = new ResizeObserver(positionMagane);
 			await waitForTextArea();
 			resizeObserver.observe(textArea);
-			keepMaganeInPlace();
 			isThereTopBar = document.querySelector('html.platform-win');
+			keepMaganeInPlace();
+			toastSuccess('Magane is now ready!');
 			// sendSubscribedPacksOnce();
 			migrateStringPackIds();
 		} catch (error) {
@@ -826,18 +828,18 @@
 		}
 	});
 
-	const toggleStickerWindow = () => {
-		const active = !stickerWindowActive;
+	const toggleStickerWindow = forceState => {
+		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
 			document.addEventListener('click', maganeBlurHandler);
 			doStickerWindowScrolls = true;
-			if (isStickerAddModalActive) {
+			if (stickerAddModalActive) {
 				doStickerModalScrolls = true;
 			}
 		} else {
 			document.removeEventListener('click', maganeBlurHandler);
 			storeStickerWindowScrolls();
-			if (isStickerAddModalActive) {
+			if (stickerAddModalActive) {
 				storeStickerModalScrolls();
 			}
 		}
@@ -845,18 +847,29 @@
 	};
 
 	const toggleStickerModal = () => {
-		const active = !isStickerAddModalActive;
+		const active = !stickerAddModalActive;
 		if (active) {
-			doStickerModalScrolls = true;
+			if (activeTab === null) {
+				// eslint-disable-next-line no-use-before-define
+				activateTab(0);
+			} else {
+				doStickerModalScrolls = true;
+			}
 		} else {
 			storeStickerModalScrolls();
 		}
-		isStickerAddModalActive = active;
+		stickerAddModalActive = active;
 	};
 
 	const activateTab = value => {
-		storeStickerModalScrolls();
+		if (activeTab !== null) {
+			storeStickerModalScrolls();
+		}
 		activeTab = value;
+		if (!stickerAddModalTabsInit[activeTab]) {
+			// Trigger DOM build for this tab for the first time (if applicable)
+			stickerAddModalTabsInit[activeTab] = true;
+		}
 		doStickerModalScrolls = true;
 	};
 
@@ -1076,8 +1089,7 @@
 			<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button">
 		</div>
 
-		{ #if stickerWindowActive }
-		<div class="stickerWindow">
+		<div class="stickerWindow" style="{ stickerWindowActive ? '' : 'display: none;' }">
 			<SimpleBar class="stickers" style="">
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
@@ -1161,9 +1173,7 @@
 				</SimpleBar>
 			</div>
 
-			<!-- Sticker add modal -->
-			{ #if isStickerAddModalActive }
-			<div class="stickersModal">
+			<div class="stickersModal" style="{ stickerAddModalActive ? '' : 'display: none;' }">
 				<div class="modal-close"
 					on:click="{ () => toggleStickerModal() }"></div>
 
@@ -1192,8 +1202,9 @@
 							</div>
 						</div>
 
-						{ #if activeTab === 0 }
-						<SimpleBar class="tabContent" style="">
+						<!-- tab: Installed -->
+						{ #if stickerAddModalTabsInit[0] }
+						<SimpleBar class="tab-content" style="{ activeTab === 0 ? '' : 'display: none;' }">
 							{ #each subscribedPacks as pack, i (pack.id) }
 							<div class="pack">
 								{ #if subscribedPacks.length > 1 }
@@ -1220,40 +1231,49 @@
 							</div>
 							{ /each }
 						</SimpleBar>
-						{ :else if activeTab === 1 }
-						<input
-							on:keyup="{ filterPacks }"
-							bind:value={ packsSearch }
-							class="inputQuery"
-							type="text"
-							placeholder="Search" />
-						<SimpleBar class="tabContent" style="">
-							{ #each filteredPacks as pack }
-							<div class="pack">
-								<div class="preview"
-									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
-								<div class="info">
-									<span>{ pack.name }</span>
-									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+						{ /if }<!-- /stickerAddModalTabsInit[0] -->
+						<!-- /tab: Installed -->
+
+						<!-- tab: Packs -->
+						<div class="tab-content avail-packs" style="{ activeTab === 1 ? '' : 'display: none;' }">
+							<input
+								on:keyup="{ filterPacks }"
+								bind:value={ packsSearch }
+								class="inputQuery"
+								type="text"
+								placeholder="Search" />
+							{ #if stickerAddModalTabsInit[1] }
+							<SimpleBar class="tab-content" style="">
+								{ #each filteredPacks as pack }
+								<div class="pack">
+									<div class="preview"
+										style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+									<div class="info">
+										<span>{ pack.name }</span>
+										<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+									</div>
+									<div class="action">
+										{ #if subscribedPacksSimple.includes(pack.id) }
+										<button class="button is-danger"
+											on:click="{ () => unsubscribeToPack(pack) }">Del</button>
+										{ :else }
+										<button class="button is-primary"
+											on:click="{ () => subscribeToPack(pack) }">Add</button>
+										{ /if }
+										{ #if localPacks[pack.id] }
+										<button class="button deletePack"
+											on:click="{ () => window.magane.deletePack(pack.id) }"></button>
+										{ /if }
+									</div>
 								</div>
-								<div class="action">
-									{ #if subscribedPacksSimple.includes(pack.id) }
-									<button class="button is-danger"
-										on:click="{ () => unsubscribeToPack(pack) }">Del</button>
-									{ :else }
-									<button class="button is-primary"
-										on:click="{ () => subscribeToPack(pack) }">Add</button>
-									{ /if }
-									{ #if localPacks[pack.id] }
-									<button class="button deletePack"
-										on:click="{ () => window.magane.deletePack(pack.id) }"></button>
-									{ /if }
-								</div>
-							</div>
-							{ /each }
-						</SimpleBar>
-						{ :else if activeTab === 2 }
-						<div class="tabContent line-proxy">
+								{ /each }
+							</SimpleBar>
+							{ /if }<!-- /stickerAddModalTabsInit[1] -->
+						</div>
+						<!-- /tab: Packs -->
+
+						<!-- tab: LINE -->
+						<div class="tab-content line-proxy" style="{ activeTab === 2 ? '' : 'display: none;' }">
 							<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
 							<input
 								bind:value={ linePackSearch }
@@ -1263,8 +1283,10 @@
 							<button class="button is-primary"
 								on:click="{ () => parseLinePack() }">Add</button>
 						</div>
-						{ :else if activeTab === 3 }
-						<SimpleBar class="tabContent misc" style="">
+						<!-- /tab: LINE -->
+
+						<!-- tab: Misc -->
+						<SimpleBar class="tab-content misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
 								<p>
@@ -1314,15 +1336,11 @@
 								</p>
 							</div>
 						</SimpleBar>
-						{ /if }
+						<!-- /tab: Misc -->
 					</div>
 				</div>
 			</div>
-			{ /if }
-			<!-- /Sticker add modal -->
-
 		</div>
 
-		{ /if }
 	</div>
 </main>

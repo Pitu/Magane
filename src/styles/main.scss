@@ -309,10 +309,15 @@ div#magane {
 					}
 				}
 
-				div.tabContent {
+				div.tab-content {
 					height: 100%;
 					width: 100%;
 					overflow-y: auto;
+
+					&.avail-packs {
+						display: flex;
+						flex-direction: column;
+					}
 
 					&.line-proxy {
 						display: flex;
