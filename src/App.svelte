@@ -467,7 +467,7 @@
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
-		toastSuccess('Favorited.', { nolog: true });
+		toastSuccess('Favorited!', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
@@ -491,7 +491,7 @@
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited sticker > ${id} of pack ${pack}`);
-		toastInfo('Unfavorited.', { nolog: true });
+		toastInfo('Unfavorited!', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -954,7 +954,7 @@
 		log(`settings['${name}'] = ${settings[name]}`);
 
 		saveToLocalStorage('magane.settings', settings);
-		toastSuccess('Settings saved.', { nolog: true });
+		toastSuccess('Settings saved!', { nolog: true });
 	};
 
 	const onReplaceDatabaseChange = event => {
