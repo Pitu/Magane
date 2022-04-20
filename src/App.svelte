@@ -307,6 +307,7 @@
 	const getTextAreaInstance = () => {
 		let cursor = textArea[Object.keys(textArea).find(key =>
 			key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))];
+		if (!cursor) return null;
 		while (
 			!(
 				cursor.stateNode &&
