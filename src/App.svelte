@@ -49,7 +49,8 @@
 	let resizeObserver;
 
 	const settings = {
-		closeWindowOnSend: false
+		closeWindowOnSend: false,
+		disableDownscale: false
 	};
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
@@ -307,7 +308,9 @@
 				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
 			}
-			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			if (!settings.disableDownscale) {
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			}
 		} else if (pack.startsWith('emojis-')) {
 			// LINE Store emojis
 			// 220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
@@ -319,7 +322,9 @@
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
 			const append = sending ? '' : '&h=100p';
-			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			if (!settings.disableDownscale) {
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			}
 		} else if (pack.startsWith('custom-')) {
 			// Custom packs
 			const template = localPacks[pack].template;
@@ -1265,6 +1270,13 @@
 										type="checkbox"
 										bind:checked={ settings.closeWindowOnSend } />
 									<label for="closeWindowOnSend">Close window when sending a sticker</label>
+								</p>
+								<p>
+									<input
+										name="disableDownscale"
+										type="checkbox"
+										bind:checked={ settings.disableDownscale } />
+									<label for="disableDownscale">Disable downscaling of manually imported LINE Store packs</label>
 								</p>
 							</div>
 							<div class="section database">
