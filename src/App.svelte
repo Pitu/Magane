@@ -48,11 +48,14 @@
 	let packsSearch = null;
 	let resizeObserver;
 
+	const settings = {};
+
 	// NOTE: For the time being only used to limit keys in replace/export database functions
 	const allowedStorageKeys = [
 		'magane.available',
 		'magane.subscribed',
-		'magane.favorites'
+		'magane.favorites',
+		'magane.settings'
 	];
 
 	const log = (message, type = 'log') =>
@@ -151,6 +154,25 @@
 
 	const saveToLocalStorage = (key, payload) => {
 		storage.setItem(key, JSON.stringify(payload));
+	};
+
+	const loadSettings = () => {
+		const storedSettings = storage.getItem('magane.settings');
+		if (storedSettings) {
+			try {
+				const parsed = JSON.parse(storedSettings);
+
+				// Only use keys that were explicitly defined in settings var
+				for (const key of Object.keys(settings)) {
+					if (typeof parsed[key] !== 'undefined' && parsed[key] !== null) {
+						settings[key] = parsed[key];
+					}
+				}
+			} catch (ex) {
+				console.error(ex);
+				// Do nothing
+			}
+		}
 	};
 
 	const grabPacks = async () => {
@@ -714,6 +736,7 @@
 		try {
 			initModules();
 			getLocalStorage();
+			loadSettings();
 			await grabPacks();
 			toastSuccess('Magane initialized.');
 			resizeObserver = new ResizeObserver(positionMagane);
@@ -896,6 +919,17 @@
 			console.error(error);
 			toastError('Unexpected error occurred. Check your console for details.');
 		}
+	};
+
+	const onSettingsChange = event => {
+		const name = event.target.name;
+		if (!name) return false;
+
+		// Value already changed via Svelte's bind:value
+		log(`settings['${name}'] = ${settings[name]}`);
+
+		saveToLocalStorage('magane.settings', settings);
+		toastSuccess('Settings saved.', { nolog: true });
 	};
 
 	const onReplaceDatabaseChange = event => {
@@ -1219,6 +1253,18 @@
 						</div>
 						{ :else if activeTab === 3 }
 						<SimpleBar class="tabContent misc" style="">
+							<!--
+							<div class="section settings" on:change="{ onSettingsChange }">
+								<p class="section-title">Settings</p>
+								<p>
+									<input
+										name="name"
+										type="checkbox"
+										bind:checked={ settings.name } />
+									<label for="name">Option description</label>
+								</p>
+							</div>
+							-->
 							<div class="section database">
 								<p class="section-title">Database</p>
 								<p>
