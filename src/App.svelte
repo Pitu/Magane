@@ -1268,25 +1268,31 @@
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
 								<p>
-									<input
-										name="disableToasts"
-										type="checkbox"
-										bind:checked={ settings.disableToasts } />
-									<label for="disableToasts">Disable Toasts</label>
+									<label>
+										<input
+											name="disableToasts"
+											type="checkbox"
+											bind:checked={ settings.disableToasts } />
+										Disable Toasts
+									</label>
 								</p>
 								<p>
-									<input
-										name="closeWindowOnSend"
-										type="checkbox"
-										bind:checked={ settings.closeWindowOnSend } />
-									<label for="closeWindowOnSend">Close window when sending a sticker</label>
+									<label>
+										<input
+											name="closeWindowOnSend"
+											type="checkbox"
+											bind:checked={ settings.closeWindowOnSend } />
+										Close window when sending a sticker
+									</label>
 								</p>
 								<p>
-									<input
-										name="disableDownscale"
-										type="checkbox"
-										bind:checked={ settings.disableDownscale } />
-									<label for="disableDownscale">Disable downscaling of manually imported LINE Store packs</label>
+									<label>
+										<input
+											name="disableDownscale"
+											type="checkbox"
+											bind:checked={ settings.disableDownscale } />
+										Disable downscaling of manually imported LINE Store packs
+									</label>
 								</p>
 							</div>
 							<div class="section database">
