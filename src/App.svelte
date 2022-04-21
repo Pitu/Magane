@@ -947,7 +947,7 @@
 	};
 
 	const onSettingsChange = event => {
-		const name = event.target.name;
+		const { name } = event.target;
 		if (!name) return false;
 
 		// Value already changed via Svelte's bind:value
@@ -958,8 +958,8 @@
 	};
 
 	const onReplaceDatabaseChange = event => {
-		const file = event.target.files[0];
-		if (!file) return false;
+		const { files } = event.target;
+		if (!files.length) return false;
 
 		const reader = new FileReader();
 		reader.onload = e => {
@@ -1041,8 +1041,8 @@
 			);
 		};
 
-		log(`Reading ${file.name}\u2026`);
-		reader.readAsText(file);
+		log(`Reading ${files[0].name}\u2026`);
+		reader.readAsText(files[0]);
 	};
 
 	const replaceDatabase = () => {
