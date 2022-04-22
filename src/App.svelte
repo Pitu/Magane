@@ -1121,6 +1121,7 @@
 							alt="{ pack.id } - { sticker }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
+						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
 						<div class="addFavorite"
 							title="Favorite"
 							on:click="{ () => favoriteSticker(pack.id, sticker) }">
@@ -1128,6 +1129,15 @@
 								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
 							</svg>
 						</div>
+						{ :else }
+						<div class="deleteFavorite"
+							title="Unfavorite"
+							on:click="{ () => unfavoriteSticker(pack.id, sticker) }">
+							<svg width="20" height="20" viewBox="0 0 24 24">
+								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
+							</svg>
+						</div>
+						{ /if }
 					</div>
 					{ /each }
 				</div>
