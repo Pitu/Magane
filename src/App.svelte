@@ -450,17 +450,16 @@
 	};
 
 	const favoriteSticker = (pack, id) => {
-		for (const favorite of favoriteStickers) {
-			if (favorite.id === id) {
-				return toastError('This sticker is already in your favorites.');
-			}
-		}
+		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
+		if (index !== -1) return;
 
 		if (!favoriteStickersData[pack]) {
 			const data = subscribedPacks.find(p => p.id === pack);
-			favoriteStickersData[pack] = {
-				name: data && data.name
-			};
+			if (data) {
+				favoriteStickersData[pack] = {
+					name: data.name
+				};
+			}
 		}
 
 		const favorite = { pack, id };
@@ -471,19 +470,11 @@
 	};
 
 	const unfavoriteSticker = (pack, id) => {
-		let found = false;
-		for (const favorite of favoriteStickers) {
-			if (favorite.id === id) found = true;
-		}
+		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
+		if (index === -1) return;
 
-		if (!found) return;
-
-		for (let i = 0; i < favoriteStickers.length; i++) {
-			if (favoriteStickers[i].id === id) {
-				favoriteStickers.splice(i, 1);
-				favoriteStickers = favoriteStickers;
-			}
-		}
+		favoriteStickers.splice(index, 1);
+		favoriteStickers = favoriteStickers;
 
 		if (!favoriteStickers.some(s => s.pack === pack)) {
 			delete favoriteStickersData[pack];
@@ -1103,7 +1094,7 @@
 							class="image"
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
-							title="{ favoriteStickersData[sticker.pack].name }"
+							title="{ favoriteStickersData[sticker.pack] ? favoriteStickersData[sticker.pack].name : 'N/A' }"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
