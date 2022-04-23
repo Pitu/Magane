@@ -106,7 +106,7 @@
 			if (!showIcon) showIcon = true;
 			const props = el.getBoundingClientRect();
 			coords.top = (isThereTopBar ? props.top - 21 : props.top) + 1;
-			coords.left = props.left - 100;
+			coords.left = props.left - 108;
 		}, 0);
 	};
 
@@ -761,8 +761,9 @@
 		const stickerWindow = document.querySelector('#magane .stickerWindow');
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
+			const maganeButton = document.querySelector('#magane .magane-button');
 			if (
-				!document.querySelector('#magane img').isSameNode(e.target) &&
+				!(e.target === maganeButton || e.target.parentNode === maganeButton) &&
 				!((e.clientX <= x + width && e.clientX >= x) &&
 				(e.clientY <= y + height && e.clientY >= y))
 			) {
@@ -1073,7 +1074,7 @@
 <main>
 	<div id="magane"
 		style="top: { `${coords.top}px` }; left: { `${coords.left}px` }; display: { showIcon ? 'flex' : 'none' };">
-		<div class="channel-textarea-emoji channel-textarea-stickers"
+		<div class="magane-button channel-textarea-emoji channel-textarea-stickers"
 			class:active="{ stickerWindowActive }"
 			on:click="{ () => toggleStickerWindow() }"
 			on:contextmenu|stopPropagation|preventDefault="{ () => grabPacks() }">
