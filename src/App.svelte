@@ -1,6 +1,6 @@
 <script>
 	/* global BdApi */
-	import { onMount, afterUpdate } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// Let's make the scrollbars pretty
 	import SimpleBar from '@jbfulgencio/svelte-simplebar';
@@ -15,8 +15,7 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
 	const selectorTextArea = '[class^=channelTextArea-]';
-	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
-	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
+	const selectorStickerWindowScroller = '#magane .stickers .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
 	let showIcon = true;
 	let isThereTopBar = null;
@@ -35,15 +34,6 @@
 	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
-
-	const stickerWindowScrolls = [
-		{ selector: selectorStickersContainer, type: 'scrollTop', position: 0 },
-		{ selector: '#magane .packs .simplebar-content-wrapper', type: 'scrollLeft', position: 0 }
-	];
-	const stickerModalScrolls = [0, 0];
-	let doStickerWindowScrolls = false;
-	let doStickerModalScrolls = false;
-
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
@@ -773,102 +763,37 @@
 		}
 	};
 
-	const restoreStickerWindowScrolls = () => {
-		for (let i = 0; i < stickerWindowScrolls.length; i++) {
-			const element = document.querySelector(stickerWindowScrolls[i].selector);
-			if (element) {
-				element[stickerWindowScrolls[i].type] = stickerWindowScrolls[i].position;
-			}
-		}
-	};
-
-	const storeStickerWindowScrolls = () => {
-		for (let i = 0; i < stickerWindowScrolls.length; i++) {
-			const element = document.querySelector(stickerWindowScrolls[i].selector);
-			if (element) {
-				stickerWindowScrolls[i].position = element[stickerWindowScrolls[i].type];
-			}
-		}
-	};
-
-	const restoreStickerModalScrolls = () => {
-		const element = document.querySelector(selectorStickerModalContent);
-		if (element) {
-			element.scrollTop = stickerModalScrolls[activeTab];
-		}
-	};
-
-	const storeStickerModalScrolls = () => {
-		const element = document.querySelector(selectorStickerModalContent);
-		if (element) {
-			stickerModalScrolls[activeTab] = element.scrollTop;
-		}
-	};
-
-	afterUpdate(() => {
-		// Only do stuff if the Magane window is open
-		if (!stickerWindowActive) return;
-
-		if (doStickerWindowScrolls) {
-			restoreStickerWindowScrolls();
-			doStickerWindowScrolls = false;
-		}
-
-		if (doStickerModalScrolls) {
-			restoreStickerModalScrolls();
-			doStickerModalScrolls = false;
-		}
-	});
-
 	const toggleStickerWindow = forceState => {
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
 			document.addEventListener('click', maganeBlurHandler);
-			doStickerWindowScrolls = true;
-			if (stickerAddModalActive) {
-				doStickerModalScrolls = true;
-			}
 		} else {
 			document.removeEventListener('click', maganeBlurHandler);
-			storeStickerWindowScrolls();
-			if (stickerAddModalActive) {
-				storeStickerModalScrolls();
-			}
 		}
 		stickerWindowActive = active;
 	};
 
 	const toggleStickerModal = () => {
 		const active = !stickerAddModalActive;
-		if (active) {
-			if (activeTab === null) {
-				// eslint-disable-next-line no-use-before-define
-				activateTab(0);
-			} else {
-				doStickerModalScrolls = true;
-			}
-		} else {
-			storeStickerModalScrolls();
+		if (active && activeTab === null) {
+			// eslint-disable-next-line no-use-before-define
+			activateTab(0);
 		}
 		stickerAddModalActive = active;
 	};
 
 	const activateTab = value => {
-		if (activeTab !== null) {
-			storeStickerModalScrolls();
-		}
 		activeTab = value;
 		if (!stickerAddModalTabsInit[activeTab]) {
 			// Trigger DOM build for this tab for the first time (if applicable)
 			stickerAddModalTabsInit[activeTab] = true;
 		}
-		doStickerModalScrolls = true;
 	};
 
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id,
-			container: document.querySelector(selectorStickersContainer)
+			container: document.querySelector(selectorStickerWindowScroller)
 		});
 	};
 
