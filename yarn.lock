@@ -18,6 +18,13 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
+"@jbfulgencio/svelte-simplebar@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@jbfulgencio/svelte-simplebar/-/svelte-simplebar-1.0.0.tgz#cf5939d5edeabb35db06a14d114a96f9b5a45e5d"
+  integrity sha512-TT7Q7KxEK8MLijXmPCrwZhSFXv8cqeeI8pkc5gC8iAnNmWsJ/IS1eMsoYm3K0JSFghOjQghXZndgKLe81hXqKQ==
+  dependencies:
+    simplebar "^5.1.0"
+
 "@rollup/plugin-commonjs@^11.0.0":
   version "11.0.0"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-11.0.0.tgz#a6675e56094ac9c797c19a3986378289396a9dd5"
@@ -85,13 +92,6 @@
   integrity sha512-2XZovu4NwcqmtZtsBR5XYLw18T8cBCnU2USFHTnYLLHz9fkhnoEMoDsqShJIOFsFhn5aJHjweiUUdTrDGujegA==
   dependencies:
     "@types/node" "*"
-
-"@woden/svelte-simplebar@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@woden/svelte-simplebar/-/svelte-simplebar-1.0.0.tgz#05df3326cc30b96e9cda2d5943b5e94ed97db4e7"
-  integrity sha512-YYr5JhmqNnNpk2E0Uf1nE8ObUmR072b175s1A3G5WTmeiyLfKbhmTYx2vfZh4vrljDtuWt1f+79e/s6ybrS4Eg==
-  dependencies:
-    simplebar "^5.1.0"
 
 acorn-jsx@^5.1.0:
   version "5.1.0"
