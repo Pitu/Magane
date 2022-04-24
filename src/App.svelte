@@ -3,7 +3,7 @@
 	import { onMount, afterUpdate } from 'svelte';
 
 	// Let's make the scrollbars pretty
-	import SimpleBar from '@woden/svelte-simplebar';
+	import SimpleBar from '@jbfulgencio/svelte-simplebar';
 	import * as animateScroll from 'svelte-scrollto';
 	import './styles/global.css';
 	import './styles/main.scss';
