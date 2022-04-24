@@ -42,7 +42,8 @@
 	const settings = {
 		disableToasts: false,
 		closeWindowOnSend: false,
-		disableDownscale: false
+		disableDownscale: false,
+		useLeftToolbar: false
 	};
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
@@ -1007,7 +1008,7 @@
 		</div>
 
 		<div class="stickerWindow" style="{ stickerWindowActive ? '' : 'display: none;' }">
-			<SimpleBar class="stickers" style="">
+			<SimpleBar class="stickers { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				{ /if }
@@ -1070,7 +1071,7 @@
 				{ /each }
 			</SimpleBar>
 
-			<div class="bottom-toolbar">
+			<div class="packs-toolbar { settings.useLeftToolbar ? 'left-toolbar' : 'bottom-toolbar' }">
 				<div class="packs packs-controls">
 					<div class="packs-wrapper">
 						<div class="pack"
@@ -1232,6 +1233,15 @@
 											type="checkbox"
 											bind:checked={ settings.closeWindowOnSend } />
 										Close window when sending a sticker
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="useLeftToolbar"
+											type="checkbox"
+											bind:checked={ settings.useLeftToolbar } />
+										Use left toolbar instead of bottom toolbar on main window
 									</label>
 								</p>
 								<p>
