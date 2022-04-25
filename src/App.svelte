@@ -1,9 +1,9 @@
 <script>
 	/* global BdApi */
-	import { onMount, afterUpdate } from 'svelte';
+	import { onMount } from 'svelte';
 
 	// Let's make the scrollbars pretty
-	import SimpleBar from '@woden/svelte-simplebar';
+	import SimpleBar from '@jbfulgencio/svelte-simplebar';
 	import * as animateScroll from 'svelte-scrollto';
 	import './styles/global.css';
 	import './styles/main.scss';
@@ -15,16 +15,16 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
 	const selectorTextArea = '[class^=channelTextArea-]';
-	const selectorStickersContainer = '#magane .stickers .simplebar-content-wrapper';
-	const selectorStickerModalContent = '#magane .stickersModal .simplebar-content-wrapper';
+	const selectorStickerWindowScroller = '#magane .stickers .simplebar-content-wrapper';
 	let textArea = document.querySelector(selectorTextArea);
 	let showIcon = true;
 	let isThereTopBar = null;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
-	let isStickerAddModalActive = false;
-	let activeTab = 0;
+	let stickerAddModalActive = false;
+	const stickerAddModalTabsInit = {};
+	let activeTab = null;
 	let favoriteStickers = [];
 	const favoriteStickersData = {};
 	let availablePacks = [];
@@ -34,36 +34,37 @@
 	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
-
-	const stickerWindowScrolls = [
-		{ selector: selectorStickersContainer, type: 'scrollTop', position: 0 },
-		{ selector: '#magane .packs .simplebar-content-wrapper', type: 'scrollLeft', position: 0 }
-	];
-	const stickerModalScrolls = [0, 0];
-	let doStickerWindowScrolls = false;
-	let doStickerModalScrolls = false;
-
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
 	let resizeObserver;
 
+	const settings = {
+		disableToasts: false,
+		closeWindowOnSend: false,
+		disableDownscale: false,
+		useLeftToolbar: false
+	};
+
 	// NOTE: For the time being only used to limit keys in replace/export database functions
 	const allowedStorageKeys = [
 		'magane.available',
 		'magane.subscribed',
-		'magane.favorites'
+		'magane.favorites',
+		'magane.settings'
 	];
 
 	const log = (message, type = 'log') =>
 		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
 
 	const toast = (message, options = {}) => {
-		if (!options.nolog) {
+		if (!options.nolog || settings.disableToasts) {
 			const type = ['log', 'info', 'warn', 'error'].includes(options.type) ? options.type : 'log';
 			log(message, type);
 		}
-		BdApi.showToast(message, options);
+		if (!settings.disableToasts) {
+			BdApi.showToast(message, options);
+		}
 	};
 
 	const toastInfo = (message, options = {}) => {
@@ -96,7 +97,7 @@
 			if (!showIcon) showIcon = true;
 			const props = el.getBoundingClientRect();
 			coords.top = (isThereTopBar ? props.top - 21 : props.top) + 1;
-			coords.left = props.left - 100;
+			coords.left = props.left - 108;
 		}, 0);
 	};
 
@@ -151,6 +152,25 @@
 
 	const saveToLocalStorage = (key, payload) => {
 		storage.setItem(key, JSON.stringify(payload));
+	};
+
+	const loadSettings = () => {
+		const storedSettings = storage.getItem('magane.settings');
+		if (storedSettings) {
+			try {
+				const parsed = JSON.parse(storedSettings);
+
+				// Only use keys that were explicitly defined in settings var
+				for (const key of Object.keys(settings)) {
+					if (typeof parsed[key] !== 'undefined' && parsed[key] !== null) {
+						settings[key] = parsed[key];
+					}
+				}
+			} catch (ex) {
+				console.error(ex);
+				// Do nothing
+			}
+		}
 	};
 
 	const grabPacks = async () => {
@@ -283,7 +303,9 @@
 				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
 			}
-			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			if (!settings.disableDownscale) {
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			}
 		} else if (pack.startsWith('emojis-')) {
 			// LINE Store emojis
 			// 220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
@@ -295,7 +317,9 @@
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
 			const append = sending ? '' : '&h=100p';
-			url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			if (!settings.disableDownscale) {
+				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+			}
 		} else if (pack.startsWith('custom-')) {
 			// Custom packs
 			const template = localPacks[pack].template;
@@ -307,6 +331,7 @@
 	const getTextAreaInstance = () => {
 		let cursor = textArea[Object.keys(textArea).find(key =>
 			key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))];
+		if (!cursor) return null;
 		while (
 			!(
 				cursor.stateNode &&
@@ -341,7 +366,6 @@
 		}
 
 		onCooldown = true;
-		// stickerWindowActive = false;
 
 		try {
 			const userId = modules.userStore.getCurrentUser().id;
@@ -356,6 +380,10 @@
 			}
 
 			toast('Sending\u2026', { nolog: true });
+			if (settings.closeWindowOnSend) {
+				// eslint-disable-next-line no-use-before-define
+				toggleStickerWindow(false);
+			}
 
 			const url = formatUrl(pack, id, true);
 			log(`Fetching sticker from remote: ${url}`);
@@ -413,40 +441,31 @@
 	};
 
 	const favoriteSticker = (pack, id) => {
-		for (const favorite of favoriteStickers) {
-			if (favorite.id === id) {
-				return toastError('This sticker is already in your favorites.');
-			}
-		}
+		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
+		if (index !== -1) return;
 
 		if (!favoriteStickersData[pack]) {
 			const data = subscribedPacks.find(p => p.id === pack);
-			favoriteStickersData[pack] = {
-				name: data && data.name
-			};
+			if (data) {
+				favoriteStickersData[pack] = {
+					name: data.name
+				};
+			}
 		}
 
 		const favorite = { pack, id };
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Favorited sticker > ${id} of pack ${pack}`);
-		toastSuccess('Favorited.', { nolog: true });
+		toastSuccess('Favorited!', { nolog: true });
 	};
 
 	const unfavoriteSticker = (pack, id) => {
-		let found = false;
-		for (const favorite of favoriteStickers) {
-			if (favorite.id === id) found = true;
-		}
+		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
+		if (index === -1) return;
 
-		if (!found) return;
-
-		for (let i = 0; i < favoriteStickers.length; i++) {
-			if (favoriteStickers[i].id === id) {
-				favoriteStickers.splice(i, 1);
-				favoriteStickers = favoriteStickers;
-			}
-		}
+		favoriteStickers.splice(index, 1);
+		favoriteStickers = favoriteStickers;
 
 		if (!favoriteStickers.some(s => s.pack === pack)) {
 			delete favoriteStickersData[pack];
@@ -454,7 +473,7 @@
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited sticker > ${id} of pack ${pack}`);
-		toastInfo('Unfavorited.', { nolog: true });
+		toastInfo('Unfavorited!', { nolog: true });
 	};
 
 	const filterPacks = () => {
@@ -713,13 +732,14 @@
 		try {
 			initModules();
 			getLocalStorage();
+			loadSettings();
 			await grabPacks();
-			toastSuccess('Magane initialized.');
 			resizeObserver = new ResizeObserver(positionMagane);
 			await waitForTextArea();
 			resizeObserver.observe(textArea);
-			keepMaganeInPlace();
 			isThereTopBar = document.querySelector('html.platform-win');
+			keepMaganeInPlace();
+			toastSuccess('Magane is now ready!');
 			// sendSubscribedPacksOnce();
 			migrateStringPackIds();
 		} catch (error) {
@@ -732,8 +752,9 @@
 		const stickerWindow = document.querySelector('#magane .stickerWindow');
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
+			const maganeButton = document.querySelector('#magane .magane-button');
 			if (
-				!document.querySelector('#magane img').isSameNode(e.target) &&
+				!(e.target === maganeButton || e.target.parentNode === maganeButton) &&
 				!((e.clientX <= x + width && e.clientX >= x) &&
 				(e.clientY <= y + height && e.clientY >= y))
 			) {
@@ -743,91 +764,37 @@
 		}
 	};
 
-	const restoreStickerWindowScrolls = () => {
-		for (let i = 0; i < stickerWindowScrolls.length; i++) {
-			const element = document.querySelector(stickerWindowScrolls[i].selector);
-			if (element) {
-				element[stickerWindowScrolls[i].type] = stickerWindowScrolls[i].position;
-			}
-		}
-	};
-
-	const storeStickerWindowScrolls = () => {
-		for (let i = 0; i < stickerWindowScrolls.length; i++) {
-			const element = document.querySelector(stickerWindowScrolls[i].selector);
-			if (element) {
-				stickerWindowScrolls[i].position = element[stickerWindowScrolls[i].type];
-			}
-		}
-	};
-
-	const restoreStickerModalScrolls = () => {
-		const element = document.querySelector(selectorStickerModalContent);
-		if (element) {
-			element.scrollTop = stickerModalScrolls[activeTab];
-		}
-	};
-
-	const storeStickerModalScrolls = () => {
-		const element = document.querySelector(selectorStickerModalContent);
-		if (element) {
-			stickerModalScrolls[activeTab] = element.scrollTop;
-		}
-	};
-
-	afterUpdate(() => {
-		// Only do stuff if the Magane window is open
-		if (!stickerWindowActive) return;
-
-		if (doStickerWindowScrolls) {
-			restoreStickerWindowScrolls();
-			doStickerWindowScrolls = false;
-		}
-
-		if (doStickerModalScrolls) {
-			restoreStickerModalScrolls();
-			doStickerModalScrolls = false;
-		}
-	});
-
-	const toggleStickerWindow = () => {
-		const active = !stickerWindowActive;
+	const toggleStickerWindow = forceState => {
+		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
 			document.addEventListener('click', maganeBlurHandler);
-			doStickerWindowScrolls = true;
-			if (isStickerAddModalActive) {
-				doStickerModalScrolls = true;
-			}
 		} else {
 			document.removeEventListener('click', maganeBlurHandler);
-			storeStickerWindowScrolls();
-			if (isStickerAddModalActive) {
-				storeStickerModalScrolls();
-			}
 		}
 		stickerWindowActive = active;
 	};
 
 	const toggleStickerModal = () => {
-		const active = !isStickerAddModalActive;
-		if (active) {
-			doStickerModalScrolls = true;
-		} else {
-			storeStickerModalScrolls();
+		const active = !stickerAddModalActive;
+		if (active && activeTab === null) {
+			// eslint-disable-next-line no-use-before-define
+			activateTab(0);
 		}
-		isStickerAddModalActive = active;
+		stickerAddModalActive = active;
 	};
 
 	const activateTab = value => {
-		storeStickerModalScrolls();
 		activeTab = value;
-		doStickerModalScrolls = true;
+		if (!stickerAddModalTabsInit[activeTab]) {
+			// Trigger DOM build for this tab for the first time (if applicable)
+			stickerAddModalTabsInit[activeTab] = true;
+		}
 	};
 
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id,
-			container: document.querySelector(selectorStickersContainer)
+			container: document.querySelector(selectorStickerWindowScroller)
 		});
 	};
 
@@ -897,9 +864,20 @@
 		}
 	};
 
+	const onSettingsChange = event => {
+		const { name } = event.target;
+		if (!name) return false;
+
+		// Value already changed via Svelte's bind:value
+		log(`settings['${name}'] = ${settings[name]}`);
+
+		saveToLocalStorage('magane.settings', settings);
+		toastSuccess('Settings saved!', { nolog: true });
+	};
+
 	const onReplaceDatabaseChange = event => {
-		const file = event.target.files[0];
-		if (!file) return false;
+		const { files } = event.target;
+		if (!files.length) return false;
 
 		const reader = new FileReader();
 		reader.onload = e => {
@@ -910,32 +888,63 @@
 			try {
 				result = JSON.parse(e.target.result);
 			} catch (error) {
+				console.error(error);
 				toastError('The selected file is not a valid JSON file.');
 			}
 
-			const content = ['This database contains the following data:'];
-			let c = 0;
+			// This accepts Discord's Markdown
+			let content = 'This database contains the following data:';
+
+			const valid = [];
+			const invalid = [];
 			for (const key of allowedStorageKeys) {
-				const len = result[key] ? result[key].length : 0;
-				content.push(`${key} has ${len} item${'' ? len === 1 : 's'}`);
-				c++;
+				if (typeof (result[key]) === 'undefined' || result[key] === null) {
+					invalid.push(key);
+				} else {
+					let len = null;
+					if (Array.isArray(result[key])) {
+						len = result[key].length;
+					} else {
+						try {
+							len = Object.keys(result[key]).length;
+						} catch (ex) {
+							// Do nothing (any other non {}-object values)
+						}
+					}
+
+					let append = '';
+					if (len !== null) {
+						append = ` has **${len}** item${len === 1 ? '' : 's'}`;
+					}
+
+					content += `\n**${key}**${append}`;
+					valid.push(key);
+				}
 			}
 
-			if (c === 0) {
-				return toastError('The selected file does not have valid magane storage keys.');
+			if (!valid.length) {
+				content = '**This is an empty database file.**';
 			}
 
-			content.push('Please continue only if you trust this database file.');
+			if (invalid.length) {
+				content += `\nThese missing or invalid field${invalid.length === 1 ? '' : 's'} **will be removed**:`;
+				content += `\n${invalid.join('\n')}`;
+			}
+
+			content += '\n**Please continue only if you trust this database file.**';
 			BdApi.showConfirmationModal(
 				'Replace Database',
-				content,
+				content.replace(/\n/g, '\n\n'), // Markdown, so we do double \n for new line
 				{
 					confirmText: 'Replace',
 					cancelText: 'Cancel',
 					danger: true,
 					onConfirm: () => {
-						for (const key of allowedStorageKeys) {
-							saveToLocalStorage(key, result[key] || []);
+						for (const key of valid) {
+							saveToLocalStorage(key, result[key]);
+						}
+						for (const key of invalid) {
+							storage.removeItem(key);
 						}
 						BdApi.showConfirmationModal(
 							'Reload Now',
@@ -950,8 +959,8 @@
 			);
 		};
 
-		log(`Reading ${file.name}\u2026`);
-		reader.readAsText(file);
+		log(`Reading ${files[0].name}\u2026`);
+		reader.readAsText(files[0]);
 	};
 
 	const replaceDatabase = () => {
@@ -967,7 +976,10 @@
 			toast('Exporting database\u2026');
 			const database = {};
 			for (const key of allowedStorageKeys) {
-				database[key] = JSON.parse(storage.getItem(key));
+				const data = storage.getItem(key);
+				if (data !== null) {
+					database[key] = JSON.parse(data);
+				}
 			}
 			const dbString = JSON.stringify(database);
 			const blob = new Blob([dbString]);
@@ -988,16 +1000,15 @@
 <main>
 	<div id="magane"
 		style="top: { `${coords.top}px` }; left: { `${coords.left}px` }; display: { showIcon ? 'flex' : 'none' };">
-		<div class="channel-textarea-emoji channel-textarea-stickers"
+		<div class="magane-button channel-textarea-emoji channel-textarea-stickers"
 			class:active="{ stickerWindowActive }"
 			on:click="{ () => toggleStickerWindow() }"
 			on:contextmenu|stopPropagation|preventDefault="{ () => grabPacks() }">
 			<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button">
 		</div>
 
-		{ #if stickerWindowActive }
-		<div class="stickerWindow">
-			<SimpleBar class="stickers" style="">
+		<div class="stickerWindow" style="{ stickerWindowActive ? '' : 'display: none;' }">
+			<SimpleBar class="stickers { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				{ /if }
@@ -1010,7 +1021,7 @@
 							class="image"
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
-							title="{ favoriteStickersData[sticker.pack].name }"
+							title="{ favoriteStickersData[sticker.pack] ? favoriteStickersData[sticker.pack].name : 'N/A' }"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
@@ -1037,6 +1048,7 @@
 							alt="{ pack.id } - { sticker }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
+						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
 						<div class="addFavorite"
 							title="Favorite"
 							on:click="{ () => favoriteSticker(pack.id, sticker) }">
@@ -1044,13 +1056,22 @@
 								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
 							</svg>
 						</div>
+						{ :else }
+						<div class="deleteFavorite"
+							title="Unfavorite"
+							on:click="{ () => unfavoriteSticker(pack.id, sticker) }">
+							<svg width="20" height="20" viewBox="0 0 24 24">
+								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
+							</svg>
+						</div>
+						{ /if }
 					</div>
 					{ /each }
 				</div>
 				{ /each }
 			</SimpleBar>
 
-			<div class="bottom-toolbar">
+			<div class="packs-toolbar { settings.useLeftToolbar ? 'left-toolbar' : 'bottom-toolbar' }">
 				<div class="packs packs-controls">
 					<div class="packs-wrapper">
 						<div class="pack"
@@ -1080,9 +1101,7 @@
 				</SimpleBar>
 			</div>
 
-			<!-- Sticker add modal -->
-			{ #if isStickerAddModalActive }
-			<div class="stickersModal">
+			<div class="stickersModal" style="{ stickerAddModalActive ? '' : 'display: none;' }">
 				<div class="modal-close"
 					on:click="{ () => toggleStickerModal() }"></div>
 
@@ -1111,8 +1130,9 @@
 							</div>
 						</div>
 
-						{ #if activeTab === 0 }
-						<SimpleBar class="tabContent" style="">
+						<!-- tab: Installed -->
+						{ #if stickerAddModalTabsInit[0] }
+						<SimpleBar class="tab-content" style="{ activeTab === 0 ? '' : 'display: none;' }">
 							{ #each subscribedPacks as pack, i (pack.id) }
 							<div class="pack">
 								{ #if subscribedPacks.length > 1 }
@@ -1139,40 +1159,49 @@
 							</div>
 							{ /each }
 						</SimpleBar>
-						{ :else if activeTab === 1 }
-						<input
-							on:keyup="{ filterPacks }"
-							bind:value={ packsSearch }
-							class="inputQuery"
-							type="text"
-							placeholder="Search" />
-						<SimpleBar class="tabContent" style="">
-							{ #each filteredPacks as pack }
-							<div class="pack">
-								<div class="preview"
-									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
-								<div class="info">
-									<span>{ pack.name }</span>
-									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+						{ /if }<!-- /stickerAddModalTabsInit[0] -->
+						<!-- /tab: Installed -->
+
+						<!-- tab: Packs -->
+						<div class="tab-content avail-packs" style="{ activeTab === 1 ? '' : 'display: none;' }">
+							<input
+								on:keyup="{ filterPacks }"
+								bind:value={ packsSearch }
+								class="inputQuery"
+								type="text"
+								placeholder="Search" />
+							{ #if stickerAddModalTabsInit[1] }
+							<SimpleBar class="tab-content" style="">
+								{ #each filteredPacks as pack }
+								<div class="pack">
+									<div class="preview"
+										style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+									<div class="info">
+										<span>{ pack.name }</span>
+										<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+									</div>
+									<div class="action">
+										{ #if subscribedPacksSimple.includes(pack.id) }
+										<button class="button is-danger"
+											on:click="{ () => unsubscribeToPack(pack) }">Del</button>
+										{ :else }
+										<button class="button is-primary"
+											on:click="{ () => subscribeToPack(pack) }">Add</button>
+										{ /if }
+										{ #if localPacks[pack.id] }
+										<button class="button deletePack"
+											on:click="{ () => window.magane.deletePack(pack.id) }"></button>
+										{ /if }
+									</div>
 								</div>
-								<div class="action">
-									{ #if subscribedPacksSimple.includes(pack.id) }
-									<button class="button is-danger"
-										on:click="{ () => unsubscribeToPack(pack) }">Del</button>
-									{ :else }
-									<button class="button is-primary"
-										on:click="{ () => subscribeToPack(pack) }">Add</button>
-									{ /if }
-									{ #if localPacks[pack.id] }
-									<button class="button deletePack"
-										on:click="{ () => window.magane.deletePack(pack.id) }"></button>
-									{ /if }
-								</div>
-							</div>
-							{ /each }
-						</SimpleBar>
-						{ :else if activeTab === 2 }
-						<div class="tabContent line-proxy">
+								{ /each }
+							</SimpleBar>
+							{ /if }<!-- /stickerAddModalTabsInit[1] -->
+						</div>
+						<!-- /tab: Packs -->
+
+						<!-- tab: LINE -->
+						<div class="tab-content line-proxy" style="{ activeTab === 2 ? '' : 'display: none;' }">
 							<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
 							<input
 								bind:value={ linePackSearch }
@@ -1182,8 +1211,49 @@
 							<button class="button is-primary"
 								on:click="{ () => parseLinePack() }">Add</button>
 						</div>
-						{ :else if activeTab === 3 }
-						<SimpleBar class="tabContent misc" style="">
+						<!-- /tab: LINE -->
+
+						<!-- tab: Misc -->
+						<SimpleBar class="tab-content misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
+							<div class="section settings" on:change="{ onSettingsChange }">
+								<p class="section-title">Settings</p>
+								<p>
+									<label>
+										<input
+											name="disableToasts"
+											type="checkbox"
+											bind:checked={ settings.disableToasts } />
+										Disable Toasts
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="closeWindowOnSend"
+											type="checkbox"
+											bind:checked={ settings.closeWindowOnSend } />
+										Close window when sending a sticker
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="useLeftToolbar"
+											type="checkbox"
+											bind:checked={ settings.useLeftToolbar } />
+										Use left toolbar instead of bottom toolbar on main window
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="disableDownscale"
+											type="checkbox"
+											bind:checked={ settings.disableDownscale } />
+										Disable downscaling of manually imported LINE Store packs
+									</label>
+								</p>
+							</div>
 							<div class="section database">
 								<p class="section-title">Database</p>
 								<p>
@@ -1203,15 +1273,11 @@
 								</p>
 							</div>
 						</SimpleBar>
-						{ /if }
+						<!-- /tab: Misc -->
 					</div>
 				</div>
 			</div>
-			{ /if }
-			<!-- /Sticker add modal -->
-
 		</div>
 
-		{ /if }
 	</div>
 </main>
