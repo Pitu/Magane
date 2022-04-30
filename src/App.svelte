@@ -968,7 +968,7 @@
 			linePackSearch = null;
 		} catch (error) {
 			console.error(error);
-			toastError('Unexpected error occurred. Check your console for details.');
+			toastError(error.toString());
 		}
 	};
 
@@ -981,7 +981,7 @@
 			remoteAlbumUrl = null;
 		} catch (error) {
 			console.error(error);
-			toastError('Unexpected error occurred. Check your console for details.');
+			toastError(error.toString());
 		}
 	};
 
