@@ -279,7 +279,7 @@
 		}
 	};
 
-	const formatUrl = (pack, id, sending) => {
+	const formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
 		if (typeof pack === 'number') {
 			// Magane's built-in packs
@@ -321,9 +321,23 @@
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('custom-')) {
-			// Custom packs
-			const template = localPacks[pack].template;
-			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
+			// Unified imported custom packs
+			if (!sending && Array.isArray(localPacks[pack].thumbs)) {
+				if (typeof thumbIndex !== 'number') {
+					// thumbIndex is not available for favorites, so do some work out
+					thumbIndex = localPacks[pack].files.findIndex(file => file === id);
+				}
+				url = thumbIndex >= 0 && localPacks[pack].thumbs[thumbIndex];
+				if (!url) {
+					// Page emoji for missing thumbs
+					url = '/assets/eedd4bd948a0da6d75bf5304bff4e17f.svg';
+				}
+			} else if (typeof localPacks[pack].template === 'string') {
+				const template = localPacks[pack].template;
+				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
+			} else {
+				url = id;
+			}
 		}
 		return url;
 	};
@@ -670,6 +684,52 @@
 		});
 	};
 
+	window.magane.appendSafePack = async (...args) => {
+		// Only compatible with public albums of safes running WeebDev/chibisafe or
+		// BobbyWibowo/lolisafe (this have chibisafe-alike /api/album/:id)
+		let { url, id, name } = parseFunctionArgs(args,
+			['url', 'id', 'name'], 1);
+
+		const match = url.match(/^(.+:\/\/)?(.+)\/a\/([^/\s]+)/);
+		if (!match || match.some(m => m === undefined)) {
+			throw new Error('Unsupported album URL.');
+		}
+
+		const apiUrl = `${match[1]}${match[2]}/api/album/${match[3]}`;
+		log(`Fetching album info from: ${apiUrl}`);
+		const response = await fetch(apiUrl, { cache: 'no-cache' });
+		const album = await response.json();
+		if (!album) {
+			throw new Error('Unable to parse album data.');
+		}
+
+		let files;
+		let thumbs;
+		if (!Array.isArray(album.files) || !album.files.length) {
+			throw new Error('Specified album have no files.');
+		} else {
+			files = album.files.map(file => file.url);
+			if (album.files.some(file => file.thumb)) {
+				thumbs = album.files.map(file => file.thumb);
+			}
+		}
+
+		name = name || album.name;
+		if (!name) {
+			throw new Error('Specified album do not have a name, please provide a custom one.');
+		}
+
+		const mid = id ? `custom-${id}` : `custom-${match[2]}-${match[3]}`;
+		return _appendPack(mid, {
+			name,
+			count: files.length,
+			id: mid,
+			files,
+			thumbs,
+			url
+		});
+	};
+
 	window.magane.deletePack = id => {
 		if (!id && !localPackIdRegex.test(id)) {
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
@@ -815,7 +875,7 @@
 
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
-			element: id,
+			element: id.replace(/([.])/g, '\\$1'),
 			container: document.querySelector(selectorStickerWindowScroller)
 		});
 	};
@@ -1066,7 +1126,7 @@
 					<div class="sticker">
 						<img
 							class="image"
-							src="{ `${formatUrl(pack.id, sticker)}` }"
+							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
@@ -1117,7 +1177,7 @@
 						<div class="pack"
 							on:click={ () => scrollToStickers(`#p${pack.id}`) }
 							title="{ pack.name }"
-							style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+							style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 						{ /each }
 					</div>
 				</SimpleBar>
@@ -1169,7 +1229,7 @@
 								</div>
 								{ /if }
 								<div class="preview"
-									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+									style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 								<div class="info">
 									<span>{ pack.name }</span>
 									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
@@ -1197,7 +1257,7 @@
 								{ #each filteredPacks as pack }
 								<div class="pack">
 									<div class="preview"
-										style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+										style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 									<div class="info">
 										<span>{ pack.name }</span>
 										<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
