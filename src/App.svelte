@@ -428,7 +428,7 @@
 			// NOTE: Buffer is Node API, but it is perfectly usable in Discord-context (Electron thing?)
 			const file = new File([Buffer.from(myBlob)], filename);
 
-			log(`Sending\u2026`);
+			log(`Sending sticker as ${filename}\u2026`);
 
 			let messageContent = '';
 			const textAreaInstance = getTextAreaInstance();
