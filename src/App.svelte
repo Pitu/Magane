@@ -938,7 +938,6 @@
 				const id = match[4];
 				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
 				const props = await response.json();
-				linePackSearch = null;
 				stored = window.magane.appendEmojisPack(props.title, props.id, props.len);
 			} else {
 				// LINE Stickers work with either its full URL or just its ID
@@ -946,10 +945,10 @@
 				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
 				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
 				const props = await response.json();
-				linePackSearch = null;
 				stored = window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
 			}
 			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
+			linePackSearch = null;
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred. Check your console for details.');
