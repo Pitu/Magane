@@ -34,6 +34,7 @@
 	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
+	let remoteAlbumUrl = null;
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
@@ -955,6 +956,19 @@
 		}
 	};
 
+	const parseRemoteAlbum = async () => {
+		if (!remoteAlbumUrl) return;
+		try {
+			toast('Loading pack information\u2026', { nolog: true });
+			const stored = await window.magane.appendSafePack({ url: remoteAlbumUrl });
+			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
+			remoteAlbumUrl = null;
+		} catch (error) {
+			console.error(error);
+			toastError('Unexpected error occurred. Check your console for details.');
+		}
+	};
+
 	const onSettingsChange = event => {
 		const { name } = event.target;
 		if (!name) return false;
@@ -1216,7 +1230,7 @@
 							<div class="tab"
 								on:click="{ () => activateTab(2) }"
 								class:is-active="{ activeTab === 2 }">
-								LINE
+								Import
 							</div>
 							<div class="tab"
 								on:click="{ () => activateTab(3) }"
@@ -1295,18 +1309,38 @@
 						</div>
 						<!-- /tab: Packs -->
 
-						<!-- tab: LINE -->
-						<div class="tab-content line-proxy" style="{ activeTab === 2 ? '' : 'display: none;' }">
-							<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
-							<input
-								bind:value={ linePackSearch }
-								class="inputQuery"
-								type="text"
-								placeholder="LINE Sticker Pack URL" />
-							<button class="button is-primary"
-								on:click="{ () => parseLinePack() }">Add</button>
-						</div>
-						<!-- /tab: LINE -->
+						<!-- tab: Import -->
+						<SimpleBar class="tab-content import" style="{ activeTab === 2 ? '' : 'display: none;' }">
+							<div class="section line-proxy">
+								<p class="section-title">LINE Store Proxy</p>
+								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below.</p>
+								<p>For example: https://store.line.me/stickershop/product/17573/ja</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ linePackSearch }
+										class="inputQuery"
+										type="text"
+										placeholder="LINE Sticker Pack URL" />
+									<button class="button is-primary"
+										on:click="{ () => parseLinePack() }">Add</button>
+								</p>
+							</div>
+							<div class="section chibisafe-albums">
+								<p class="section-title">Chibisafe Albums</p>
+								<p>If you have an image album at any Chibisafe-based websites, you can import it as a sticker pack by pasting its public link in the box below.</p>
+								<p>For example: https://chibisafe.moe/a/myalbum</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ remoteAlbumUrl }
+										class="inputQuery"
+										type="text"
+										placeholder="Chibisafe Album URL" />
+									<button class="button is-primary"
+										on:click="{ () => parseRemoteAlbum() }">Add</button>
+								</p>
+							</div>
+						</SimpleBar>
+						<!-- /tab: Import -->
 
 						<!-- tab: Misc -->
 						<SimpleBar class="tab-content misc" style="{ activeTab === 3 ? '' : 'display: none;' }">

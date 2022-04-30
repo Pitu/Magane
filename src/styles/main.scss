@@ -353,28 +353,29 @@ div#magane {
 						flex-direction: column;
 					}
 
-					&.line-proxy {
-						display: flex;
-						flex-direction: column;
-						justify-content: center;
-						align-items: center;
-
-						p {
-							padding: 2rem;
-							padding-top: 0;
-							margin-top: -5rem;
-							user-select: text;
-						}
-					}
-
+					&.import,
 					&.misc {
-						margin: 0 5px 10px;
+						user-select: text;
 
 						.section {
-							padding: 5px 12px;
+							padding: 0 24px 5px;
 
 							.section-title {
 								font-weight: 800;
+							}
+						}
+
+						.input-grouped {
+							display: flex;
+
+							input {
+								margin: 0;
+								width: auto;
+								flex-grow: 1;
+							}
+
+							button {
+								margin-left: 4px;
 							}
 						}
 					}
