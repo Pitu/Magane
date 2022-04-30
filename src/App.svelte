@@ -962,6 +962,39 @@
 		}
 	};
 
+	const updateRemoteAlbumPack = async id => {
+		try {
+			toast('Updating album information\u2026', { nolog: true });
+			const stored = await window.magane.appendSafePack({
+				url: localPacks[id].url,
+				overwrite: true
+			});
+
+			// Update favorites data
+			favoriteStickers = favoriteStickers.filter(s =>
+				s.pack !== id || stored.pack.files.findIndex(f => f === s.id) !== -1);
+			if (favoriteStickers.some(s => s.pack === id)) {
+				favoriteStickersData[id].name = stored.pack.name;
+			} else {
+				delete favoriteStickersData[id];
+			}
+			saveToLocalStorage('magane.favorites', favoriteStickers);
+
+			// Update subscribed pack data
+			const subIndex = subscribedPacks.findIndex(p => p.id === id);
+			if (subIndex !== -1)	{
+				subscribedPacks[subIndex] = stored.pack;
+				subscribedPacksSimple[subIndex] = stored.pack.id;
+				saveToLocalStorage('magane.subscribed', subscribedPacks);
+			}
+
+			toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 8000 });
+		} catch (error) {
+			console.error(error);
+			toastError(error.toString());
+		}
+	};
+
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
 		try {
@@ -1306,9 +1339,14 @@
 									<span>{ pack.name }</span>
 									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
 								</div>
-								<div class="action">
+								<div class="action{ localPacks[pack.id] && localPacks[pack.id].url && ' is-tight' }">
 									<button class="button is-danger"
 										on:click="{ () => unsubscribeToPack(pack) }">Del</button>
+									{ #if localPacks[pack.id] && localPacks[pack.id].url }
+									<button class="button update-pack"
+										on:click="{ () => updateRemoteAlbumPack(pack.id) }"
+										title="Update pack">Up</button>
+									{ /if }
 								</div>
 							</div>
 							{ /each }
@@ -1343,6 +1381,11 @@
 											on:click="{ () => subscribeToPack(pack) }">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
+										{ #if localPacks[pack.id].url }
+										<button class="button update-pack"
+											on:click="{ () => updateRemoteAlbumPack(pack.id) }"
+											title="Update pack">Up</button>
+										{ /if }
 										<button class="button delete-pack"
 											on:click="{ () => deleteLocalPack(pack.id) }"
 											title="Purge completely"></button>
