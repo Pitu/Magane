@@ -933,6 +933,19 @@
 		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}.`);
 	};
 
+	const deleteLocalPack = id => {
+		try {
+			const _name = localPacks[id].name;
+			const deleted = window.magane.deletePack(id);
+			if (deleted) {
+				toastSuccess(`Removed pack ${_name}.`, { nolog: true, timeout: 6000 });
+			}
+		} catch (error) {
+			console.error(error);
+			toastError(error.toString());
+		}
+	};
+
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
 		try {
@@ -1305,7 +1318,7 @@
 										<span>{ pack.name }</span>
 										<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
 									</div>
-									<div class="action">
+									<div class="action{ localPacks[pack.id] && ' is-tight' }">
 										{ #if subscribedPacksSimple.includes(pack.id) }
 										<button class="button is-danger"
 											on:click="{ () => unsubscribeToPack(pack) }">Del</button>
@@ -1314,8 +1327,9 @@
 											on:click="{ () => subscribeToPack(pack) }">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
-										<button class="button deletePack"
-											on:click="{ () => window.magane.deletePack(pack.id) }"></button>
+										<button class="button delete-pack"
+											on:click="{ () => deleteLocalPack(pack.id) }"
+											title="Purge completely"></button>
 										{ /if }
 									</div>
 								</div>

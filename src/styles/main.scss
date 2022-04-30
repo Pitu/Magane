@@ -396,13 +396,22 @@ div#magane {
 
 					div.index,
 					div.handle,
-					div.preview,
-					div.action {
+					div.preview {
 						flex: 0 0 auto;
 						min-width: 75px;
 						height: 75px;
+					}
 
-						button.deletePack {
+					div.action {
+						flex: 1 0 auto;
+
+						&.is-tight button {
+							width: auto;
+							padding-right: 0.5em;
+							padding-left: 0.5em;
+						}
+
+						button.delete-pack {
 							width: 36px;
 							height: 36px;
 
