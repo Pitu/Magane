@@ -939,14 +939,23 @@
 				const id = match[4];
 				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
 				const props = await response.json();
-				stored = window.magane.appendEmojisPack(props.title, props.id, props.len);
+				stored = window.magane.appendEmojisPack({
+					name: props.title,
+					id: props.id,
+					count: props.len
+				});
 			} else {
 				// LINE Stickers work with either its full URL or just its ID
 				const id = Number(match[4]);
 				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
 				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
 				const props = await response.json();
-				stored = window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
+				stored = window.magane.appendPack({
+					name: props.title,
+					firstid: props.first,
+					count: props.len,
+					animated: props.hasAnimation
+				});
 			}
 			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
 			linePackSearch = null;
