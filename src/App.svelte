@@ -762,10 +762,9 @@
 				}
 
 				// Force unfavorite stickers
-				const favedStickers = favoriteStickers.filter(s => s.pack === id);
-				if (favedStickers.length) {
-					favedStickers.forEach(s => unfavoriteSticker(id, s.id));
-				}
+				favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
+				delete favoriteStickersData[id];
+				saveToLocalStorage('magane.favorites', favoriteStickers);
 
 				// Force unsubscribe
 				const subbedPack = subscribedPacks.find(p => p.id === id);
@@ -783,6 +782,7 @@
 					filterPacks();
 				}
 
+				delete localPacks[id];
 				log(`Removed pack with ID ${id} (old index: ${index})`);
 				return true;
 			} catch (ex) {
