@@ -1339,7 +1339,7 @@
 									<span>{ pack.name }</span>
 									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
 								</div>
-								<div class="action{ localPacks[pack.id] && localPacks[pack.id].url && ' is-tight' }">
+								<div class="action{ localPacks[pack.id] && localPacks[pack.id].url ? ' is-tight' : '' }">
 									<button class="button is-danger"
 										on:click="{ () => unsubscribeToPack(pack) }">Del</button>
 									{ #if localPacks[pack.id] && localPacks[pack.id].url }
@@ -1372,7 +1372,7 @@
 										<span>{ pack.name }</span>
 										<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
 									</div>
-									<div class="action{ localPacks[pack.id] && ' is-tight' }">
+									<div class="action{ localPacks[pack.id] ? ' is-tight' : '' }">
 										{ #if subscribedPacksSimple.includes(pack.id) }
 										<button class="button is-danger"
 											on:click="{ () => unsubscribeToPack(pack) }">Del</button>
