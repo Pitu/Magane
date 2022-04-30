@@ -580,10 +580,24 @@
 		}
 	};
 
-	window.magane.appendPack = (title, firstid, count, animated, _) => {
-		if (_) {
-			throw new Error('This function expects only 4 parameters. Were you looking for appendCustomPack()?');
+	const parseFunctionArgs = (args, argNames, minArgs) => {
+		// Allow calling window.magane.X functions with
+		// func(val1, val2, ..., valN) for backwards-compatibility, and
+		// func({arg1: val, arg2: val, ..., argN: val}) for a clean expandable future.
+		const isFirstArgAnObj = typeof args[0] === 'object';
+		if (!isFirstArgAnObj && typeof minArgs === 'number' && args.length < minArgs) {
+			throw new Error(`This function expects at least ${minArgs} parameter(s).`);
 		}
+		const parsed = {};
+		for (let i = 0; i < argNames.length; i++) {
+			parsed[argNames[i]] = isFirstArgAnObj ? args[0][argNames[i]] : args[i];
+		}
+		return parsed;
+	};
+
+	window.magane.appendPack = (...args) => {
+		let { name, firstid, count, animated } = parseFunctionArgs(args,
+			['name', 'firstid', 'count', 'animated'], 4);
 
 		firstid = Number(firstid);
 		if (isNaN(firstid) || !isFinite(firstid) || firstid < 0) {
@@ -598,18 +612,17 @@
 		}
 
 		return _appendPack(mid, {
-			name: title,
-			count: count,
+			name,
+			count,
 			id: mid,
 			animated: animated ? 1 : null,
-			files: files
+			files
 		});
 	};
 
-	window.magane.appendEmojisPack = (title, id, count, _) => {
-		if (_) {
-			throw new Error('This function expects only 3 parameters.');
-		}
+	window.magane.appendEmojisPack = (...args) => {
+		let { name, id, count } = parseFunctionArgs(args,
+			['name', 'id', 'count'], 3);
 
 		count = Math.max(Math.min(Number(count), 200), 0) || 0;
 		const mid = `emojis-${id}`;
@@ -619,32 +632,41 @@
 		}
 
 		return _appendPack(mid, {
-			name: title,
-			count: count,
+			name,
+			count,
 			id: mid,
-			files: files
+			files
 		});
 	};
 
-	window.magane.appendCustomPack = (title, id, count, animated, template) => {
-		if (!template) {
-			throw new Error('Missing URL template.');
-		}
+	window.magane.appendCustomPack = (...args) => {
+		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
 
 		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
-		const files = [];
-		for (let i = 1; i <= count; i += 1) {
-			files.push(i + (animated ? '.gif' : '.png'));
+		if (Array.isArray(files)) {
+			if (!files.length) {
+				throw new Error('"files" array cannot be empty.');
+			}
+		} else {
+			if (!template) {
+				throw new Error('"template" must be set if not using custom "files" array.');
+			}
+			files = [];
+			for (let i = 1; i <= count; i += 1) {
+				files.push(i + (animated ? '.gif' : '.png'));
+			}
 		}
 
 		return _appendPack(mid, {
-			name: title,
-			count: count,
+			name,
+			count,
 			id: mid,
 			animated: animated ? 1 : null,
-			files: files,
-			template: template
+			files,
+			thumbs,
+			template
 		});
 	};
 
