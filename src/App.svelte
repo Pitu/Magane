@@ -709,7 +709,7 @@
 
 		const match = url.match(/^(.+:\/\/)?(.+)\/a\/([^/\s]+)/);
 		if (!match || match.some(m => m === undefined)) {
-			throw new Error('Unsupported album URL.');
+			throw new Error('Malformed album URL.');
 		}
 
 		const apiUrl = `${match[1]}${match[2]}/api/album/${match[3]}`;
@@ -720,14 +720,14 @@
 			throw new Error('Unable to parse album data.');
 		}
 
-		let files;
-		let thumbs;
+		const files = [];
+		const thumbs = [];
 		if (!Array.isArray(album.files) || !album.files.length) {
 			throw new Error('Specified album have no files.');
 		} else {
-			files = album.files.map(file => file.url);
-			if (album.files.some(file => file.thumb)) {
-				thumbs = album.files.map(file => file.thumb);
+			for (let i = 0; i < album.files.length; i++) {
+				files.push(album.files[i].url);
+				thumbs.push(album.files[i].thumb || null);
 			}
 		}
 
