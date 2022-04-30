@@ -519,36 +519,52 @@
 		}
 	};
 
-	const _appendPack = (id, e) => {
+	const _appendPack = (id, e, opts = {}) => {
 		if (!e.count || !e.files.length) {
 			throw new Error('Invalid stickers count.');
 		}
 
-		let availLocalPacks = [];
+		let availLocalPacks;
+		let foundIndex;
 		const storedLocalPacks = storage.getItem('magane.available');
 		if (storedLocalPacks) {
 			availLocalPacks = JSON.parse(storedLocalPacks);
 			if (availLocalPacks) {
-				const index = availLocalPacks.findIndex(p => p.id === id);
-				if (index >= 0) {
-					throw new Error(`Pack with ID ${id} already exist`);
+				foundIndex = availLocalPacks.findIndex(p => p.id === id);
+				if (foundIndex >= 0) {
+					if (opts.overwrite) {
+						// Allow partial properties overwrites
+						e = Object.assign(availLocalPacks[foundIndex], e);
+					} else {
+						throw new Error(`Pack with ID ${id} already exist.`);
+					}
 				}
 			}
 		}
 
+		const result = { pack: e };
 		if (localPackIdRegex.test(id)) {
 			localPacks[id] = e;
 		}
 
-		availLocalPacks.unshift(e);
-		saveToLocalStorage('magane.available', availLocalPacks);
+		if (foundIndex >= 0) {
+			availLocalPacks[foundIndex] = e;
+			const sharedIndex = availablePacks.findIndex(p => p.id === id);
+			if (sharedIndex !== -1) {
+				availablePacks[sharedIndex] = e;
+			}
+			result.sharedIndex = sharedIndex;
+		} else {
+			availLocalPacks.unshift(e);
+			availablePacks.unshift(e);
+			availablePacks = availablePacks;
+		}
 
-		availablePacks.unshift(e);
-		availablePacks = availablePacks;
+		saveToLocalStorage('magane.available', availLocalPacks);
 		filterPacks();
 
 		log(`Added a new pack with ID ${id}`);
-		return e;
+		return result;
 	};
 
 	/*
@@ -671,8 +687,8 @@
 	};
 
 	window.magane.appendCustomPack = (...args) => {
-		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
-			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
+		let { name, id, count, animated, template, files, thumbs, overwrite } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs', 'overwrite'], 5);
 
 		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
@@ -698,14 +714,14 @@
 			files,
 			thumbs,
 			template
-		});
+		}, { overwrite });
 	};
 
 	window.magane.appendSafePack = async (...args) => {
 		// Only compatible with public albums of safes running WeebDev/chibisafe or
 		// BobbyWibowo/lolisafe (this have chibisafe-alike /api/album/:id)
-		let { url, id, name } = parseFunctionArgs(args,
-			['url', 'id', 'name'], 1);
+		let { url, id, name, overwrite } = parseFunctionArgs(args,
+			['url', 'id', 'name', 'overwrite'], 1);
 
 		const match = url.match(/^(.+:\/\/)?(.+)\/a\/([^/\s]+)/);
 		if (!match || match.some(m => m === undefined)) {
@@ -744,7 +760,7 @@
 			files,
 			thumbs,
 			url
-		});
+		}, { overwrite });
 	};
 
 	window.magane.deletePack = id => {
@@ -977,7 +993,7 @@
 					animated: props.hasAnimation
 				});
 			}
-			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
+			toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
 			linePackSearch = null;
 		} catch (error) {
 			console.error(error);
@@ -988,9 +1004,9 @@
 	const parseRemoteAlbum = async () => {
 		if (!remoteAlbumUrl) return;
 		try {
-			toast('Loading pack information\u2026', { nolog: true });
+			toast('Loading album information\u2026', { nolog: true });
 			const stored = await window.magane.appendSafePack({ url: remoteAlbumUrl });
-			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
+			toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
 			remoteAlbumUrl = null;
 		} catch (error) {
 			console.error(error);
