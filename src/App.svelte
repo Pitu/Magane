@@ -43,7 +43,8 @@
 		disableToasts: false,
 		closeWindowOnSend: false,
 		disableDownscale: false,
-		useLeftToolbar: false
+		useLeftToolbar: false,
+		disableImportedObfuscation: false
 	};
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
@@ -410,8 +411,12 @@
 					filename = filename.replace(/\.png$/i, '.gif');
 					toastWarn('Animated stickers from LINE Store currently cannot be animated.');
 				} else if (pack.startsWith('custom-')) {
-					// Obfuscate file name of stickers from custom packs
-					filename = `${Date.now().toString()}.${id.split('.')[1]}`;
+					if (settings.disableImportedObfuscation) {
+						filename = id;
+					} else {
+						const ext = id.match(/(\.\w+)$/);
+						filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
+					}
 				}
 			}
 
@@ -1337,6 +1342,15 @@
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
 										Disable downscaling of manually imported LINE Store packs
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="disableImportedObfuscation"
+											type="checkbox"
+											bind:checked={ settings.disableImportedObfuscation } />
+										Disable obfuscation of files names for imported custom packs
 									</label>
 								</p>
 							</div>
