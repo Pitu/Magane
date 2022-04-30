@@ -319,7 +319,12 @@
 			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
-			const append = sending ? '' : '&h=100p';
+			let append = sending ? '' : '&h=100p';
+			if (localPacks[pack].animated) {
+				url = url.replace(/\.png/, '_animation.png');
+				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
+				append += '&output=gif';
+			}
 			if (!settings.disableDownscale) {
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
@@ -409,9 +414,9 @@
 
 			let filename = id;
 			if (typeof pack === 'string') {
-				if (pack.startsWith('startswith-') && localPacks[pack].animated) {
+				if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 					filename = filename.replace(/\.png$/i, '.gif');
-					toastWarn('Animated stickers from LINE Store currently cannot be animated.');
+					toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
 				} else if (pack.startsWith('custom-')) {
 					if (settings.disableImportedObfuscation) {
 						filename = id;
@@ -622,7 +627,7 @@
 
 	window.magane.appendPack = (...args) => {
 		let { name, firstid, count, animated } = parseFunctionArgs(args,
-			['name', 'firstid', 'count', 'animated'], 4);
+			['name', 'firstid', 'count', 'animated'], 3);
 
 		firstid = Number(firstid);
 		if (isNaN(firstid) || !isFinite(firstid) || firstid < 0) {
@@ -646,8 +651,8 @@
 	};
 
 	window.magane.appendEmojisPack = (...args) => {
-		let { name, id, count } = parseFunctionArgs(args,
-			['name', 'id', 'count'], 3);
+		let { name, id, count, animated } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated'], 3);
 
 		count = Math.max(Math.min(Number(count), 200), 0) || 0;
 		const mid = `emojis-${id}`;
@@ -660,6 +665,7 @@
 			name,
 			count,
 			id: mid,
+			animated: animated ? 1 : null,
 			files
 		});
 	};
@@ -942,7 +948,8 @@
 				stored = window.magane.appendEmojisPack({
 					name: props.title,
 					id: props.id,
-					count: props.len
+					count: props.len,
+					animated: props.hasAnimation || null
 				});
 			} else {
 				// LINE Stickers work with either its full URL or just its ID
