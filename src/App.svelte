@@ -44,7 +44,8 @@
 		closeWindowOnSend: false,
 		disableDownscale: false,
 		useLeftToolbar: false,
-		disableImportedObfuscation: false
+		disableImportedObfuscation: false,
+		markAsSpoiler: false
 	};
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
@@ -418,6 +419,10 @@
 						filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
 					}
 				}
+			}
+
+			if (settings.markAsSpoiler) {
+				filename = `SPOILER_${filename}`;
 			}
 
 			// NOTE: Buffer is Node API, but it is perfectly usable in Discord-context (Electron thing?)
@@ -1351,6 +1356,15 @@
 											type="checkbox"
 											bind:checked={ settings.disableImportedObfuscation } />
 										Disable obfuscation of files names for imported custom packs
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="markAsSpoiler"
+											type="checkbox"
+											bind:checked={ settings.markAsSpoiler } />
+										Mark stickers as spoilers when sending
 									</label>
 								</p>
 							</div>
