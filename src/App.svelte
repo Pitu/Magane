@@ -1346,11 +1346,11 @@
 								</div>
 								<div class="action{ localPacks[pack.id] && localPacks[pack.id].url ? ' is-tight' : '' }">
 									<button class="button is-danger"
-										on:click="{ () => unsubscribeToPack(pack) }">Del</button>
-									{ #if localPacks[pack.id] && localPacks[pack.id].url }
+										on:click="{ () => unsubscribeToPack(pack) }"
+										title="Unsubscribe">Del</button>
 									<button class="button update-pack"
 										on:click="{ () => updateRemoteAlbumPack(pack.id) }"
-										title="Update pack">Up</button>
+										title="Update">Up</button>
 									{ /if }
 								</div>
 							</div>
@@ -1380,20 +1380,22 @@
 									<div class="action{ localPacks[pack.id] ? ' is-tight' : '' }">
 										{ #if subscribedPacksSimple.includes(pack.id) }
 										<button class="button is-danger"
-											on:click="{ () => unsubscribeToPack(pack) }">Del</button>
+											on:click="{ () => unsubscribeToPack(pack) }"
+											title="Unsubscribe">Del</button>
 										{ :else }
 										<button class="button is-primary"
-											on:click="{ () => subscribeToPack(pack) }">Add</button>
+											on:click="{ () => subscribeToPack(pack) }"
+											title="Subscribe">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
 										{ #if localPacks[pack.id].url }
 										<button class="button update-pack"
 											on:click="{ () => updateRemoteAlbumPack(pack.id) }"
-											title="Update pack">Up</button>
+											title="Update">Up</button>
 										{ /if }
 										<button class="button delete-pack"
 											on:click="{ () => deleteLocalPack(pack.id) }"
-											title="Purge completely"></button>
+											title="Purge"></button>
 										{ /if }
 									</div>
 								</div>
