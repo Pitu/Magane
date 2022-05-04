@@ -592,6 +592,12 @@ div#magane {
 
 		&.has-width-full {
 			width: 100%;
+
+			&:hover {
+				/* TODO: Figure out how to do a more consistent scaling,
+				  regardless of the button's dynamic size. */
+				transform: scale3d(1.04, 1.04, 1.04);
+			}
 		}
 	}
 }
