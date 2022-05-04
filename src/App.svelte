@@ -963,7 +963,7 @@
 			}
 		} catch (error) {
 			console.error(error);
-			toastError(error.toString());
+			toastError(error.toString(), { nolog: true });
 		}
 	};
 
@@ -996,7 +996,7 @@
 			toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 8000 });
 		} catch (error) {
 			console.error(error);
-			toastError(error.toString());
+			toastError(error.toString(), { nolog: true });
 		}
 	};
 
@@ -1035,7 +1035,7 @@
 			linePackSearch = null;
 		} catch (error) {
 			console.error(error);
-			toastError(error.toString());
+			toastError(error.toString(), { nolog: true });
 		}
 	};
 
