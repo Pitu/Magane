@@ -46,7 +46,8 @@
 		disableDownscale: false,
 		useLeftToolbar: false,
 		disableImportedObfuscation: false,
-		markAsSpoiler: false
+		markAsSpoiler: false,
+		hidePackAppendix: false
 	};
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
@@ -1493,8 +1494,8 @@
 								<div class="preview"
 									style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 								<div class="info">
-									<span>{ pack.name }</span>
-									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+									<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
+									<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
 								</div>
 								<div class="action{ localPacks[pack.id] && localPacks[pack.id].updateUrl ? ' is-tight' : '' }">
 									<button class="button is-danger"
@@ -1527,8 +1528,8 @@
 									<div class="preview"
 										style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 									<div class="info">
-										<span>{ pack.name }</span>
-										<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+										<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
+										<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
 									</div>
 									<div class="action{ localPacks[pack.id] ? ' is-tight' : '' }">
 										{ #if subscribedPacksSimple.includes(pack.id) }
@@ -1633,6 +1634,15 @@
 											type="checkbox"
 											bind:checked={ settings.useLeftToolbar } />
 										Use left toolbar instead of bottom toolbar on main window
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="hidePackAppendix"
+											type="checkbox"
+											bind:checked={ settings.hidePackAppendix } />
+										Hide pack's appendix in packs list (e.g. its numerical ID)
 									</label>
 								</p>
 								<p>
