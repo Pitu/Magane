@@ -363,6 +363,15 @@ div#magane {
 							.section-title {
 								font-weight: 800;
 							}
+
+							a {
+								/* inherit Discord's link color */
+								color: var(--text-link);
+
+								&:hover {
+									text-decoration: underline;
+								}
+							}
 						}
 
 						.input-grouped {

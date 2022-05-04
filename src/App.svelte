@@ -1428,8 +1428,8 @@
 						<SimpleBar class="tab-content import" style="{ activeTab === 2 ? '' : 'display: none;' }">
 							<div class="section line-proxy">
 								<p class="section-title">LINE Store Proxy</p>
-								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below.</p>
-								<p>For example: https://store.line.me/stickershop/product/17573/ja</p>
+								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.</p>
+								<p>e.g. https://store.line.me/stickershop/product/17573/ja</p>
 								<p class="input-grouped">
 									<input
 										bind:value={ linePackSearch }
@@ -1442,8 +1442,8 @@
 							</div>
 							<div class="section chibisafe-albums">
 								<p class="section-title">Chibisafe Albums</p>
-								<p>If you have an image album at any Chibisafe-based websites, you can import it as a sticker pack by pasting its public link in the box below.</p>
-								<p>For example: https://chibisafe.moe/a/myalbum</p>
+								<p>If you have an image album at any <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>-based websites, you can import it as a sticker pack by pasting its public link in the box below.</p>
+								<p>https://chibisafe.moe/a/my_album</p>
 								<p class="input-grouped">
 									<input
 										bind:value={ remoteAlbumUrl }
