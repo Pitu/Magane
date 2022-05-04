@@ -34,7 +34,7 @@
 	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
-	let remoteAlbumUrl = null;
+	let remotePackUrl = null;
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
@@ -724,52 +724,6 @@
 		});
 	};
 
-	window.magane.appendSafePack = async (...args) => {
-		// Only compatible with public albums of safes running WeebDev/chibisafe or
-		// BobbyWibowo/lolisafe (this have chibisafe-alike /api/album/:id)
-		let { url, id, name, overwrite } = parseFunctionArgs(args,
-			['url', 'id', 'name', 'overwrite'], 1);
-
-		const match = url.match(/^(.+:\/\/)?(.+)\/a\/([^/\s]+)/);
-		if (!match || match.some(m => m === undefined)) {
-			throw new Error('Malformed album URL.');
-		}
-
-		const apiUrl = `${match[1]}${match[2]}/api/album/${match[3]}`;
-		log(`Fetching album info from: ${apiUrl}`);
-		const response = await fetch(apiUrl, { cache: 'no-cache' });
-		const album = await response.json();
-		if (!album) {
-			throw new Error('Unable to parse album data.');
-		}
-
-		const files = [];
-		const thumbs = [];
-		if (!Array.isArray(album.files) || !album.files.length) {
-			throw new Error('Specified album have no files.');
-		} else {
-			for (let i = 0; i < album.files.length; i++) {
-				files.push(album.files[i].url);
-				thumbs.push(album.files[i].thumb || null);
-			}
-		}
-
-		name = name || album.name;
-		if (!name) {
-			throw new Error('Specified album do not have a name, please provide a custom one.');
-		}
-
-		const mid = id ? `custom-${id}` : `custom-${match[2]}-${match[3]}`;
-		return _appendPack(mid, {
-			name,
-			count: files.length,
-			id: mid,
-			files,
-			thumbs,
-			url
-		}, { overwrite });
-	};
-
 	window.magane.editPack = (...args) => {
 		const { id, props } = parseFunctionArgs(args,
 			['id', 'props'], 2);
@@ -986,13 +940,132 @@
 		}
 	};
 
-	const updateRemoteAlbumPack = async id => {
+	const processRemotePack = async (data, opts) => {
+		const pack = {
+			id: '',
+			name: '',
+			files: [],
+			count: 0,
+			remoteType: 0
+		};
+
+		if (opts) {
+			for (const key of Object.keys(opts)) {
+				pack[key] = opts[key];
+			}
+		}
+
+		// Expandable if required
+		switch (pack.remoteType) {
+			case 1: // Chibisafe Albums
+				pack.name = String(data.name);
+
+				pack.thumbs = [];
+				for (let i = 0; i < data.files.length; i++) {
+					pack.files.push(data.files[i].url);
+					pack.thumbs.push(data.files[i].thumb || null);
+				}
+				break;
+			case 0: // Custom JSON
+			default:
+				if (['id', 'name', 'files'].some(key => !data[key])) {
+					throw new Error('Invalid config. Some required fields are missing.');
+				}
+
+				pack.id = String(data.id);
+				pack.name = String(data.name);
+
+				if (data.files.some(file => typeof file !== 'string')) {
+					throw new Error('Invalid "files" array. Some values are not string.');
+				}
+				pack.files = data.files;
+
+				if (Array.isArray(data.thumbs)) {
+					if (data.thumbs.some(thumb => typeof thumb !== 'string' && thumb !== null)) {
+						throw new Error('Invalid "thumbs" array. Some values are neither string nor null.');
+					}
+					pack.thumbs = data.thumbs;
+				}
+
+				pack.description = data.description ? String(data.description) : null;
+				pack.homeUrl = data.homeUrl ? String(data.homeUrl) : null;
+				pack.template = data.template ? String(data.template) : null;
+
+				// Override update URL if required
+				if (data.updateUrl) {
+					pack.updateUrl = String(data.updateUrl);
+				}
+				break;
+		}
+
+		// General chores
+		pack.count = pack.files.length;
+		// If all thumbs are missing, just empty the array
+		if (Array.isArray(pack.thumbs) && pack.thumbs.every(thumb => thumb === null)) {
+			pack.thumbs = [];
+		}
+
+		return pack;
+	};
+
+	const fetchRemotePack = async (url, bypassCheck = false, remoteType) => {
+		const opts = { updateUrl: url };
+		if (bypassCheck) {
+			opts.remoteType = remoteType;
+		} else {
+			if (!url || !/^https?:\/\//.test(url)) {
+				throw new Error('URL must have HTTP(s) protocol.');
+			}
+
+			// Expandable if required
+			const regExes = [
+				// RegEx for chibisafe album links (basically must have /a/identifier)
+				/^(.+:\/\/)(.+)\/a\/([^/\s]+)/
+			];
+
+			let match = { index: -1 };
+			for (let i = 0; i < regExes.length; i++) {
+				const _match = url.match(regExes[i]);
+				if (_match && !_match.some(m => m === undefined)) {
+					match = {
+						index: i,
+						result: _match
+					};
+				}
+			}
+
+			switch (match.index) {
+				case 0:
+					opts.id = `${match.result[2]}-${match.result[3]}`;
+					opts.homeUrl = url;
+					opts.updateUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
+					opts.remoteType = 1;
+					break;
+			}
+		}
+
+		const response = await fetch(opts.updateUrl, { cache: 'no-cache' });
+		const data = await response.json();
+		if (!data) {
+			throw new Error('Unable to parse data. Check your console for details.');
+		}
+
+		return processRemotePack(data, opts);
+	};
+
+	const updateRemotePack = async id => {
 		try {
-			toast('Updating album information\u2026', { nolog: true });
-			const stored = await window.magane.appendSafePack({
-				url: localPacks[id].url,
-				overwrite: true
-			});
+			if (!localPacks[id] || !localPacks[id].updateUrl) return;
+			toast('Updating pack information\u2026', { nolog: true });
+
+			const pack = await fetchRemotePack(
+				localPacks[id].updateUrl,
+				typeof (localPacks[id].remoteType) === 'number' ? true : false,
+				localPacks[id].remoteType
+			);
+			pack.id = id;
+
+			const stored = _appendPack(pack.id, pack, { overwrite: true });
 
 			// Update favorites data
 			favoriteStickers = favoriteStickers.filter(s =>
@@ -1058,17 +1131,37 @@
 		}
 	};
 
-	const parseRemoteAlbum = async () => {
-		if (!remoteAlbumUrl) return;
-		try {
-			toast('Loading album information\u2026', { nolog: true });
-			const stored = await window.magane.appendSafePack({ url: remoteAlbumUrl });
-			toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
-			remoteAlbumUrl = null;
-		} catch (error) {
-			console.error(error);
-			toastError(error.toString());
-		}
+	const assertRemotePackConsent = (context, onConfirm) => {
+		// Markdown, so we do double \n for new line
+		const content = `${context}\n\n` +
+			'**Please continue only if you trust this remote pack.**';
+		BdApi.showConfirmationModal(
+			'Import Remote Pack',
+			content,
+			{
+				confirmText: 'Import',
+				cancelText: 'Cancel',
+				danger: true,
+				onConfirm
+			}
+		);
+	};
+
+	const parseRemotePackUrl = () => {
+		if (!remotePackUrl) return;
+		assertRemotePackConsent(`URL: ${remotePackUrl}`, async () => {
+			try {
+				toast('Loading pack information\u2026', { nolog: true });
+				const pack = await fetchRemotePack(remotePackUrl);
+				pack.id = `custom-${pack.id}`;
+				const stored = _appendPack(pack.id, pack);
+				toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+				remotePackUrl = null;
+			} catch (error) {
+				console.error(error);
+				toastError(error.toString(), { nolog: true });
+			}
+		});
 	};
 
 	const onSettingsChange = event => {
@@ -1363,12 +1456,13 @@
 									<span>{ pack.name }</span>
 									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
 								</div>
-								<div class="action{ localPacks[pack.id] && localPacks[pack.id].url ? ' is-tight' : '' }">
+								<div class="action{ localPacks[pack.id] && localPacks[pack.id].updateUrl ? ' is-tight' : '' }">
 									<button class="button is-danger"
 										on:click="{ () => unsubscribeToPack(pack) }"
 										title="Unsubscribe">Del</button>
+									{ #if localPacks[pack.id] && localPacks[pack.id].updateUrl }
 									<button class="button update-pack"
-										on:click="{ () => updateRemoteAlbumPack(pack.id) }"
+										on:click="{ () => updateRemotePack(pack.id) }"
 										title="Update">Up</button>
 									{ /if }
 								</div>
@@ -1407,9 +1501,9 @@
 											title="Subscribe">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
-										{ #if localPacks[pack.id].url }
+										{ #if localPacks[pack.id].updateUrl }
 										<button class="button update-pack"
-											on:click="{ () => updateRemoteAlbumPack(pack.id) }"
+											on:click="{ () => updateRemotePack(pack.id) }"
 											title="Update">Up</button>
 										{ /if }
 										<button class="button delete-pack"
@@ -1440,18 +1534,20 @@
 										on:click="{ () => parseLinePack() }">Add</button>
 								</p>
 							</div>
-							<div class="section chibisafe-albums">
-								<p class="section-title">Chibisafe Albums</p>
-								<p>If you have an image album at any <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>-based websites, you can import it as a sticker pack by pasting its public link in the box below.</p>
-								<p>https://chibisafe.moe/a/my_album</p>
+							<div class="section remote-packs">
+								<p class="section-title">Remote Packs</p>
+								<p>You can paste URL to a JSON config file of a remote pack in here.<br>
+									This also supports public album links of any file hosting websites running <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>.</p>
+								<p>e.g. https://example.com/packs/my_custom_pack.json<br>
+									https://chibisafe.moe/a/my_album</p>
 								<p class="input-grouped">
 									<input
-										bind:value={ remoteAlbumUrl }
+										bind:value={ remotePackUrl }
 										class="inputQuery"
 										type="text"
-										placeholder="Chibisafe Album URL" />
+										placeholder="Remote Pack JSON or Chibisafe Album URL" />
 									<button class="button is-primary"
-										on:click="{ () => parseRemoteAlbum() }">Add</button>
+										on:click="{ () => parseRemotePackUrl() }">Add</button>
 								</p>
 							</div>
 						</SimpleBar>
