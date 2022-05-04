@@ -331,20 +331,22 @@
 		} else if (pack.startsWith('custom-')) {
 			// Unified imported custom packs
 			if (!sending && Array.isArray(localPacks[pack].thumbs)) {
-				if (typeof thumbIndex !== 'number') {
-					// thumbIndex is not available for favorites, so do some work out
-					thumbIndex = localPacks[pack].files.findIndex(file => file === id);
+				if (localPacks[pack].thumbs.length) {
+					if (typeof thumbIndex !== 'number') {
+						// thumbIndex is not available for favorites, so do some work out
+						thumbIndex = localPacks[pack].files.findIndex(file => file === id);
+					}
+					url = thumbIndex >= 0 ? localPacks[pack].thumbs[thumbIndex] : null;
 				}
-				url = thumbIndex >= 0 && localPacks[pack].thumbs[thumbIndex];
 				if (!url) {
-					// Page emoji for missing thumbs
-					url = '/assets/eedd4bd948a0da6d75bf5304bff4e17f.svg';
+					// Immediately return with placeholder thumb (paper emoji)
+					return '/assets/eedd4bd948a0da6d75bf5304bff4e17f.svg';
 				}
-			} else if (typeof localPacks[pack].template === 'string') {
-				const template = localPacks[pack].template;
-				url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
 			} else {
 				url = id;
+			}
+			if (typeof localPacks[pack].template === 'string') {
+				url = localPacks[pack].template.replace(/%pack%/g, pack.replace('custom-', '')).replace(/%id%/g, url);
 			}
 		}
 		return url;
