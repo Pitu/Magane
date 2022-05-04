@@ -869,10 +869,13 @@
 		const stickerWindow = document.querySelector('#magane .stickerWindow');
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
-			const maganeButton = document.querySelector('#magane .magane-button');
-			if (
-				!(e.target === maganeButton || e.target.parentNode === maganeButton) &&
-				!((e.clientX <= x + width && e.clientX >= x) &&
+			if (e.target) {
+				const maganeButton = document.querySelector('#magane .magane-button');
+				if (maganeButton.contains(e.target)) return;
+				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
+				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
+			}
+			if (!((e.clientX <= x + width && e.clientX >= x) &&
 				(e.clientY <= y + height && e.clientY >= y))
 			) {
 				// eslint-disable-next-line no-use-before-define
