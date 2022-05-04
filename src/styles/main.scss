@@ -399,7 +399,6 @@ div#magane {
 					div.preview {
 						flex: 0 0 auto;
 						min-width: 75px;
-						height: 75px;
 					}
 
 					div.action {
@@ -445,6 +444,7 @@ div#magane {
 					}
 
 					div.preview {
+						height: 75px;
 						background-position: center;
 						background-size: contain;
 						background-repeat: no-repeat;
