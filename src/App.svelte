@@ -1164,6 +1164,46 @@
 		});
 	};
 
+	const onLocalRemotePackChange = event => {
+		const { files } = event.target;
+		if (!files.length) return false;
+
+		const file = files[0];
+		const reader = new FileReader();
+		reader.onload = e => {
+			// Reset selected file in the hidden input
+			event.target.value = '';
+
+			let result;
+			try {
+				result = JSON.parse(e.target.result);
+			} catch (error) {
+				console.error(error);
+				toastError('The selected file is not a valid JSON file.');
+			}
+
+			assertRemotePackConsent(`File: ${file.name}`, async () => {
+				try {
+					const pack = await processRemotePack(result);
+					pack.id = `custom-${pack.id}`;
+					const stored = _appendPack(pack.id, pack);
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+				} catch (error) {
+					console.error(error);
+					toastError(error.toString(), { nolog: true });
+				}
+			});
+		};
+
+		log(`Reading ${file.name}\u2026`);
+		reader.readAsText(file);
+	};
+
+	const loadLocalRemotePack = () => {
+		const element = document.getElementById('localRemotePackInput');
+		element.click();
+	};
+
 	const onSettingsChange = event => {
 		const { name } = event.target;
 		if (!name) return false;
@@ -1548,6 +1588,17 @@
 										placeholder="Remote Pack JSON or Chibisafe Album URL" />
 									<button class="button is-primary"
 										on:click="{ () => parseRemotePackUrl() }">Add</button>
+								</p>
+								<p>
+									<input
+										id="localRemotePackInput"
+										type="file"
+										style="display: none"
+										accept="application/JSON"
+										on:click="{ event => event.stopPropagation() }"
+										on:change="{ onLocalRemotePackChange }" />
+									<button class="button has-width-full"
+										on:click="{ () => loadLocalRemotePack() }">Load local JSON</button>
 								</p>
 							</div>
 						</SimpleBar>
