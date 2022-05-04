@@ -694,8 +694,8 @@
 	};
 
 	window.magane.appendCustomPack = (...args) => {
-		let { name, id, count, animated, template, files, thumbs, overwrite } = parseFunctionArgs(args,
-			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs', 'overwrite'], 5);
+		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
 
 		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
@@ -721,7 +721,7 @@
 			files,
 			thumbs,
 			template
-		}, { overwrite });
+		});
 	};
 
 	window.magane.appendSafePack = async (...args) => {
@@ -768,6 +768,20 @@
 			thumbs,
 			url
 		}, { overwrite });
+	};
+
+	window.magane.editPack = (...args) => {
+		const { id, props } = parseFunctionArgs(args,
+			['id', 'props'], 2);
+
+		if (typeof props !== 'object') {
+			throw new Error('"props" must be an object.');
+		}
+
+		return _appendPack(id, props, {
+			overwrite: true,
+			partial: true
+		});
 	};
 
 	window.magane.deletePack = id => {
