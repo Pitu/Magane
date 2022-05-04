@@ -838,7 +838,7 @@
 			} else if (id.startsWith('emojis-')) {
 				tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
 			} else if (id.startsWith('custom-')) {
-				tmp = `Custom ${id.replace('custom-', '')}`;
+				tmp = id.replace('custom-', '');
 			}
 		}
 		return `<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
