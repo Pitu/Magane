@@ -1054,10 +1054,12 @@
 		return processRemotePack(data, opts);
 	};
 
-	const updateRemotePack = async id => {
+	const updateRemotePack = async (id, silent = false) => {
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
-			toast('Updating pack information\u2026', { nolog: true });
+			if (!silent) {
+				toast('Updating pack information\u2026', { nolog: true });
+			}
 
 			const pack = await fetchRemotePack(
 				localPacks[id].updateUrl,
@@ -1086,7 +1088,10 @@
 				saveToLocalStorage('magane.subscribed', subscribedPacks);
 			}
 
-			toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 8000 });
+			if (!silent) {
+				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+			}
+			return stored;
 		} catch (error) {
 			console.error(error);
 			toastError(error.toString(), { nolog: true });
@@ -1203,6 +1208,40 @@
 	const loadLocalRemotePack = () => {
 		const element = document.getElementById('localRemotePackInput');
 		element.click();
+	};
+
+	const bulkUpdateRemotePacks = () => {
+		const packs = Object.values(localPacks)
+			.filter(pack => pack.updateUrl)
+			.map(pack => pack.id);
+		if (!packs.length) {
+			return toastWarn('You do not have any remote packs that can be updated.');
+		}
+
+		// Markdown, so we do double \n for new line
+		const content = `**Please confirm that you want to update __${packs.length}__ remote pack${packs.length === 1 ? '' : 's'}.**`;
+		BdApi.showConfirmationModal(
+			`Update ${packs.length} remote pack${packs.length === 1 ? '' : 's'}`,
+			content,
+			{
+				confirmText: 'Import',
+				cancelText: 'Cancel',
+				danger: true,
+				onConfirm: async () => {
+					try {
+						for (let i = 0; i < packs.length; i++) {
+							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 1000 });
+							const stored = await updateRemotePack(packs[i], true);
+							if (!stored) break;
+						}
+						toastSuccess('Updates completed.', { nolog: true });
+					} catch (ex) {
+						toastWarn('Updated cancelled due to unexpected errors.', { nolog: true });
+						// Do nothing
+					}
+				}
+			}
+		);
 	};
 
 	const onSettingsChange = event => {
@@ -1600,6 +1639,10 @@
 										on:change="{ onLocalRemotePackChange }" />
 									<button class="button has-width-full"
 										on:click="{ () => loadLocalRemotePack() }">Load local JSON</button>
+								</p>
+								<p>
+									<button class="button is-primary has-width-full"
+										on:click="{ () => bulkUpdateRemotePacks() }">Update all remote packs</button>
 								</p>
 							</div>
 						</SimpleBar>
