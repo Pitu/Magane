@@ -522,10 +522,6 @@
 	};
 
 	const _appendPack = (id, e, opts = {}) => {
-		if (!e.count || !e.files.length) {
-			throw new Error('Invalid stickers count.');
-		}
-
 		let availLocalPacks;
 		let foundIndex;
 		const storedLocalPacks = storage.getItem('magane.available');
@@ -534,14 +530,20 @@
 			if (availLocalPacks) {
 				foundIndex = availLocalPacks.findIndex(p => p.id === id);
 				if (foundIndex >= 0) {
-					if (opts.overwrite) {
+					if (opts.overwrite && opts.partial) {
 						// Allow partial properties overwrites
 						e = Object.assign(availLocalPacks[foundIndex], e);
-					} else {
+					} else if (!opts.overwrite) {
 						throw new Error(`Pack with ID ${id} already exist.`);
 					}
+				} else if (opts.overwrite) {
+					throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
 				}
 			}
+		}
+
+		if (!e.count || !e.files.length) {
+			throw new Error('Invalid stickers count.');
 		}
 
 		const result = { pack: e };
@@ -555,7 +557,6 @@
 			if (sharedIndex !== -1) {
 				availablePacks[sharedIndex] = e;
 			}
-			result.sharedIndex = sharedIndex;
 		} else {
 			availLocalPacks.unshift(e);
 			availablePacks.unshift(e);
@@ -565,7 +566,11 @@
 		saveToLocalStorage('magane.available', availLocalPacks);
 		filterPacks();
 
-		log(`Added a new pack with ID ${id}`);
+		if (opts.overwrite) {
+			log(`Overwritten pack with ID ${id}`);
+		} else {
+			log(`Added a new pack with ID ${id}`);
+		}
 		return result;
 	};
 
