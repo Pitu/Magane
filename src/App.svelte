@@ -1236,7 +1236,7 @@
 						}
 						toastSuccess('Updates completed.', { nolog: true });
 					} catch (ex) {
-						toastWarn('Updated cancelled due to unexpected errors.', { nolog: true });
+						toastWarn('Updates cancelled due to unexpected errors.', { nolog: true });
 						// Do nothing
 					}
 				}
