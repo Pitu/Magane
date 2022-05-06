@@ -34,6 +34,7 @@
 	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
+	let remotePackUrl = null;
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
@@ -43,7 +44,10 @@
 		disableToasts: false,
 		closeWindowOnSend: false,
 		disableDownscale: false,
-		useLeftToolbar: false
+		useLeftToolbar: false,
+		disableImportedObfuscation: false,
+		markAsSpoiler: false,
+		hidePackAppendix: false
 	};
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
@@ -279,7 +283,7 @@
 		}
 	};
 
-	const formatUrl = (pack, id, sending) => {
+	const formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
 		if (typeof pack === 'number') {
 			// Magane's built-in packs
@@ -316,14 +320,35 @@
 			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
-			const append = sending ? '' : '&h=100p';
+			let append = sending ? '' : '&h=100p';
+			if (localPacks[pack].animated) {
+				url = url.replace(/\.png/, '_animation.png');
+				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
+				append += '&output=gif';
+			}
 			if (!settings.disableDownscale) {
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('custom-')) {
-			// Custom packs
-			const template = localPacks[pack].template;
-			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id);
+			// Unified imported custom packs
+			if (!sending && Array.isArray(localPacks[pack].thumbs)) {
+				if (localPacks[pack].thumbs.length) {
+					if (typeof thumbIndex !== 'number') {
+						// thumbIndex is not available for favorites, so do some work out
+						thumbIndex = localPacks[pack].files.findIndex(file => file === id);
+					}
+					url = thumbIndex >= 0 ? localPacks[pack].thumbs[thumbIndex] : null;
+				}
+				if (!url) {
+					// Immediately return with placeholder thumb (paper emoji)
+					return '/assets/eedd4bd948a0da6d75bf5304bff4e17f.svg';
+				}
+			} else {
+				url = id;
+			}
+			if (typeof localPacks[pack].template === 'string') {
+				url = localPacks[pack].template.replace(/%pack%/g, pack.replace('custom-', '')).replace(/%id%/g, url);
+			}
 		}
 		return url;
 	};
@@ -392,19 +417,27 @@
 
 			let filename = id;
 			if (typeof pack === 'string') {
-				if (pack.startsWith('startswith-') && localPacks[pack].animated) {
+				if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 					filename = filename.replace(/\.png$/i, '.gif');
-					toastWarn('Animated stickers from LINE Store currently cannot be animated.');
+					toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
 				} else if (pack.startsWith('custom-')) {
-					// Obfuscate file name of stickers from custom packs
-					filename = `${Date.now().toString()}.${id.split('.')[1]}`;
+					if (settings.disableImportedObfuscation) {
+						filename = id;
+					} else {
+						const ext = id.match(/(\.\w+)$/);
+						filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
+					}
 				}
+			}
+
+			if (settings.markAsSpoiler) {
+				filename = `SPOILER_${filename}`;
 			}
 
 			// NOTE: Buffer is Node API, but it is perfectly usable in Discord-context (Electron thing?)
 			const file = new File([Buffer.from(myBlob)], filename);
 
-			log(`Sending\u2026`);
+			log(`Sending sticker as ${filename}\u2026`);
 
 			let messageContent = '';
 			const textAreaInstance = getTextAreaInstance();
@@ -489,36 +522,57 @@
 		}
 	};
 
-	const _appendPack = (id, e) => {
-		if (!e.count || !e.files.length) {
-			throw new Error('Invalid stickers count.');
-		}
-
-		let availLocalPacks = [];
+	const _appendPack = (id, e, opts = {}) => {
+		let availLocalPacks;
+		let foundIndex;
 		const storedLocalPacks = storage.getItem('magane.available');
 		if (storedLocalPacks) {
 			availLocalPacks = JSON.parse(storedLocalPacks);
 			if (availLocalPacks) {
-				const index = availLocalPacks.findIndex(p => p.id === id);
-				if (index >= 0) {
-					throw new Error(`Pack with ID ${id} already exist`);
+				foundIndex = availLocalPacks.findIndex(p => p.id === id);
+				if (foundIndex >= 0) {
+					if (opts.overwrite && opts.partial) {
+						// Allow partial properties overwrites
+						e = Object.assign(availLocalPacks[foundIndex], e);
+					} else if (!opts.overwrite) {
+						throw new Error(`Pack with ID ${id} already exist.`);
+					}
+				} else if (opts.overwrite) {
+					throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
 				}
 			}
 		}
 
+		if (!e.count || !e.files.length) {
+			throw new Error('Invalid stickers count.');
+		}
+
+		const result = { pack: e };
 		if (localPackIdRegex.test(id)) {
 			localPacks[id] = e;
 		}
 
-		availLocalPacks.unshift(e);
-		saveToLocalStorage('magane.available', availLocalPacks);
+		if (foundIndex >= 0) {
+			availLocalPacks[foundIndex] = e;
+			const sharedIndex = availablePacks.findIndex(p => p.id === id);
+			if (sharedIndex !== -1) {
+				availablePacks[sharedIndex] = e;
+			}
+		} else {
+			availLocalPacks.unshift(e);
+			availablePacks.unshift(e);
+			availablePacks = availablePacks;
+		}
 
-		availablePacks.unshift(e);
-		availablePacks = availablePacks;
+		saveToLocalStorage('magane.available', availLocalPacks);
 		filterPacks();
 
-		log(`Added a new pack with ID ${id}`);
-		return e;
+		if (opts.overwrite) {
+			log(`Overwritten pack with ID ${id}`);
+		} else {
+			log(`Added a new pack with ID ${id}`);
+		}
+		return result;
 	};
 
 	/*
@@ -580,10 +634,24 @@
 		}
 	};
 
-	window.magane.appendPack = (title, firstid, count, animated, _) => {
-		if (_) {
-			throw new Error('This function expects only 4 parameters. Were you looking for appendCustomPack()?');
+	const parseFunctionArgs = (args, argNames, minArgs) => {
+		// Allow calling window.magane.X functions with
+		// func(val1, val2, ..., valN) for backwards-compatibility, and
+		// func({arg1: val, arg2: val, ..., argN: val}) for a clean expandable future.
+		const isFirstArgAnObj = typeof args[0] === 'object';
+		if (!isFirstArgAnObj && typeof minArgs === 'number' && args.length < minArgs) {
+			throw new Error(`This function expects at least ${minArgs} parameter(s).`);
 		}
+		const parsed = {};
+		for (let i = 0; i < argNames.length; i++) {
+			parsed[argNames[i]] = isFirstArgAnObj ? args[0][argNames[i]] : args[i];
+		}
+		return parsed;
+	};
+
+	window.magane.appendPack = (...args) => {
+		let { name, firstid, count, animated } = parseFunctionArgs(args,
+			['name', 'firstid', 'count', 'animated'], 3);
 
 		firstid = Number(firstid);
 		if (isNaN(firstid) || !isFinite(firstid) || firstid < 0) {
@@ -598,18 +666,17 @@
 		}
 
 		return _appendPack(mid, {
-			name: title,
-			count: count,
+			name,
+			count,
 			id: mid,
 			animated: animated ? 1 : null,
-			files: files
+			files
 		});
 	};
 
-	window.magane.appendEmojisPack = (title, id, count, _) => {
-		if (_) {
-			throw new Error('This function expects only 3 parameters.');
-		}
+	window.magane.appendEmojisPack = (...args) => {
+		let { name, id, count, animated } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated'], 3);
 
 		count = Math.max(Math.min(Number(count), 200), 0) || 0;
 		const mid = `emojis-${id}`;
@@ -619,32 +686,56 @@
 		}
 
 		return _appendPack(mid, {
-			name: title,
-			count: count,
+			name,
+			count,
 			id: mid,
-			files: files
+			animated: animated ? 1 : null,
+			files
 		});
 	};
 
-	window.magane.appendCustomPack = (title, id, count, animated, template) => {
-		if (!template) {
-			throw new Error('Missing URL template.');
-		}
+	window.magane.appendCustomPack = (...args) => {
+		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
 
 		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
-		const files = [];
-		for (let i = 1; i <= count; i += 1) {
-			files.push(i + (animated ? '.gif' : '.png'));
+		if (Array.isArray(files)) {
+			if (!files.length) {
+				throw new Error('"files" array cannot be empty.');
+			}
+		} else {
+			if (!template) {
+				throw new Error('"template" must be set if not using custom "files" array.');
+			}
+			files = [];
+			for (let i = 1; i <= count; i += 1) {
+				files.push(i + (animated ? '.gif' : '.png'));
+			}
 		}
 
 		return _appendPack(mid, {
-			name: title,
-			count: count,
+			name,
+			count,
 			id: mid,
 			animated: animated ? 1 : null,
-			files: files,
-			template: template
+			files,
+			thumbs,
+			template
+		});
+	};
+
+	window.magane.editPack = (...args) => {
+		const { id, props } = parseFunctionArgs(args,
+			['id', 'props'], 2);
+
+		if (typeof props !== 'object') {
+			throw new Error('"props" must be an object.');
+		}
+
+		return _appendPack(id, props, {
+			overwrite: true,
+			partial: true
 		});
 	};
 
@@ -663,10 +754,9 @@
 				}
 
 				// Force unfavorite stickers
-				const favedStickers = favoriteStickers.filter(s => s.pack === id);
-				if (favedStickers.length) {
-					favedStickers.forEach(s => unfavoriteSticker(id, s.id));
-				}
+				favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
+				delete favoriteStickersData[id];
+				saveToLocalStorage('magane.favorites', favoriteStickers);
 
 				// Force unsubscribe
 				const subbedPack = subscribedPacks.find(p => p.id === id);
@@ -684,6 +774,7 @@
 					filterPacks();
 				}
 
+				delete localPacks[id];
 				log(`Removed pack with ID ${id} (old index: ${index})`);
 				return true;
 			} catch (ex) {
@@ -721,7 +812,7 @@
 			} else if (id.startsWith('emojis-')) {
 				tmp = `LINE Emojis ${id.replace('emojis-', '')}`;
 			} else if (id.startsWith('custom-')) {
-				tmp = `Custom ${id.replace('custom-', '')}`;
+				tmp = id.replace('custom-', '');
 			}
 		}
 		return `<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
@@ -752,10 +843,13 @@
 		const stickerWindow = document.querySelector('#magane .stickerWindow');
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
-			const maganeButton = document.querySelector('#magane .magane-button');
-			if (
-				!(e.target === maganeButton || e.target.parentNode === maganeButton) &&
-				!((e.clientX <= x + width && e.clientX >= x) &&
+			if (e.target) {
+				const maganeButton = document.querySelector('#magane .magane-button');
+				if (maganeButton.contains(e.target)) return;
+				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
+				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
+			}
+			if (!((e.clientX <= x + width && e.clientX >= x) &&
 				(e.clientY <= y + height && e.clientY >= y))
 			) {
 				// eslint-disable-next-line no-use-before-define
@@ -793,7 +887,7 @@
 
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
-			element: id,
+			element: id.replace(/([.])/g, '\\$1'),
 			container: document.querySelector(selectorStickerWindowScroller)
 		});
 	};
@@ -834,6 +928,176 @@
 		toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}.`);
 	};
 
+	const deleteLocalPack = id => {
+		try {
+			const _name = localPacks[id].name;
+			const deleted = window.magane.deletePack(id);
+			if (deleted) {
+				toastSuccess(`Removed pack ${_name}.`, { nolog: true, timeout: 6000 });
+			}
+		} catch (error) {
+			console.error(error);
+			toastError(error.toString(), { nolog: true });
+		}
+	};
+
+	const processRemotePack = async (data, opts) => {
+		const pack = {
+			id: '',
+			name: '',
+			files: [],
+			count: 0,
+			remoteType: 0
+		};
+
+		if (opts) {
+			for (const key of Object.keys(opts)) {
+				pack[key] = opts[key];
+			}
+		}
+
+		// Expandable if required
+		switch (pack.remoteType) {
+			case 1: // Chibisafe Albums
+				pack.name = String(data.name);
+
+				pack.thumbs = [];
+				for (let i = 0; i < data.files.length; i++) {
+					pack.files.push(data.files[i].url);
+					pack.thumbs.push(data.files[i].thumb || null);
+				}
+				break;
+			case 0: // Custom JSON
+			default:
+				if (['id', 'name', 'files'].some(key => !data[key])) {
+					throw new Error('Invalid config. Some required fields are missing.');
+				}
+
+				pack.id = String(data.id);
+				pack.name = String(data.name);
+
+				if (data.files.some(file => typeof file !== 'string')) {
+					throw new Error('Invalid "files" array. Some values are not string.');
+				}
+				pack.files = data.files;
+
+				if (Array.isArray(data.thumbs)) {
+					if (data.thumbs.some(thumb => typeof thumb !== 'string' && thumb !== null)) {
+						throw new Error('Invalid "thumbs" array. Some values are neither string nor null.');
+					}
+					pack.thumbs = data.thumbs;
+				}
+
+				pack.description = data.description ? String(data.description) : null;
+				pack.homeUrl = data.homeUrl ? String(data.homeUrl) : null;
+				pack.template = data.template ? String(data.template) : null;
+
+				// Override update URL if required
+				if (data.updateUrl) {
+					pack.updateUrl = String(data.updateUrl);
+				}
+				break;
+		}
+
+		// General chores
+		pack.count = pack.files.length;
+		// If all thumbs are missing, just empty the array
+		if (Array.isArray(pack.thumbs) && pack.thumbs.every(thumb => thumb === null)) {
+			pack.thumbs = [];
+		}
+
+		return pack;
+	};
+
+	const fetchRemotePack = async (url, bypassCheck = false, remoteType) => {
+		const opts = { updateUrl: url };
+		if (bypassCheck) {
+			opts.remoteType = remoteType;
+		} else {
+			if (!url || !/^https?:\/\//.test(url)) {
+				throw new Error('URL must have HTTP(s) protocol.');
+			}
+
+			// Expandable if required
+			const regExes = [
+				// RegEx for chibisafe album links (basically must have /a/identifier)
+				/^(.+:\/\/)(.+)\/a\/([^/\s]+)/
+			];
+
+			let match = { index: -1 };
+			for (let i = 0; i < regExes.length; i++) {
+				const _match = url.match(regExes[i]);
+				if (_match && !_match.some(m => m === undefined)) {
+					match = {
+						index: i,
+						result: _match
+					};
+				}
+			}
+
+			switch (match.index) {
+				case 0:
+					opts.id = `${match.result[2]}-${match.result[3]}`;
+					opts.homeUrl = url;
+					opts.updateUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
+					opts.remoteType = 1;
+					break;
+			}
+		}
+
+		const response = await fetch(opts.updateUrl, { cache: 'no-cache' });
+		const data = await response.json();
+		if (!data) {
+			throw new Error('Unable to parse data. Check your console for details.');
+		}
+
+		return processRemotePack(data, opts);
+	};
+
+	const updateRemotePack = async (id, silent = false) => {
+		try {
+			if (!localPacks[id] || !localPacks[id].updateUrl) return;
+			if (!silent) {
+				toast('Updating pack information\u2026', { nolog: true });
+			}
+
+			const pack = await fetchRemotePack(
+				localPacks[id].updateUrl,
+				typeof (localPacks[id].remoteType) === 'number' ? true : false,
+				localPacks[id].remoteType
+			);
+			pack.id = id;
+
+			const stored = _appendPack(pack.id, pack, { overwrite: true });
+
+			// Update favorites data
+			favoriteStickers = favoriteStickers.filter(s =>
+				s.pack !== id || stored.pack.files.findIndex(f => f === s.id) !== -1);
+			if (favoriteStickers.some(s => s.pack === id)) {
+				favoriteStickersData[id].name = stored.pack.name;
+			} else {
+				delete favoriteStickersData[id];
+			}
+			saveToLocalStorage('magane.favorites', favoriteStickers);
+
+			// Update subscribed pack data
+			const subIndex = subscribedPacks.findIndex(p => p.id === id);
+			if (subIndex !== -1)	{
+				subscribedPacks[subIndex] = stored.pack;
+				subscribedPacksSimple[subIndex] = stored.pack.id;
+				saveToLocalStorage('magane.subscribed', subscribedPacks);
+			}
+
+			if (!silent) {
+				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+			}
+			return stored;
+		} catch (error) {
+			console.error(error);
+			toastError(error.toString(), { nolog: true });
+		}
+	};
+
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
 		try {
@@ -846,22 +1110,138 @@
 				const id = match[4];
 				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
 				const props = await response.json();
-				linePackSearch = null;
-				stored = window.magane.appendEmojisPack(props.title, props.id, props.len);
+				stored = window.magane.appendEmojisPack({
+					name: props.title,
+					id: props.id,
+					count: props.len,
+					animated: props.hasAnimation || null
+				});
 			} else {
 				// LINE Stickers work with either its full URL or just its ID
 				const id = Number(match[4]);
 				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
 				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
 				const props = await response.json();
-				linePackSearch = null;
-				stored = window.magane.appendPack(props.title, props.first, props.len, props.hasAnimation);
+				stored = window.magane.appendPack({
+					name: props.title,
+					firstid: props.first,
+					count: props.len,
+					animated: props.hasAnimation
+				});
 			}
-			toastSuccess(`Added a new pack ${stored.name}.`, { nolog: true, timeout: 6000 });
+			toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+			linePackSearch = null;
 		} catch (error) {
 			console.error(error);
-			toastError('Unexpected error occurred. Check your console for details.');
+			toastError(error.toString(), { nolog: true });
 		}
+	};
+
+	const assertRemotePackConsent = (context, onConfirm) => {
+		// Markdown, so we do double \n for new line
+		const content = `${context}\n\n` +
+			'**Please continue only if you trust this remote pack.**';
+		BdApi.showConfirmationModal(
+			'Import Remote Pack',
+			content,
+			{
+				confirmText: 'Import',
+				cancelText: 'Cancel',
+				danger: true,
+				onConfirm
+			}
+		);
+	};
+
+	const parseRemotePackUrl = () => {
+		if (!remotePackUrl) return;
+		assertRemotePackConsent(`URL: ${remotePackUrl}`, async () => {
+			try {
+				toast('Loading pack information\u2026', { nolog: true });
+				const pack = await fetchRemotePack(remotePackUrl);
+				pack.id = `custom-${pack.id}`;
+				const stored = _appendPack(pack.id, pack);
+				toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+				remotePackUrl = null;
+			} catch (error) {
+				console.error(error);
+				toastError(error.toString(), { nolog: true });
+			}
+		});
+	};
+
+	const onLocalRemotePackChange = event => {
+		const { files } = event.target;
+		if (!files.length) return false;
+
+		const file = files[0];
+		const reader = new FileReader();
+		reader.onload = e => {
+			// Reset selected file in the hidden input
+			event.target.value = '';
+
+			let result;
+			try {
+				result = JSON.parse(e.target.result);
+			} catch (error) {
+				console.error(error);
+				toastError('The selected file is not a valid JSON file.');
+			}
+
+			assertRemotePackConsent(`File: ${file.name}`, async () => {
+				try {
+					const pack = await processRemotePack(result);
+					pack.id = `custom-${pack.id}`;
+					const stored = _appendPack(pack.id, pack);
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+				} catch (error) {
+					console.error(error);
+					toastError(error.toString(), { nolog: true });
+				}
+			});
+		};
+
+		log(`Reading ${file.name}\u2026`);
+		reader.readAsText(file);
+	};
+
+	const loadLocalRemotePack = () => {
+		const element = document.getElementById('localRemotePackInput');
+		element.click();
+	};
+
+	const bulkUpdateRemotePacks = () => {
+		const packs = Object.values(localPacks)
+			.filter(pack => pack.updateUrl)
+			.map(pack => pack.id);
+		if (!packs.length) {
+			return toastWarn('You do not have any remote packs that can be updated.');
+		}
+
+		// Markdown, so we do double \n for new line
+		const content = `**Please confirm that you want to update __${packs.length}__ remote pack${packs.length === 1 ? '' : 's'}.**`;
+		BdApi.showConfirmationModal(
+			`Update ${packs.length} remote pack${packs.length === 1 ? '' : 's'}`,
+			content,
+			{
+				confirmText: 'Import',
+				cancelText: 'Cancel',
+				danger: true,
+				onConfirm: async () => {
+					try {
+						for (let i = 0; i < packs.length; i++) {
+							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 1000 });
+							const stored = await updateRemotePack(packs[i], true);
+							if (!stored) break;
+						}
+						toastSuccess('Updates completed.', { nolog: true });
+					} catch (ex) {
+						toastWarn('Updates cancelled due to unexpected errors.', { nolog: true });
+						// Do nothing
+					}
+				}
+			}
+		);
 	};
 
 	const onSettingsChange = event => {
@@ -1021,7 +1401,10 @@
 							class="image"
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
-							title="{ favoriteStickersData[sticker.pack] ? favoriteStickersData[sticker.pack].name : 'N/A' }"
+							title="{
+								(favoriteStickersData[sticker.pack] ? favoriteStickersData[sticker.pack].name : 'N/A') +
+								(typeof sticker.pack === 'string' && sticker.pack.startsWith('custom-') ? ` – ${sticker.id}` : '')
+							}"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
@@ -1044,8 +1427,9 @@
 					<div class="sticker">
 						<img
 							class="image"
-							src="{ `${formatUrl(pack.id, sticker)}` }"
+							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
+							title="{ typeof pack.id === 'string' && pack.id.startsWith('custom-') ? sticker : '' }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
@@ -1095,7 +1479,7 @@
 						<div class="pack"
 							on:click={ () => scrollToStickers(`#p${pack.id}`) }
 							title="{ pack.name }"
-							style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+							style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 						{ /each }
 					</div>
 				</SimpleBar>
@@ -1121,7 +1505,7 @@
 							<div class="tab"
 								on:click="{ () => activateTab(2) }"
 								class:is-active="{ activeTab === 2 }">
-								LINE
+								Import
 							</div>
 							<div class="tab"
 								on:click="{ () => activateTab(3) }"
@@ -1147,14 +1531,20 @@
 								</div>
 								{ /if }
 								<div class="preview"
-									style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+									style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 								<div class="info">
-									<span>{ pack.name }</span>
-									<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+									<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
+									<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
 								</div>
-								<div class="action">
+								<div class="action{ localPacks[pack.id] && localPacks[pack.id].updateUrl ? ' is-tight' : '' }">
 									<button class="button is-danger"
-										on:click="{ () => unsubscribeToPack(pack) }">Del</button>
+										on:click="{ () => unsubscribeToPack(pack) }"
+										title="Unsubscribe">Del</button>
+									{ #if localPacks[pack.id] && localPacks[pack.id].updateUrl }
+									<button class="button update-pack"
+										on:click="{ () => updateRemotePack(pack.id) }"
+										title="Update">Up</button>
+									{ /if }
 								</div>
 							</div>
 							{ /each }
@@ -1175,22 +1565,30 @@
 								{ #each filteredPacks as pack }
 								<div class="pack">
 									<div class="preview"
-										style="background-image: { `url(${formatUrl(pack.id, pack.files[0])})` }" />
+										style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 									<div class="info">
-										<span>{ pack.name }</span>
-										<span>{ pack.count } stickers{ @html formatPackAppendix(pack.id) }</span>
+										<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
+										<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
 									</div>
-									<div class="action">
+									<div class="action{ localPacks[pack.id] ? ' is-tight' : '' }">
 										{ #if subscribedPacksSimple.includes(pack.id) }
 										<button class="button is-danger"
-											on:click="{ () => unsubscribeToPack(pack) }">Del</button>
+											on:click="{ () => unsubscribeToPack(pack) }"
+											title="Unsubscribe">Del</button>
 										{ :else }
 										<button class="button is-primary"
-											on:click="{ () => subscribeToPack(pack) }">Add</button>
+											on:click="{ () => subscribeToPack(pack) }"
+											title="Subscribe">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
-										<button class="button deletePack"
-											on:click="{ () => window.magane.deletePack(pack.id) }"></button>
+										{ #if localPacks[pack.id].updateUrl }
+										<button class="button update-pack"
+											on:click="{ () => updateRemotePack(pack.id) }"
+											title="Update">Up</button>
+										{ /if }
+										<button class="button delete-pack"
+											on:click="{ () => deleteLocalPack(pack.id) }"
+											title="Purge"></button>
 										{ /if }
 									</div>
 								</div>
@@ -1200,18 +1598,55 @@
 						</div>
 						<!-- /tab: Packs -->
 
-						<!-- tab: LINE -->
-						<div class="tab-content line-proxy" style="{ activeTab === 2 ? '' : 'display: none;' }">
-							<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the LINE Store and pick whatever pack you want and paste the full URL in the box below. <br><br>For example: https://store.line.me/stickershop/product/17573/ja</p>
-							<input
-								bind:value={ linePackSearch }
-								class="inputQuery"
-								type="text"
-								placeholder="LINE Sticker Pack URL" />
-							<button class="button is-primary"
-								on:click="{ () => parseLinePack() }">Add</button>
-						</div>
-						<!-- /tab: LINE -->
+						<!-- tab: Import -->
+						<SimpleBar class="tab-content import" style="{ activeTab === 2 ? '' : 'display: none;' }">
+							<div class="section line-proxy">
+								<p class="section-title">LINE Store Proxy</p>
+								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.</p>
+								<p>e.g. https://store.line.me/stickershop/product/17573/ja</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ linePackSearch }
+										class="inputQuery"
+										type="text"
+										placeholder="LINE Sticker Pack URL" />
+									<button class="button is-primary"
+										on:click="{ () => parseLinePack() }">Add</button>
+								</p>
+							</div>
+							<div class="section remote-packs">
+								<p class="section-title">Remote Packs</p>
+								<p>You can paste URL to a JSON config file of a remote pack in here.<br>
+									This also supports public album links of any file hosting websites running <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>.</p>
+								<p>e.g. https://example.com/packs/my_custom_pack.json<br>
+									https://chibisafe.moe/a/my_album</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ remotePackUrl }
+										class="inputQuery"
+										type="text"
+										placeholder="Remote Pack JSON or Chibisafe Album URL" />
+									<button class="button is-primary"
+										on:click="{ () => parseRemotePackUrl() }">Add</button>
+								</p>
+								<p>
+									<input
+										id="localRemotePackInput"
+										type="file"
+										style="display: none"
+										accept="application/JSON"
+										on:click="{ event => event.stopPropagation() }"
+										on:change="{ onLocalRemotePackChange }" />
+									<button class="button has-width-full"
+										on:click="{ () => loadLocalRemotePack() }">Load local JSON</button>
+								</p>
+								<p>
+									<button class="button is-primary has-width-full"
+										on:click="{ () => bulkUpdateRemotePacks() }">Update all remote packs</button>
+								</p>
+							</div>
+						</SimpleBar>
+						<!-- /tab: Import -->
 
 						<!-- tab: Misc -->
 						<SimpleBar class="tab-content misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
@@ -1247,10 +1682,37 @@
 								<p>
 									<label>
 										<input
+											name="hidePackAppendix"
+											type="checkbox"
+											bind:checked={ settings.hidePackAppendix } />
+										Hide pack's appendix in packs list (e.g. its numerical ID)
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
 										Disable downscaling of manually imported LINE Store packs
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="disableImportedObfuscation"
+											type="checkbox"
+											bind:checked={ settings.disableImportedObfuscation } />
+										Disable obfuscation of files names for imported custom packs
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="markAsSpoiler"
+											type="checkbox"
+											bind:checked={ settings.markAsSpoiler } />
+										Mark stickers as spoilers when sending
 									</label>
 								</p>
 							</div>

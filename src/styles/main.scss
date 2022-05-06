@@ -64,8 +64,7 @@ div#magane {
 			position: relative;
 
 			&.has-left-toolbar {
-				height: 650px !important;
-				margin-bottom: 0;
+				height: 600px !important;
 				margin-left: 50px;
 			}
 
@@ -354,28 +353,38 @@ div#magane {
 						flex-direction: column;
 					}
 
-					&.line-proxy {
-						display: flex;
-						flex-direction: column;
-						justify-content: center;
-						align-items: center;
-
-						p {
-							padding: 2rem;
-							padding-top: 0;
-							margin-top: -5rem;
-							user-select: text;
-						}
-					}
-
+					&.import,
 					&.misc {
-						margin: 0 5px 10px;
+						user-select: text;
 
 						.section {
-							padding: 5px 12px;
+							padding: 0 24px 5px;
 
 							.section-title {
 								font-weight: 800;
+							}
+
+							a {
+								/* inherit Discord's link color */
+								color: var(--text-link);
+
+								&:hover {
+									text-decoration: underline;
+								}
+							}
+						}
+
+						.input-grouped {
+							display: flex;
+
+							input {
+								margin: 0;
+								width: auto;
+								flex-grow: 1;
+							}
+
+							button {
+								margin-left: 4px;
 							}
 						}
 					}
@@ -396,13 +405,21 @@ div#magane {
 
 					div.index,
 					div.handle,
-					div.preview,
-					div.action {
+					div.preview {
 						flex: 0 0 auto;
 						min-width: 75px;
-						height: 75px;
+					}
 
-						button.deletePack {
+					div.action {
+						flex: 1 0 auto;
+
+						&.is-tight button {
+							width: auto;
+							padding-right: 0.5em;
+							padding-left: 0.5em;
+						}
+
+						button.delete-pack {
 							width: 36px;
 							height: 36px;
 
@@ -436,6 +453,7 @@ div#magane {
 					}
 
 					div.preview {
+						height: 75px;
 						background-position: center;
 						background-size: contain;
 						background-repeat: no-repeat;
@@ -583,6 +601,12 @@ div#magane {
 
 		&.has-width-full {
 			width: 100%;
+
+			&:hover {
+				/* TODO: Figure out how to do a more consistent scaling,
+				  regardless of the button's dynamic size. */
+				transform: scale3d(1.04, 1.04, 1.04);
+			}
 		}
 	}
 }
