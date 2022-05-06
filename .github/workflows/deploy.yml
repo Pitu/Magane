@@ -11,6 +11,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  NODE_VERSION: 14
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -27,11 +30,18 @@ jobs:
       - name: Install Node v14
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
-          cache: 'yarn'
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v2
+        id: cache-nodemodules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ env.NODE_VERSION }}-nodemodules-${{ hashFiles('**/yarn.lock') }}
 
       - name: Install dependencies
-        run: yarn install
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile --non-interactive
 
       - name: Build application
         run: yarn build
