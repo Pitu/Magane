@@ -44,14 +44,12 @@ module.exports = (() => {
                 type: 'switch',
                 id: 'disableToasts',
                 name: 'Disable toasts',
-                note: 'Disable toasts for Magane.',
                 value: false
             },
             {
                 type: 'switch',
                 id: 'closeWhenSending',
-                name: 'Close window when sending a sticker',
-                note: 'Automatically close the window after sending a sticker.',
+                name: 'Automatically close window after sending a sticker',
                 value: false
             },
             {
