@@ -13,10 +13,10 @@ import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
 const file = path.resolve(__dirname, production ? 'dist' : 'dist-dev', 'magane.plugin.js');
-const meta = path.resolve(__dirname, 'src/discord-meta.txt');
+const meta = path.resolve(__dirname, 'src/bd-meta.txt');
 
 export default {
-	input: 'src/discord.js',
+	input: 'src/bd-main.js',
 	output: {
 		exports: 'auto',
 		file,
