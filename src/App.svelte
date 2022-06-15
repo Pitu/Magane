@@ -1,6 +1,6 @@
 <script>
 	/* global BdApi */
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	// Let's make the scrollbars pretty
 	import SimpleBar from '@jbfulgencio/svelte-simplebar';
@@ -837,6 +837,12 @@
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
+	});
+
+	onDestroy(async () => {
+		if (resizeObserver) resizeObserver.disconnect();
+		delete window.magane;
+		log('Internal components cleaned up.');
 	});
 
 	const maganeBlurHandler = e => {
