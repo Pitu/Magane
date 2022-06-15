@@ -38,7 +38,8 @@
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
-	let resizeObserver;
+	let resizeObserver = null;
+	let waitForTextAreaTimeout = null;
 
 	const settings = {
 		disableToasts: false,
@@ -106,12 +107,13 @@
 	};
 
 	const waitForTextArea = () => {
+		log('Waiting for textarea\u2025');
 		let pollForTextArea;
 		return new Promise(resolve => {
 			(pollForTextArea = () => {
 				textArea = document.querySelector(selectorTextArea);
 				if (textArea) return resolve();
-				setTimeout(pollForTextArea, 500);
+				waitForTextAreaTimeout = setTimeout(pollForTextArea, 500);
 			})();
 		});
 	};
@@ -840,6 +842,7 @@
 	});
 
 	onDestroy(async () => {
+		if (waitForTextAreaTimeout) clearTimeout(waitForTextAreaTimeout);
 		if (resizeObserver) resizeObserver.disconnect();
 		delete window.magane;
 		log('Internal components cleaned up.');
