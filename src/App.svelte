@@ -15,7 +15,8 @@
 	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
 	const selectorTextArea = '[class^=channelTextArea-]';
-	const selectorStickerWindowScroller = '#magane .stickers .simplebar-content-wrapper';
+	const selectorStickerWindowScroller = '.stickers .simplebar-content-wrapper';
+	let main = null;
 	let textArea = document.querySelector(selectorTextArea);
 	let showIcon = true;
 	let isThereTopBar = null;
@@ -857,11 +858,11 @@
 	});
 
 	const maganeBlurHandler = e => {
-		const stickerWindow = document.querySelector('#magane .stickerWindow');
+		const stickerWindow = main.querySelector('.stickerWindow');
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
 			if (e.target) {
-				const maganeButton = document.querySelector('#magane .magane-button');
+				const maganeButton = main.querySelector('.magane-button');
 				if (maganeButton.contains(e.target)) return;
 				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
@@ -905,7 +906,7 @@
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id.replace(/([.])/g, '\\$1'),
-			container: document.querySelector(selectorStickerWindowScroller)
+			container: main.querySelector(selectorStickerWindowScroller)
 		});
 	};
 
@@ -1394,7 +1395,7 @@
 	};
 </script>
 
-<main>
+<main bind:this={ main }>
 	<div id="magane"
 		style="top: { `${coords.top}px` }; left: { `${coords.left}px` }; display: { showIcon ? 'flex' : 'none' };">
 		<div class="magane-button channel-textarea-emoji channel-textarea-stickers"
