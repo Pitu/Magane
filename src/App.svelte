@@ -151,9 +151,11 @@
 	};
 
 	const getLocalStorage = () => {
-		const localStorageIframe = document.createElement('iframe');
-		localStorageIframe.id = 'localStorageIframe';
-		storage = document.body.appendChild(localStorageIframe).contentWindow.frames.localStorage;
+		// Temporarily spawn an iframe to duplicate localStorage's descriptors into a local object
+		const iframe = document.createElement('iframe');
+		document.head.append(iframe);
+		storage = Object.getOwnPropertyDescriptor(iframe.contentWindow.frames, 'localStorage').get.call(window);
+		iframe.remove();
 	};
 
 	const saveToLocalStorage = (key, payload) => {
