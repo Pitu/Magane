@@ -12,14 +12,16 @@
 	window.magane = {};
 	const modules = {};
 
-	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
-	const selectorTextArea = '[class^=channelTextArea-]';
+	const selectorBaseLayerShown = '[class*="baseLayer"]:is([style=""], :not([style]))';
+	const selectorTextArea = `${selectorBaseLayerShown} [class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])`;
+	const selectorTextAreaButtons = `[class^="buttons"]`;
 	const selectorStickerWindowScroller = '.stickers .simplebar-content-wrapper';
 	let main = null;
-	let textArea = document.querySelector(selectorTextArea);
-	let showIcon = true;
-	let isThereTopBar = null;
+	let isParentBody = false;
+	let textArea = null;
+	let showIcon = false;
+	let isThereTopBar = false;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
@@ -93,20 +95,6 @@
 		return toast(message, options);
 	};
 
-	const keepMaganeInPlace = () => {
-		setTimeout(() => {
-			const el = document.querySelector(elementToCheck);
-			if (!el) {
-				if (showIcon) showIcon = false;
-				return;
-			}
-			if (!showIcon) showIcon = true;
-			const props = el.getBoundingClientRect();
-			coords.top = (isThereTopBar ? props.top - 21 : props.top) + 1;
-			coords.left = props.left - 108;
-		}, 0);
-	};
-
 	const waitForTextArea = () => {
 		log('Waiting for textarea\u2025');
 		let pollForTextArea;
@@ -119,17 +107,60 @@
 		});
 	};
 
-	const positionMagane = async entries => {
-		for (const entry of entries) {
-			if (!entry.contentRect) return;
-			keepMaganeInPlace();
-			if (entry.contentRect.width || entry.contentRect.height) return;
+	const updateButtonPosition = _textArea => {
+		log('Updating button\'s position\u2026');
 
-			resizeObserver.unobserve(textArea);
-			await waitForTextArea();
-			resizeObserver.observe(textArea);
-			keepMaganeInPlace();
+		const buttonsContainer = _textArea.querySelector(selectorTextAreaButtons);
+		if (!buttonsContainer) {
+			if (showIcon) showIcon = false;
+			return;
 		}
+
+		if (!showIcon) showIcon = true;
+		const props = buttonsContainer.getBoundingClientRect();
+
+		if (isParentBody) {
+			coords.top = props.top;
+			coords.left = props.left - 36; // 36px is Magane's button exact width
+		} else {
+			coords.top = (isThereTopBar ? props.top - 21 : props.top) + 1;
+			coords.left = props.left - 108;
+		}
+	};
+
+	const initResizeObserver = async () => {
+		if (resizeObserver) {
+			resizeObserver.disconnect();
+			log('ResizeObserver disconnected.');
+		} else {
+			resizeObserver = new ResizeObserver(entries => {
+				for (const entry of entries) {
+					if (!entry.contentRect) return;
+					if (entry.contentRect.width || entry.contentRect.height) {
+						updateButtonPosition(entry.target);
+					} else {
+						showIcon = false;
+						initResizeObserver();
+					}
+				}
+			});
+			log('ResizeObserver initiated.');
+		}
+		await waitForTextArea();
+		resizeObserver.observe(textArea);
+	};
+
+	const initButton = async () => {
+		// Simple indicator to check if Magane is mounted via the new BD plugin or not
+		isParentBody = main.parentNode.parentNode === document.body;
+		log(`isParentBody = ${isParentBody}`);
+
+		// Only used when mounted via legacy BD plugin
+		isThereTopBar = document.querySelector('html.platform-win');
+
+		await waitForTextArea();
+		updateButtonPosition(textArea);
+		initResizeObserver();
 	};
 
 	const initModules = () => {
@@ -840,11 +871,7 @@
 			await migrateStringPackIds();
 			toastSuccess('Magane is now ready!');
 			// Init button & ResizeObserver
-			resizeObserver = new ResizeObserver(positionMagane);
-			await waitForTextArea();
-			resizeObserver.observe(textArea);
-			isThereTopBar = document.querySelector('html.platform-win');
-			keepMaganeInPlace();
+			initButton();
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
