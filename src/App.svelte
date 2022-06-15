@@ -613,21 +613,25 @@
 		const favorites = JSON.parse(storage.getItem('magane.favorites'));
 		const subscribed = JSON.parse(storage.getItem('magane.subscribed'));
 
-		favorites.forEach(item => {
-			if (typeof item.pack === 'number') return;
-			const result = parseInt(item.pack, 10);
-			if (isNaN(item.pack)) return;
-			item.pack = result;
-			dirty = true;
-		});
+		if (favorites) {
+			favorites.forEach(item => {
+				if (typeof item.pack === 'number') return;
+				const result = parseInt(item.pack, 10);
+				if (isNaN(item.pack)) return;
+				item.pack = result;
+				dirty = true;
+			});
+		}
 
-		subscribed.forEach(item => {
-			if (typeof item.id === 'number') return;
-			const result = parseInt(item.id, 10);
-			if (isNaN(item.id)) return;
-			item.id = result;
-			dirty = true;
-		});
+		if (subscribed) {
+			subscribed.forEach(item => {
+				if (typeof item.id === 'number') return;
+				const result = parseInt(item.id, 10);
+				if (isNaN(item.id)) return;
+				item.id = result;
+				dirty = true;
+			});
+		}
 
 		if (dirty) {
 			toastInfo('Found packs/stickers to migrate, migrating now...');
