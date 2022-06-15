@@ -561,7 +561,7 @@
 	};
 
 	const _appendPack = (id, e, opts = {}) => {
-		let availLocalPacks;
+		let availLocalPacks = [];
 		let foundIndex;
 		const storedLocalPacks = storage.getItem('magane.available');
 		if (storedLocalPacks) {
