@@ -830,20 +830,21 @@
 	};
 
 	onMount(async () => {
-		log('Mounted on DOM');
 		try {
+			toast('Loading Magane\u2026');
+			// Background tasks
 			initModules();
 			getLocalStorage();
 			loadSettings();
 			await grabPacks();
+			await migrateStringPackIds();
+			toastSuccess('Magane is now ready!');
+			// Init button & ResizeObserver
 			resizeObserver = new ResizeObserver(positionMagane);
 			await waitForTextArea();
 			resizeObserver.observe(textArea);
 			isThereTopBar = document.querySelector('html.platform-win');
 			keepMaganeInPlace();
-			toastSuccess('Magane is now ready!');
-			// sendSubscribedPacksOnce();
-			migrateStringPackIds();
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
