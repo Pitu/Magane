@@ -445,11 +445,13 @@
 			const textAreaInstance = getTextAreaInstance();
 			if (textAreaInstance) {
 				messageContent = textAreaInstance.stateNode.state.textValue;
-			} else {
+			} else if (textArea) {
 				log('Unable to fetch text area of chat input, attempting workaround\u2026', 'warn');
 				let element = textArea.querySelector('span');
 				if (!element) element = textArea;
 				messageContent = element.innerText;
+			} else {
+				log('Unable to fetch text area of chat input, workaround unavailable\u2026', 'warn');
 			}
 
 			modules.messageUpload.upload({
