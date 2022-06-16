@@ -86,7 +86,7 @@ export default {
 			}
 		}),
 		Boolean(process.env.BD_PLUGIN_PATH) &&
-			command(`/usr/bin/cp --force "${file}" "${process.env.BD_PLUGIN_PATH}"`, {
+			command(`cp --force "${file}" "${process.env.BD_PLUGIN_PATH}"`, {
 				wait: true
 			})
 	],
