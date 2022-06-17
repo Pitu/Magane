@@ -21,7 +21,7 @@ export default {
 	plugins: [
 		svelte({
 			dev: !production,
-			css: true,
+			emitCss: true,
 			preprocess: autoPreprocess()
 		}),
 		postcss({
