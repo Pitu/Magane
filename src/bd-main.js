@@ -1,3 +1,4 @@
+/* global BdApi */
 const App = require('./App.svelte');
 
 module.exports = class MaganeBD {
@@ -8,6 +9,9 @@ module.exports = class MaganeBD {
 	load() {}
 
 	start() {
+		for (const id of Object.keys(global.MAGANE_STYLES)) {
+			BdApi.injectCSS(`${this.constructor.name}-${id}`, global.MAGANE_STYLES[id]);
+		}
 		this.log('Mounting container into DOM\u2026');
 		this.container = document.createElement('div');
 		this.container.id = 'maganeContainer';
@@ -17,7 +21,7 @@ module.exports = class MaganeBD {
 		});
 	}
 
-	unload() {
+	stop() {
 		if (this.app) {
 			this.log('Destroying Svelte component\u2026');
 			this.app.$destroy();
@@ -26,9 +30,8 @@ module.exports = class MaganeBD {
 			this.log('Removing container from DOM\u2026');
 			this.container.remove();
 		}
-	}
-
-	stop() {
-		this.unload();
+		for (const id of Object.keys(global.MAGANE_STYLES)) {
+			BdApi.clearCSS(`${this.constructor.name}-${id}`);
+		}
 	}
 };

@@ -7,8 +7,6 @@ import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
 import postcss from 'rollup-plugin-postcss';
 import autoPreprocess from 'svelte-preprocess';
-
-import { name } from './package.json';
 import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
@@ -18,7 +16,6 @@ const meta = path.resolve(__dirname, 'src/bd-meta.txt');
 export default {
 	input: 'src/bd-main.js',
 	output: {
-		exports: 'auto',
 		file,
 		format: 'cjs',
 		name: 'app',
@@ -44,11 +41,13 @@ export default {
 			inject: (cssVariableName, fileId) => {
 				// Extract packaga name if available
 				const match = fileId.match(/[\/]node_modules[\/](.*?)[\/]/);
-				let prepend = '';
-				if (match) prepend = `${match[1]}-`;
+				let pkg = '';
+				if (match) pkg = `${match[1]}-`;
 				// Normalize basename
-				const id = path.basename(fileId).replace(/\./, '_');
-				return `BdApi.injectCSS("${name}-${prepend}${id}", ${cssVariableName})`;
+				const id = pkg + path.basename(fileId).replace(/\./, '_');
+				// Arguably hacky.., but cleanest method that I could think of
+				return 'if (typeof global.MAGANE_STYLES !== "object") global.MAGANE_STYLES = {};\n' +
+					`global.MAGANE_STYLES["${id}"] = ${cssVariableName};`;
 			}
 		}),
 		resolve({
