@@ -131,7 +131,6 @@
 	const initResizeObserver = async () => {
 		if (resizeObserver) {
 			resizeObserver.disconnect();
-			log('ResizeObserver disconnected.');
 		} else {
 			resizeObserver = new ResizeObserver(entries => {
 				for (const entry of entries) {
@@ -144,7 +143,6 @@
 					}
 				}
 			});
-			log('ResizeObserver initiated.');
 		}
 		await waitForTextArea();
 		resizeObserver.observe(textArea);
