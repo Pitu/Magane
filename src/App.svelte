@@ -2,10 +2,7 @@
 	/* global BdApi */
 	import { onMount, onDestroy } from 'svelte';
 
-	// Let's make the scrollbars pretty
-	import SimpleBar from '@jbfulgencio/svelte-simplebar';
 	import * as animateScroll from 'svelte-scrollto';
-	import './styles/global.css';
 	import './styles/main.scss';
 
 	// APIs
@@ -16,7 +13,6 @@
 	const selectorBaseLayerShown = '[class*="baseLayer"]:is([style=""], :not([style]))';
 	const selectorTextArea = `${selectorBaseLayerShown} [class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])`;
 	const selectorTextAreaButtons = `[class^="buttons"]`;
-	const selectorStickerWindowScroller = '.stickers .simplebar-content-wrapper';
 	let main = null;
 	let isParentBody = false;
 	let textArea = null;
@@ -932,7 +928,7 @@
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id.replace(/([.])/g, '\\$1'),
-			container: main.querySelector(selectorStickerWindowScroller)
+			container: main.querySelector('.stickers')
 		});
 	};
 
@@ -1432,7 +1428,7 @@
 		</div>
 
 		<div class="stickerWindow" style="{ stickerWindowActive ? '' : 'display: none;' }">
-			<SimpleBar class="stickers { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
+			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				{ /if }
@@ -1497,9 +1493,9 @@
 					{ /each }
 				</div>
 				{ /each }
-			</SimpleBar>
+			</div>
 
-			<div class="packs-toolbar { settings.useLeftToolbar ? 'left-toolbar' : 'bottom-toolbar' }">
+			<div class="packs-toolbar { settings.useLeftToolbar ? 'has-scroll-y' : 'has-scroll-x' }">
 				<div class="packs packs-controls">
 					<div class="packs-wrapper">
 						<div class="pack"
@@ -1517,7 +1513,7 @@
 					</div>
 				</div>
 
-				<SimpleBar class="packs" style="">
+				<div class="packs" style="">
 					<div class="packs-wrapper">
 						{ #each subscribedPacks as pack, i }
 						<div class="pack"
@@ -1526,7 +1522,7 @@
 							style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 						{ /each }
 					</div>
-				</SimpleBar>
+				</div>
 			</div>
 
 			<div class="stickersModal" style="{ stickerAddModalActive ? '' : 'display: none;' }">
@@ -1560,7 +1556,7 @@
 
 						<!-- tab: Installed -->
 						{ #if stickerAddModalTabsInit[0] }
-						<SimpleBar class="tab-content" style="{ activeTab === 0 ? '' : 'display: none;' }">
+						<div class="tab-content has-scroll-y" style="{ activeTab === 0 ? '' : 'display: none;' }">
 							{ #each subscribedPacks as pack, i (pack.id) }
 							<div class="pack">
 								{ #if subscribedPacks.length > 1 }
@@ -1592,7 +1588,7 @@
 								</div>
 							</div>
 							{ /each }
-						</SimpleBar>
+						</div>
 						{ /if }<!-- /stickerAddModalTabsInit[0] -->
 						<!-- /tab: Installed -->
 
@@ -1605,7 +1601,7 @@
 								type="text"
 								placeholder="Search" />
 							{ #if stickerAddModalTabsInit[1] }
-							<SimpleBar class="tab-content" style="">
+							<div class="packs has-scroll-y" style="">
 								{ #each filteredPacks as pack }
 								<div class="pack">
 									<div class="preview"
@@ -1637,13 +1633,13 @@
 									</div>
 								</div>
 								{ /each }
-							</SimpleBar>
+							</div>
 							{ /if }<!-- /stickerAddModalTabsInit[1] -->
 						</div>
 						<!-- /tab: Packs -->
 
 						<!-- tab: Import -->
-						<SimpleBar class="tab-content import" style="{ activeTab === 2 ? '' : 'display: none;' }">
+						<div class="tab-content has-scroll-y import" style="{ activeTab === 2 ? '' : 'display: none;' }">
 							<div class="section line-proxy">
 								<p class="section-title">LINE Store Proxy</p>
 								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.</p>
@@ -1689,11 +1685,11 @@
 										on:click="{ () => bulkUpdateRemotePacks() }">Update all remote packs</button>
 								</p>
 							</div>
-						</SimpleBar>
+						</div>
 						<!-- /tab: Import -->
 
 						<!-- tab: Misc -->
-						<SimpleBar class="tab-content misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
+						<div class="tab-content has-scroll-y misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
 								<p>
@@ -1778,7 +1774,7 @@
 										on:click="{ () => exportDatabase() }">Export Database</button>
 								</p>
 							</div>
-						</SimpleBar>
+						</div>
 						<!-- /tab: Misc -->
 					</div>
 				</div>

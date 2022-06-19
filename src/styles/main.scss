@@ -5,6 +5,7 @@ div#magane {
 	$backgroundSecondary: var(--background-tertiary);
 	$textColor: var(--header-secondary);
 	$hoverColor: var(--interactive-active);
+	$scrollbarColor: rgb(105, 96, 128);
 	display: flex;
 	flex-direction: row;
 	height: 44px;
@@ -52,13 +53,11 @@ div#magane {
 		position: fixed;
 		background: $backgroundPrimary;
 		max-height: 600px;
-		overflow: hidden;
 		transition: all 0.2s ease;
 		border-radius: 4px;
 		box-shadow: var(--elevation-stroke),var(--elevation-high);
 
 		div.stickers {
-			overflow: auto;
 			height: 550px !important;
 			margin-bottom: 100px;
 			position: relative;
@@ -171,7 +170,6 @@ div#magane {
 
 				div.packs {
 					flex: 1 0 auto;
-					overflow: auto hidden;
 
 					&.packs-controls {
 						flex: 0 0 auto;
@@ -193,7 +191,6 @@ div#magane {
 
 				div.packs {
 					flex: 1 1 auto;
-					overflow: hidden auto;
 					height: 100%;
 
 					&.packs-controls {
@@ -257,7 +254,6 @@ div#magane {
 		top: 0;
 		align-items: center;
 		justify-content: center;
-		overflow: hidden;
 
 		&.is-active {
 			display: flex;
@@ -306,7 +302,6 @@ div#magane {
 			left: 0;
 			top: 0;
 			background: $backgroundSecondary;
-			overflow: hidden;
 		}
 
 		.modal-content {
@@ -392,7 +387,7 @@ div#magane {
 
 				div.pack {
 					height: 75px;
-					width: 600px; /* if not static, its width may flicker due to simplebar */
+					width: 100%;
 					float: left;
 					display: flex;
 					padding: 0 20px;
@@ -606,6 +601,46 @@ div#magane {
 				/* TODO: Figure out how to do a more consistent scaling,
 				  regardless of the button's dynamic size. */
 				transform: scale3d(1.04, 1.04, 1.04);
+			}
+		}
+	}
+
+	.has-scroll-x {
+		overflow-x: overlay;
+	}
+
+	.has-scroll-y {
+		overflow-y: overlay;
+	}
+
+	::-webkit-scrollbar {
+		/* Let's make the scrollbars pretty */
+		width: 6px;
+		height: 6px;
+
+		&-track {
+			margin: 0;
+			background: transparent;
+			border-radius: 5px;
+
+			&-piece {
+				border: 0 solid transparent;
+				background: transparent;
+				margin: 0;
+			}
+		}
+
+		&-thumb {
+			background: rgba($scrollbarColor, 0.5);
+			border: 0 solid transparent;
+			border-radius: 5px;
+
+			&:hover {
+				background: rgba($scrollbarColor, 0.75);
+			}
+
+			&:active {
+				background: rgba($scrollbarColor, 1);
 			}
 		}
 	}

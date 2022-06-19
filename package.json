@@ -21,7 +21,6 @@
     "dev-bd": "rollup -c rollup-bd.config.js -w"
   },
   "devDependencies": {
-    "@jbfulgencio/svelte-simplebar": "^1.0.0",
     "@rollup/plugin-commonjs": "^11.1.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-replace": "^4.0.0",
