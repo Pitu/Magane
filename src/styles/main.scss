@@ -164,7 +164,7 @@ div#magane {
 			background: $backgroundSecondary;
 			display: flex;
 
-			&.bottom-toolbar {
+			&.has-scroll-x {
 				width: 100%;
 				height: 50px;
 
@@ -184,7 +184,7 @@ div#magane {
 				}
 			}
 
-			&.left-toolbar {
+			&.has-scroll-y {
 				width: 50px;
 				height: 100%;
 				flex-direction: column;
