@@ -10,8 +10,9 @@
 	const modules = {};
 
 	const coords = { top: 0, left: 0 };
-	const selectorBaseLayerShown = '[class*="baseLayer"]:is([style=""], :not([style]))';
-	const selectorTextArea = `${selectorBaseLayerShown} [class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])`;
+	// Selector for base layer when it is NOT shrunked down and/or mid-animation
+	const selectorStaticBaseLayer = '[class*="baseLayer"]:is([style=""], :not([style]))';
+	const selectorTextArea = `[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])`;
 	const selectorTextAreaButtons = `[class^="buttons"]`;
 	let main = null;
 	let isParentBody = false;
@@ -38,7 +39,7 @@
 	let storage = null;
 	let packsSearch = null;
 	let resizeObserver = null;
-	let waitForTextAreaTimeout = null;
+	const waitForTimeouts = {};
 
 	const settings = {
 		disableToasts: false,
@@ -91,28 +92,32 @@
 		return toast(message, options);
 	};
 
-	const waitForTextArea = () => {
-		log('Waiting for textarea\u2025');
-		let pollForTextArea;
+	const waitFor = (selector, logname) => {
+		if (logname) log(`Waiting for ${logname}\u2026`);
+		let poll;
 		return new Promise(resolve => {
-			(pollForTextArea = () => {
-				textArea = document.querySelector(selectorTextArea);
-				if (textArea) return resolve();
-				waitForTextAreaTimeout = setTimeout(pollForTextArea, 500);
+			(poll = () => {
+				const element = document.querySelector(selector);
+				if (element) {
+					delete waitForTimeouts[selector];
+					return resolve(element);
+				}
+				waitForTimeouts[selector] = setTimeout(poll, 500);
 			})();
 		});
 	};
 
-	const updateButtonPosition = _textArea => {
+	const updateButtonPosition = async () => {
+		if (waitForTimeouts[selectorStaticBaseLayer]) return;
+
+		showIcon = false;
+		await waitFor(selectorStaticBaseLayer);
 		log('Updating button\'s position\u2026');
 
-		const buttonsContainer = _textArea.querySelector(selectorTextAreaButtons);
-		if (!buttonsContainer) {
-			if (showIcon) showIcon = false;
-			return;
-		}
+		const buttonsContainer = textArea.querySelector(selectorTextAreaButtons);
+		if (!buttonsContainer) return;
 
-		if (!showIcon) showIcon = true;
+		showIcon = true;
 		const props = buttonsContainer.getBoundingClientRect();
 
 		if (isParentBody) {
@@ -124,7 +129,7 @@
 		}
 	};
 
-	const initResizeObserver = async () => {
+	const initResizeObserver = async firstrun => {
 		if (resizeObserver) {
 			resizeObserver.disconnect();
 		} else {
@@ -132,7 +137,7 @@
 				for (const entry of entries) {
 					if (!entry.contentRect) return;
 					if (entry.contentRect.width || entry.contentRect.height) {
-						updateButtonPosition(entry.target);
+						updateButtonPosition();
 					} else {
 						showIcon = false;
 						initResizeObserver();
@@ -140,7 +145,8 @@
 				}
 			});
 		}
-		await waitForTextArea();
+		textArea = await waitFor(selectorTextArea, 'textarea');
+		if (firstrun) updateButtonPosition();
 		resizeObserver.observe(textArea);
 	};
 
@@ -152,9 +158,7 @@
 		// Only used when mounted via legacy BD plugin
 		isThereTopBar = document.querySelector('html.platform-win');
 
-		await waitForTextArea();
-		updateButtonPosition(textArea);
-		initResizeObserver();
+		initResizeObserver(true);
 	};
 
 	const initModules = () => {
@@ -872,8 +876,10 @@
 		}
 	});
 
-	onDestroy(async () => {
-		if (waitForTextAreaTimeout) clearTimeout(waitForTextAreaTimeout);
+	onDestroy(() => {
+		for (const timeout of Object.values(waitForTimeouts)) {
+			clearTimeout(timeout);
+		}
 		if (resizeObserver) resizeObserver.disconnect();
 		delete window.magane;
 		log('Internal components cleaned up.');
