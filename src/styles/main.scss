@@ -18,12 +18,7 @@ div#magane {
 		font-weight: 400;
 		line-height: 1.5;
 		font-size: 16px;
-		-moz-osx-font-smoothing: grayscale;
-		-webkit-font-smoothing: antialiased;
 		text-rendering: optimizeLegibility;
-		-webkit-text-size-adjust: 100%;
-		-moz-text-size-adjust: 100%;
-		-ms-text-size-adjust: 100%;
 		text-size-adjust: 100%;
 	}
 
@@ -518,8 +513,6 @@ div#magane {
 		}
 
 		.modal-close {
-			-moz-appearance: none;
-			-webkit-appearance: none;
 			user-select: none;
 			background-color: rgba(10, 10, 10, 0.2);
 			border: none;
@@ -573,8 +566,6 @@ div#magane {
 	}
 
 	.button {
-		-moz-appearance: none;
-		-webkit-appearance: none;
 		align-items: center;
 		border: 1px solid transparent;
 		border-radius: 3px;

@@ -6,6 +6,7 @@ import license from 'rollup-plugin-license';
 import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
 import postcss from 'rollup-plugin-postcss';
+import postcssPresetEnv from 'postcss-preset-env';
 import autoPreprocess from 'svelte-preprocess';
 import path from 'path';
 
@@ -38,6 +39,9 @@ export default {
 		}),
 		postcss({
 			extensions: ['.css', '.scss'],
+			plugins: [
+				postcssPresetEnv()
+			],
 			inject: (cssVariableName, fileId) => {
 				// Extract packaga name if available
 				const match = fileId.match(/[\/]node_modules[\/](.*?)[\/]/);
