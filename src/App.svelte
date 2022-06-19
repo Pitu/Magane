@@ -160,7 +160,7 @@
 			log('Magane is mounted with MaganeBD.');
 		} else {
 			log('Magane is mounted with legacy BD plugin.');
-			isThereTopBar = document.querySelector('[class*="titleBar-"]');
+			isThereTopBar = Boolean(document.querySelector('[class*="titleBar-"]'));
 		}
 		initResizeObserver(true);
 	};
