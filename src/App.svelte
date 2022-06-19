@@ -14,10 +14,10 @@
 	const selectorStaticBaseLayer = '[class*="baseLayer"]:is([style=""], :not([style]))';
 	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])';
 	let main = null;
-	let isParentBody = false;
+	let base = null;
 	let textArea = null;
 	let showIcon = false;
-	let isThereTopBar = false;
+	let isThereTopBar = null;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
@@ -119,13 +119,17 @@
 		showIcon = true;
 		const props = buttonsContainer.getBoundingClientRect();
 
-		if (isParentBody) {
+		if (base === document.body) {
 			coords.top = props.top;
 			coords.left = props.left - 36; // 36px is Magane's button exact width
 		} else {
-			coords.top = (isThereTopBar ? props.top - 21 : props.top) + 1;
-			coords.left = props.left - 108;
+			coords.top = (isThereTopBar ? props.top - 22 : props.top); // 22px is title bar exact height
+			coords.left = props.left - 72 - 36; // 72px is servers list sidebar exact width
 		}
+
+		// stickerWindow coords relative to buttons position
+		coords.wbottom = (base.clientHeight - coords.top) + 8;
+		coords.wright = (base.clientWidth - coords.left) - (props.width + 36) - 6;
 	};
 
 	const initResizeObserver = async firstrun => {
@@ -150,13 +154,14 @@
 	};
 
 	const initButton = async () => {
-		// Simple indicator to check if Magane is mounted via the new BD plugin or not
-		isParentBody = main.parentNode.parentNode === document.body;
-		log(`isParentBody = ${isParentBody}`);
-
-		// Only used when mounted via legacy BD plugin
-		isThereTopBar = document.querySelector('html.platform-win');
-
+		// Simple check if Magane is mounted with the new BD plugin or not
+		base = main.parentNode.parentNode;
+		if (base === document.body) {
+			log('Magane is mounted with MaganeBD.');
+		} else {
+			log('Magane is mounted with legacy BD plugin.');
+			isThereTopBar = document.querySelector('[class*="titleBar-"]');
+		}
 		initResizeObserver(true);
 	};
 
@@ -1432,7 +1437,7 @@
 			<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button">
 		</div>
 
-		<div class="stickerWindow" style="{ stickerWindowActive ? '' : 'display: none;' }">
+		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
