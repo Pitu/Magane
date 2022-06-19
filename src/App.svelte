@@ -12,8 +12,7 @@
 	const coords = { top: 0, left: 0 };
 	// Selector for base layer when it is NOT shrunked down and/or mid-animation
 	const selectorStaticBaseLayer = '[class*="baseLayer"]:is([style=""], :not([style]))';
-	const selectorTextArea = `[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])`;
-	const selectorTextAreaButtons = `[class^="buttons"]`;
+	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])';
 	let main = null;
 	let isParentBody = false;
 	let textArea = null;
@@ -114,7 +113,7 @@
 		await waitFor(selectorStaticBaseLayer);
 		log('Updating button\'s position\u2026');
 
-		const buttonsContainer = textArea.querySelector(selectorTextAreaButtons);
+		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
 		if (!buttonsContainer) return;
 
 		showIcon = true;
