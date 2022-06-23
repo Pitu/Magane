@@ -1,0 +1,14 @@
+@name MaganeBD
+@displayName MaganeBD
+@description Bringing LINE stickers to Discord in a chaotic way. BetterDiscord-plugin edition.
+@author Kana, Bobby
+@authorId 176200089226706944
+@authorLink https://github.com/Pitu
+@license MIT - https://opensource.org/licenses/MIT
+@version <%= pkg.version %>
+@invite 5g6vgwn
+@source https://github.com/Pitu/Magane
+@updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
+@website https://magane.moe
+@donate https://github.com/sponsors/Pitu
+@patreon https://patreon.com/pitu

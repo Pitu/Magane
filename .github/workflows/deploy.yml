@@ -43,8 +43,11 @@ jobs:
         if: steps.cache-nodemodules.outputs.cache-hit != 'true'
         run: yarn install --frozen-lockfile --non-interactive
 
-      - name: Build application
+      - name: Build application (Classic)
         run: yarn build
+
+      - name: Build application (BetterDiscord plugin)
+        run: yarn build-bd
 
       - uses: EndBug/add-and-commit@v6
         with:

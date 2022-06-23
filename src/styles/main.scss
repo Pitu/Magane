@@ -5,6 +5,7 @@ div#magane {
 	$backgroundSecondary: var(--background-tertiary);
 	$textColor: var(--header-secondary);
 	$hoverColor: var(--interactive-active);
+	$scrollbarColor: rgb(105, 96, 128);
 	display: flex;
 	flex-direction: row;
 	height: 44px;
@@ -17,12 +18,7 @@ div#magane {
 		font-weight: 400;
 		line-height: 1.5;
 		font-size: 16px;
-		-moz-osx-font-smoothing: grayscale;
-		-webkit-font-smoothing: antialiased;
 		text-rendering: optimizeLegibility;
-		-webkit-text-size-adjust: 100%;
-		-moz-text-size-adjust: 100%;
-		-ms-text-size-adjust: 100%;
 		text-size-adjust: 100%;
 	}
 
@@ -47,18 +43,14 @@ div#magane {
 		z-index: 2000;
 		width: 600px;
 		min-height: 200px;
-		right: 270px;
-		bottom: 82px;
 		position: fixed;
 		background: $backgroundPrimary;
 		max-height: 600px;
-		overflow: hidden;
 		transition: all 0.2s ease;
 		border-radius: 4px;
 		box-shadow: var(--elevation-stroke),var(--elevation-high);
 
 		div.stickers {
-			overflow: auto;
 			height: 550px !important;
 			margin-bottom: 100px;
 			position: relative;
@@ -165,13 +157,12 @@ div#magane {
 			background: $backgroundSecondary;
 			display: flex;
 
-			&.bottom-toolbar {
+			&.has-scroll-x {
 				width: 100%;
 				height: 50px;
 
 				div.packs {
 					flex: 1 0 auto;
-					overflow: auto hidden;
 
 					&.packs-controls {
 						flex: 0 0 auto;
@@ -186,14 +177,13 @@ div#magane {
 				}
 			}
 
-			&.left-toolbar {
+			&.has-scroll-y {
 				width: 50px;
 				height: 100%;
 				flex-direction: column;
 
 				div.packs {
 					flex: 1 1 auto;
-					overflow: hidden auto;
 					height: 100%;
 
 					&.packs-controls {
@@ -257,7 +247,6 @@ div#magane {
 		top: 0;
 		align-items: center;
 		justify-content: center;
-		overflow: hidden;
 
 		&.is-active {
 			display: flex;
@@ -306,7 +295,6 @@ div#magane {
 			left: 0;
 			top: 0;
 			background: $backgroundSecondary;
-			overflow: hidden;
 		}
 
 		.modal-content {
@@ -317,10 +305,8 @@ div#magane {
 				flex-direction: column;
 
 				.tabs {
-					height: 75px;
 					width: 100%;
 					text-align: center;
-					margin-bottom: 10px;
 
 					.tab {
 						color: $textColor;
@@ -344,13 +330,21 @@ div#magane {
 				}
 
 				div.tab-content {
-					height: 100%;
+					height: calc(100% - 66px); /* .tabs height */
 					width: 100%;
-					overflow-y: auto;
+					padding: 10px 0;
+					box-sizing: border-box;
 
 					&.avail-packs {
 						display: flex;
 						flex-direction: column;
+						padding-bottom: 0;
+
+						.packs {
+							height: 100%;
+							width: 100%;
+							padding-bottom: 10px;
+						}
 					}
 
 					&.import,
@@ -358,10 +352,14 @@ div#magane {
 						user-select: text;
 
 						.section {
-							padding: 0 24px 5px;
+							padding: 0 24px 14px;
 
 							.section-title {
 								font-weight: 800;
+							}
+
+							> p:last-of-type {
+								margin-bottom: 0;
 							}
 
 							a {
@@ -392,7 +390,7 @@ div#magane {
 
 				div.pack {
 					height: 75px;
-					width: 600px; /* if not static, its width may flicker due to simplebar */
+					width: 100%;
 					float: left;
 					display: flex;
 					padding: 0 20px;
@@ -513,8 +511,6 @@ div#magane {
 		}
 
 		.modal-close {
-			-moz-appearance: none;
-			-webkit-appearance: none;
 			user-select: none;
 			background-color: rgba(10, 10, 10, 0.2);
 			border: none;
@@ -568,8 +564,6 @@ div#magane {
 	}
 
 	.button {
-		-moz-appearance: none;
-		-webkit-appearance: none;
 		align-items: center;
 		border: 1px solid transparent;
 		border-radius: 3px;
@@ -606,6 +600,46 @@ div#magane {
 				/* TODO: Figure out how to do a more consistent scaling,
 				  regardless of the button's dynamic size. */
 				transform: scale3d(1.04, 1.04, 1.04);
+			}
+		}
+	}
+
+	.has-scroll-x {
+		overflow-x: overlay;
+	}
+
+	.has-scroll-y {
+		overflow-y: overlay;
+	}
+
+	::-webkit-scrollbar {
+		/* Let's make the scrollbars pretty */
+		width: 6px;
+		height: 6px;
+
+		&-track {
+			margin: 0;
+			background: transparent;
+			border-radius: 5px;
+
+			&-piece {
+				border: 0 solid transparent;
+				background: transparent;
+				margin: 0;
+			}
+		}
+
+		&-thumb {
+			background: rgba($scrollbarColor, 0.5);
+			border: 0 solid transparent;
+			border-radius: 5px;
+
+			&:hover {
+				background: rgba($scrollbarColor, 0.75);
+			}
+
+			&:active {
+				background: rgba($scrollbarColor, 1);
 			}
 		}
 	}

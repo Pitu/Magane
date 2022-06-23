@@ -1,23 +1,22 @@
 <script>
 	/* global BdApi */
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
-	// Let's make the scrollbars pretty
-	import SimpleBar from '@jbfulgencio/svelte-simplebar';
 	import * as animateScroll from 'svelte-scrollto';
-	import './styles/global.css';
 	import './styles/main.scss';
 
 	// APIs
 	window.magane = {};
 	const modules = {};
 
-	const elementToCheck = '[class^=channelTextArea] [class^=buttons]';
 	const coords = { top: 0, left: 0 };
-	const selectorTextArea = '[class^=channelTextArea-]';
-	const selectorStickerWindowScroller = '#magane .stickers .simplebar-content-wrapper';
-	let textArea = document.querySelector(selectorTextArea);
-	let showIcon = true;
+	// Selector for base layer when it is NOT shrunked down and/or mid-animation
+	const selectorStaticBaseLayer = '[class*="baseLayer"]:is([style=""], :not([style]))';
+	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])';
+	let main = null;
+	let base = null;
+	let textArea = null;
+	let showIcon = false;
 	let isThereTopBar = null;
 
 	let baseURL = '';
@@ -38,7 +37,8 @@
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
-	let resizeObserver;
+	let resizeObserver = null;
+	const waitForTimeouts = {};
 
 	const settings = {
 		disableToasts: false,
@@ -91,42 +91,78 @@
 		return toast(message, options);
 	};
 
-	const keepMaganeInPlace = () => {
-		setTimeout(() => {
-			const el = document.querySelector(elementToCheck);
-			if (!el) {
-				if (showIcon) showIcon = false;
-				return;
-			}
-			if (!showIcon) showIcon = true;
-			const props = el.getBoundingClientRect();
-			coords.top = (isThereTopBar ? props.top - 21 : props.top) + 1;
-			coords.left = props.left - 108;
-		}, 0);
-	};
-
-	const waitForTextArea = () => {
-		let pollForTextArea;
+	const waitFor = (selector, logname) => {
+		if (logname) log(`Waiting for ${logname}\u2026`);
+		let poll;
 		return new Promise(resolve => {
-			(pollForTextArea = () => {
-				textArea = document.querySelector(selectorTextArea);
-				if (textArea) return resolve();
-				setTimeout(pollForTextArea, 500);
+			(poll = () => {
+				const element = document.querySelector(selector);
+				if (element) {
+					delete waitForTimeouts[selector];
+					return resolve(element);
+				}
+				waitForTimeouts[selector] = setTimeout(poll, 500);
 			})();
 		});
 	};
 
-	const positionMagane = async entries => {
-		for (const entry of entries) {
-			if (!entry.contentRect) return;
-			keepMaganeInPlace();
-			if (entry.contentRect.width || entry.contentRect.height) return;
+	const updateButtonPosition = async () => {
+		if (waitForTimeouts[selectorStaticBaseLayer]) return;
 
-			resizeObserver.unobserve(textArea);
-			await waitForTextArea();
-			resizeObserver.observe(textArea);
-			keepMaganeInPlace();
+		showIcon = false;
+		await waitFor(selectorStaticBaseLayer);
+		log('Updating button\'s position\u2026');
+
+		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
+		if (!buttonsContainer) return;
+
+		showIcon = true;
+		const props = buttonsContainer.getBoundingClientRect();
+
+		if (base === document.body) {
+			coords.top = props.top;
+			coords.left = props.left - 36; // 36px is Magane's button exact width
+		} else {
+			coords.top = (isThereTopBar ? props.top - 22 : props.top); // 22px is title bar exact height
+			coords.left = props.left - 72 - 36; // 72px is servers list sidebar exact width
 		}
+
+		// stickerWindow coords relative to buttons position
+		coords.wbottom = (base.clientHeight - coords.top) + 8;
+		coords.wright = (base.clientWidth - coords.left) - (props.width + 36) - 6;
+	};
+
+	const initResizeObserver = async firstrun => {
+		if (resizeObserver) {
+			resizeObserver.disconnect();
+		} else {
+			resizeObserver = new ResizeObserver(entries => {
+				for (const entry of entries) {
+					if (!entry.contentRect) return;
+					if (entry.contentRect.width || entry.contentRect.height) {
+						updateButtonPosition();
+					} else {
+						showIcon = false;
+						initResizeObserver();
+					}
+				}
+			});
+		}
+		textArea = await waitFor(selectorTextArea, 'textarea');
+		if (firstrun) updateButtonPosition();
+		resizeObserver.observe(textArea);
+	};
+
+	const initButton = async () => {
+		// Simple check if Magane is mounted with the new BD plugin or not
+		base = main.parentNode.parentNode;
+		if (base === document.body) {
+			log('Magane is mounted with MaganeBD.');
+		} else {
+			log('Magane is mounted with legacy BD plugin.');
+			isThereTopBar = Boolean(document.querySelector('[class*="titleBar-"]'));
+		}
+		initResizeObserver(true);
 	};
 
 	const initModules = () => {
@@ -149,9 +185,11 @@
 	};
 
 	const getLocalStorage = () => {
-		const localStorageIframe = document.createElement('iframe');
-		localStorageIframe.id = 'localStorageIframe';
-		storage = document.body.appendChild(localStorageIframe).contentWindow.frames.localStorage;
+		// Temporarily spawn an iframe to duplicate localStorage's descriptors into a local object
+		const iframe = document.createElement('iframe');
+		document.head.append(iframe);
+		storage = Object.getOwnPropertyDescriptor(iframe.contentWindow.frames, 'localStorage').get.call(window);
+		iframe.remove();
 	};
 
 	const saveToLocalStorage = (key, payload) => {
@@ -443,11 +481,13 @@
 			const textAreaInstance = getTextAreaInstance();
 			if (textAreaInstance) {
 				messageContent = textAreaInstance.stateNode.state.textValue;
-			} else {
+			} else if (textArea) {
 				log('Unable to fetch text area of chat input, attempting workaround\u2026', 'warn');
 				let element = textArea.querySelector('span');
 				if (!element) element = textArea;
 				messageContent = element.innerText;
+			} else {
+				log('Unable to fetch text area of chat input, workaround unavailable\u2026', 'warn');
 			}
 
 			modules.messageUpload.upload({
@@ -609,21 +649,25 @@
 		const favorites = JSON.parse(storage.getItem('magane.favorites'));
 		const subscribed = JSON.parse(storage.getItem('magane.subscribed'));
 
-		favorites.forEach(item => {
-			if (typeof item.pack === 'number') return;
-			const result = parseInt(item.pack, 10);
-			if (isNaN(item.pack)) return;
-			item.pack = result;
-			dirty = true;
-		});
+		if (favorites) {
+			favorites.forEach(item => {
+				if (typeof item.pack === 'number') return;
+				const result = parseInt(item.pack, 10);
+				if (isNaN(item.pack)) return;
+				item.pack = result;
+				dirty = true;
+			});
+		}
 
-		subscribed.forEach(item => {
-			if (typeof item.id === 'number') return;
-			const result = parseInt(item.id, 10);
-			if (isNaN(item.id)) return;
-			item.id = result;
-			dirty = true;
-		});
+		if (subscribed) {
+			subscribed.forEach(item => {
+				if (typeof item.id === 'number') return;
+				const result = parseInt(item.id, 10);
+				if (isNaN(item.id)) return;
+				item.id = result;
+				dirty = true;
+			});
+		}
 
 		if (dirty) {
 			toastInfo('Found packs/stickers to migrate, migrating now...');
@@ -819,32 +863,38 @@
 	};
 
 	onMount(async () => {
-		log('Mounted on DOM');
 		try {
+			toast('Loading Magane\u2026');
+			// Background tasks
 			initModules();
 			getLocalStorage();
 			loadSettings();
 			await grabPacks();
-			resizeObserver = new ResizeObserver(positionMagane);
-			await waitForTextArea();
-			resizeObserver.observe(textArea);
-			isThereTopBar = document.querySelector('html.platform-win');
-			keepMaganeInPlace();
+			await migrateStringPackIds();
 			toastSuccess('Magane is now ready!');
-			// sendSubscribedPacksOnce();
-			migrateStringPackIds();
+			// Init button & ResizeObserver
+			initButton();
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
 	});
 
+	onDestroy(() => {
+		for (const timeout of Object.values(waitForTimeouts)) {
+			clearTimeout(timeout);
+		}
+		if (resizeObserver) resizeObserver.disconnect();
+		delete window.magane;
+		log('Internal components cleaned up.');
+	});
+
 	const maganeBlurHandler = e => {
-		const stickerWindow = document.querySelector('#magane .stickerWindow');
+		const stickerWindow = main.querySelector('.stickerWindow');
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
 			if (e.target) {
-				const maganeButton = document.querySelector('#magane .magane-button');
+				const maganeButton = main.querySelector('.magane-button');
 				if (maganeButton.contains(e.target)) return;
 				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
@@ -888,7 +938,7 @@
 	const scrollToStickers = id => {
 		animateScroll.scrollTo({
 			element: id.replace(/([.])/g, '\\$1'),
-			container: document.querySelector(selectorStickerWindowScroller)
+			container: main.querySelector('.stickers')
 		});
 	};
 
@@ -1377,7 +1427,7 @@
 	};
 </script>
 
-<main>
+<main bind:this={ main }>
 	<div id="magane"
 		style="top: { `${coords.top}px` }; left: { `${coords.left}px` }; display: { showIcon ? 'flex' : 'none' };">
 		<div class="magane-button channel-textarea-emoji channel-textarea-stickers"
@@ -1387,8 +1437,8 @@
 			<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button">
 		</div>
 
-		<div class="stickerWindow" style="{ stickerWindowActive ? '' : 'display: none;' }">
-			<SimpleBar class="stickers { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
+		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
+			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
 				{ #if !favoriteStickers && !subscribedPacks }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				{ /if }
@@ -1453,9 +1503,9 @@
 					{ /each }
 				</div>
 				{ /each }
-			</SimpleBar>
+			</div>
 
-			<div class="packs-toolbar { settings.useLeftToolbar ? 'left-toolbar' : 'bottom-toolbar' }">
+			<div class="packs-toolbar { settings.useLeftToolbar ? 'has-scroll-y' : 'has-scroll-x' }">
 				<div class="packs packs-controls">
 					<div class="packs-wrapper">
 						<div class="pack"
@@ -1473,7 +1523,7 @@
 					</div>
 				</div>
 
-				<SimpleBar class="packs" style="">
+				<div class="packs" style="">
 					<div class="packs-wrapper">
 						{ #each subscribedPacks as pack, i }
 						<div class="pack"
@@ -1482,7 +1532,7 @@
 							style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 						{ /each }
 					</div>
-				</SimpleBar>
+				</div>
 			</div>
 
 			<div class="stickersModal" style="{ stickerAddModalActive ? '' : 'display: none;' }">
@@ -1516,7 +1566,7 @@
 
 						<!-- tab: Installed -->
 						{ #if stickerAddModalTabsInit[0] }
-						<SimpleBar class="tab-content" style="{ activeTab === 0 ? '' : 'display: none;' }">
+						<div class="tab-content has-scroll-y" style="{ activeTab === 0 ? '' : 'display: none;' }">
 							{ #each subscribedPacks as pack, i (pack.id) }
 							<div class="pack">
 								{ #if subscribedPacks.length > 1 }
@@ -1548,7 +1598,7 @@
 								</div>
 							</div>
 							{ /each }
-						</SimpleBar>
+						</div>
 						{ /if }<!-- /stickerAddModalTabsInit[0] -->
 						<!-- /tab: Installed -->
 
@@ -1561,7 +1611,7 @@
 								type="text"
 								placeholder="Search" />
 							{ #if stickerAddModalTabsInit[1] }
-							<SimpleBar class="tab-content" style="">
+							<div class="packs has-scroll-y" style="">
 								{ #each filteredPacks as pack }
 								<div class="pack">
 									<div class="preview"
@@ -1593,13 +1643,13 @@
 									</div>
 								</div>
 								{ /each }
-							</SimpleBar>
+							</div>
 							{ /if }<!-- /stickerAddModalTabsInit[1] -->
 						</div>
 						<!-- /tab: Packs -->
 
 						<!-- tab: Import -->
-						<SimpleBar class="tab-content import" style="{ activeTab === 2 ? '' : 'display: none;' }">
+						<div class="tab-content has-scroll-y import" style="{ activeTab === 2 ? '' : 'display: none;' }">
 							<div class="section line-proxy">
 								<p class="section-title">LINE Store Proxy</p>
 								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.</p>
@@ -1645,11 +1695,11 @@
 										on:click="{ () => bulkUpdateRemotePacks() }">Update all remote packs</button>
 								</p>
 							</div>
-						</SimpleBar>
+						</div>
 						<!-- /tab: Import -->
 
 						<!-- tab: Misc -->
-						<SimpleBar class="tab-content misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
+						<div class="tab-content has-scroll-y misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
 								<p>
@@ -1734,7 +1784,7 @@
 										on:click="{ () => exportDatabase() }">Export Database</button>
 								</p>
 							</div>
-						</SimpleBar>
+						</div>
 						<!-- /tab: Misc -->
 					</div>
 				</div>

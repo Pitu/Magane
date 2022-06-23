@@ -5,6 +5,7 @@ import command from 'rollup-plugin-command';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
 import postcss from 'rollup-plugin-postcss';
+import postcssPresetEnv from 'postcss-preset-env';
 import serve from 'rollup-plugin-serve';
 import autoPreprocess from 'svelte-preprocess';
 
@@ -21,11 +22,14 @@ export default {
 	plugins: [
 		svelte({
 			dev: !production,
-			css: true,
+			emitCss: true,
 			preprocess: autoPreprocess()
 		}),
 		postcss({
-			extensions: ['.css']
+			extensions: ['.css', '.scss'],
+			plugins: [
+				postcssPresetEnv()
+			]
 		}),
 		resolve({
 			browser: true,
@@ -45,7 +49,7 @@ export default {
 		}),
 		!production && livereload('public'),
 		!production && Boolean(process.env.BD_PLUGIN_PATH) &&
-			command(`/usr/bin/touch "${process.env.BD_PLUGIN_PATH}"`, {
+			command(`touch "${process.env.BD_PLUGIN_PATH}"`, {
 				wait: true
 			}),
 		production && terser()
