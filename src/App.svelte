@@ -451,7 +451,7 @@
 			const url = formatUrl(pack, id, true);
 			log(`Fetching sticker from remote: ${url}`);
 			const response = await fetch(url, { cache: 'force-cache' });
-			const myBlob = await response.arrayBuffer();
+			const blob = await response.blob();
 
 			let filename = id;
 			if (typeof pack === 'string') {
@@ -471,10 +471,7 @@
 			if (settings.markAsSpoiler) {
 				filename = `SPOILER_${filename}`;
 			}
-
-			// NOTE: Buffer is Node API, but it is perfectly usable in Discord-context (Electron thing?)
-			const file = new File([Buffer.from(myBlob)], filename);
-
+			const file = new File([blob], filename);
 			log(`Sending sticker as ${filename}\u2026`);
 
 			let messageContent = '';
