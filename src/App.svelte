@@ -17,6 +17,7 @@
 	let textArea = null;
 	let isMaganeBD = null;
 	let buttonComponent = null;
+	let hideMagane = false;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
@@ -48,6 +49,7 @@
 		markAsSpoiler: false,
 		hidePackAppendix: false
 	};
+	const defaultSettings = Object.freeze(Object.assign({}, settings));
 
 	// NOTE: For the time being only used to limit keys in replace/export database functions
 	const allowedStorageKeys = [
@@ -1392,21 +1394,24 @@
 					confirmText: 'Replace',
 					cancelText: 'Cancel',
 					danger: true,
-					onConfirm: () => {
+					onConfirm: async () => {
 						for (const key of valid) {
 							saveToLocalStorage(key, result[key]);
 						}
 						for (const key of invalid) {
 							storage.removeItem(key);
 						}
-						BdApi.showConfirmationModal(
-							'Reload Now',
-							'Please reload Discord immediately (Ctrl + R) to complete Magane database replacement.',
-							{
-								cancelText: 'Later',
-								onConfirm: () => window.location.reload()
-							}
-						);
+
+						hideMagane = true;
+						toast('Reloading Magane database\u2026');
+
+						Object.assign(settings, defaultSettings);
+						loadSettings();
+						await grabPacks();
+						await migrateStringPackIds();
+
+						toastSuccess('Magane is now ready!');
+						hideMagane = false;
 					}
 				}
 			);
@@ -1452,7 +1457,7 @@
 
 <main bind:this={ main }>
 	<div id="magane"
-		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` }">
+		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` } { hideMagane ? 'display: none;' : ''}">
 
 		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
