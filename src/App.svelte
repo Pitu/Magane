@@ -879,6 +879,8 @@
 	});
 
 	onDestroy(() => {
+		// eslint-disable-next-line no-use-before-define
+		document.removeEventListener('click', maganeBlurHandler);
 		for (const timeout of Object.values(waitForTimeouts)) {
 			clearTimeout(timeout);
 		}
