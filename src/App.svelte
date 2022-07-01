@@ -139,13 +139,9 @@
 		coords.wright = (base.clientWidth - props.right) - 6;
 
 		if (!isMaganeBD) {
-			// Dynamically fetch title bar height, in case of third-party stylings
-			const titleBar = document.querySelector('[class*="titleBar-"]');
-			if (titleBar) coords.wbottom += titleBar.clientHeight;
-
-			// Dynamically fetch servers sidebar width, in case of third-party stylings
-			const serversSidebar = document.querySelector('nav[class*="guilds-"]');
-			if (serversSidebar) coords.wright += serversSidebar.clientWidth;
+			const baseProps = base.getBoundingClientRect();
+			coords.wbottom += baseProps.top;
+			coords.wright += baseProps.left;
 		}
 	};
 
