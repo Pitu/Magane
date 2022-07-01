@@ -17,7 +17,7 @@ const prepareDOM = () => {
 	maganeContainer.id = 'maganeContainer';
 	appendableElement.insertAdjacentElement('afterbegin', maganeContainer);
 
-	new App({ // eslint-disable-line no-new
+	window.MAGANE_APP = new App({ // eslint-disable-line no-new
 		target: maganeContainer
 	});
 };
