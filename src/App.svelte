@@ -34,6 +34,8 @@
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
+	let hotkeyInput = null;
+	let hotkey = {};
 	let onCooldown = false;
 	let storage = null;
 	let packsSearch = null;
@@ -47,7 +49,8 @@
 		useLeftToolbar: false,
 		disableImportedObfuscation: false,
 		markAsSpoiler: false,
-		hidePackAppendix: false
+		hidePackAppendix: false,
+		hotkey: null
 	};
 	const defaultSettings = Object.freeze(Object.assign({}, settings));
 
@@ -229,6 +232,10 @@
 						settings[key] = parsed[key];
 					}
 				}
+
+				hotkeyInput = settings.hotkey;
+				// eslint-disable-next-line no-use-before-define
+				parseThenInitHotkey();
 			} catch (ex) {
 				console.error(ex);
 				// Do nothing
@@ -901,6 +908,8 @@
 	onDestroy(() => {
 		// eslint-disable-next-line no-use-before-define
 		document.removeEventListener('click', maganeBlurHandler);
+		// eslint-disable-next-line no-use-before-define
+		document.removeEventListener('keyup', onKeydownEvent);
 		destroyButtonComponent();
 		for (const timeout of Object.values(waitForTimeouts)) {
 			clearTimeout(timeout);
@@ -1328,6 +1337,66 @@
 
 		saveToLocalStorage('magane.settings', settings);
 		toastSuccess('Settings saved!', { nolog: true });
+	};
+
+	const onKeydownEvent = event => {
+		for (const prop in hotkey) {
+			if (prop === 'key') {
+				if (hotkey[prop] !== event[prop].toLocaleLowerCase()) return;
+			} else if (hotkey[prop] !== event[prop]) {
+				return;
+			}
+		}
+
+		event.preventDefault();
+
+		if (buttonComponent && document.body.contains(buttonComponent.element)) {
+			toggleStickerWindow();
+		}
+	};
+
+	const parseThenInitHotkey = save => {
+		let tmp;
+		if (hotkeyInput) {
+			const keys = hotkeyInput
+				.split('+')
+				.map(key => key.trim());
+
+			tmp = {};
+			if (keys.length >= 2) {
+				for (const key of keys) {
+					if (/alt/i.test(key)) {
+						tmp.altKey = true;
+					} else if (/meta/i.test(key)) {
+						tmp.metaKey = true;
+					} else if (/shift/i.test(key)) {
+						tmp.shiftKey = true;
+					} else if (/(control|ctrl|ctl)/i.test(key)) {
+						tmp.ctrlKey = true;
+					} else if (tmp.key) {
+						return toastError('Invalid hotkey. If used with modifier keys, only support 1 other key.',
+							{ timeout: 6000 });
+					} else {
+						tmp.key = key.toLocaleLowerCase();
+					}
+				}
+			} else {
+				tmp.key = keys[0].toLocaleLowerCase();
+			}
+
+			hotkey = tmp;
+			document.addEventListener('keyup', onKeydownEvent);
+		} else {
+			hotkey = null;
+			document.removeEventListener('keyup', onKeydownEvent);
+		}
+
+		if (save) {
+			settings.hotkey = hotkeyInput;
+			log(`settings['hotkey'] = ${settings.hotkey}`);
+			saveToLocalStorage('magane.settings', settings);
+			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.');
+		}
 	};
 
 	const onReplaceDatabaseChange = event => {
@@ -1786,6 +1855,26 @@
 											bind:checked={ settings.markAsSpoiler } />
 										Mark stickers as spoilers when sending
 									</label>
+								</p>
+							</div>
+							<div class="section hotkey">
+								<p class="section-title">Hotkey</p>
+								<p>
+									<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>
+								</p>
+								<p>
+									Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (Ctrl, Alt, etc.) + other keys.
+								</p>
+								<p>
+									e.g. M, Ctrl+Q, Alt+Shift+Y
+								</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ hotkeyInput }
+										class="inputQuery"
+										type="text" />
+									<button class="button is-primary"
+										on:click="{ () => parseThenInitHotkey(true) }">Set</button>
 								</p>
 							</div>
 							<div class="section database">
