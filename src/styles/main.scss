@@ -634,7 +634,7 @@ div#maganeButton {
 		align-items: center;
 		cursor: pointer;
 
-		 &:hover, &.active {
+		&:hover, &.active {
 			filter: brightness(1.35);
 		}
 	}

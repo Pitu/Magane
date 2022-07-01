@@ -942,6 +942,7 @@
 			document.removeEventListener('click', maganeBlurHandler);
 		}
 		stickerWindowActive = active;
+		buttonComponent.active = active;
 	};
 
 	const toggleStickerModal = () => {
