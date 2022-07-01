@@ -1,6 +1,7 @@
 <script>
 	/* global BdApi */
 	import { onMount, onDestroy } from 'svelte';
+	import Button from './Button.svelte';
 
 	import * as animateScroll from 'svelte-scrollto';
 	import './styles/main.scss';
@@ -10,14 +11,12 @@
 	const modules = {};
 
 	const coords = { top: 0, left: 0 };
-	// Selector for base layer when it is NOT shrunked down and/or mid-animation
-	const selectorStaticBaseLayer = '[class*="baseLayer"]:is([style=""], :not([style]))';
 	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])';
 	let main = null;
 	let base = null;
 	let textArea = null;
-	let showIcon = false;
-	let isThereTopBar = null;
+	let isMaganeBD = null;
+	let buttonComponent = null;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
@@ -107,63 +106,86 @@
 		});
 	};
 
-	const updateButtonPosition = async () => {
-		if (waitForTimeouts[selectorStaticBaseLayer]) return;
+	const destroyButtonComponent = () => {
+		if (buttonComponent) {
+			buttonComponent.$destroy();
+		}
+	};
 
-		showIcon = false;
-		await waitFor(selectorStaticBaseLayer);
-		log('Updating button\'s position\u2026');
-
+	const mountButtonComponent = () => {
 		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
 		if (!buttonsContainer) return;
 
-		showIcon = true;
-		const props = buttonsContainer.getBoundingClientRect();
+		buttonComponent = new Button({
+			target: buttonsContainer,
+			anchor: buttonsContainer.firstElementChild
+		});
 
-		if (base === document.body) {
-			coords.top = props.top;
-			coords.left = props.left - 36; // 36px is Magane's button exact width
-		} else {
-			coords.top = (isThereTopBar ? props.top - 22 : props.top); // 22px is title bar exact height
-			coords.left = props.left - 72 - 36; // 72px is servers list sidebar exact width
-		}
-
-		// stickerWindow coords relative to buttons position
-		coords.wbottom = (base.clientHeight - coords.top) + 8;
-		coords.wright = (base.clientWidth - coords.left) - (props.width + 36) - 6;
+		// eslint-disable-next-line no-use-before-define
+		buttonComponent.$on('click', () => toggleStickerWindow());
+		// eslint-disable-next-line no-use-before-define
+		buttonComponent.$on('grabPacks', () => grabPacks());
 	};
 
-	const initResizeObserver = async firstrun => {
-		if (resizeObserver) {
-			resizeObserver.disconnect();
-		} else {
+	const updateStickerWindowPosition = () => {
+		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
+		if (!buttonsContainer) return;
+
+		const props = buttonsContainer.getBoundingClientRect();
+
+		log('Updating window\'s position\u2026');
+
+		coords.wbottom = (base.clientHeight - props.top) + 8;
+		coords.wright = (base.clientWidth - props.right) - 6;
+
+		if (!isMaganeBD) {
+			// Dynamically fetch title bar height, in case of third-party stylings
+			const titleBar = document.querySelector('[class*="titleBar-"]');
+			if (titleBar) coords.wbottom += titleBar.clientHeight;
+
+			// Dynamically fetch servers sidebar width, in case of third-party stylings
+			const serversSidebar = document.querySelector('nav[class*="guilds-"]');
+			if (serversSidebar) coords.wright += serversSidebar.clientWidth;
+		}
+	};
+
+	const initResizeObserver = async () => {
+		if (!resizeObserver) {
+			// We are basically only using this as some sort of event dispatcher
+			// for when textArea disappears due to switching channels, etc.
 			resizeObserver = new ResizeObserver(entries => {
 				for (const entry of entries) {
 					if (!entry.contentRect) return;
-					if (entry.contentRect.width || entry.contentRect.height) {
-						updateButtonPosition();
-					} else {
-						showIcon = false;
-						initResizeObserver();
-					}
+					if (entry.contentRect.width || entry.contentRect.height) return;
+					initResizeObserver();
 				}
 			});
 		}
-		textArea = await waitFor(selectorTextArea, 'textarea');
-		if (firstrun) updateButtonPosition();
-		resizeObserver.observe(textArea);
+
+		// Re-fetch textArea only if already missing from body
+		if (!document.body.contains(textArea)) {
+			resizeObserver.disconnect();
+			destroyButtonComponent();
+			textArea = await waitFor(selectorTextArea, 'textarea');
+			resizeObserver.observe(textArea);
+		}
+
+		// Re-mount button if necesary
+		if (!buttonComponent || !document.body.contains(buttonComponent.element)) {
+			mountButtonComponent();
+		}
 	};
 
 	const initButton = async () => {
-		// Simple check if Magane is mounted with the new BD plugin or not
+		// Simple check if Magane is mounted with legacy method or MaganeBD
 		base = main.parentNode.parentNode;
-		if (base === document.body) {
+		isMaganeBD = base === document.body;
+		if (isMaganeBD) {
 			log('Magane is mounted with MaganeBD.');
 		} else {
-			log('Magane is mounted with legacy BD plugin.');
-			isThereTopBar = Boolean(document.querySelector('[class*="titleBar-"]'));
+			log('Magane is mounted with legacy method.');
 		}
-		initResizeObserver(true);
+		initResizeObserver();
 	};
 
 	const initModules = () => {
@@ -881,6 +903,7 @@
 	onDestroy(() => {
 		// eslint-disable-next-line no-use-before-define
 		document.removeEventListener('click', maganeBlurHandler);
+		destroyButtonComponent();
 		for (const timeout of Object.values(waitForTimeouts)) {
 			clearTimeout(timeout);
 		}
@@ -894,8 +917,7 @@
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
 			if (e.target) {
-				const maganeButton = main.querySelector('.magane-button');
-				if (maganeButton.contains(e.target)) return;
+				if (buttonComponent && buttonComponent.element.contains(e.target)) return;
 				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
 			}
@@ -909,8 +931,12 @@
 	};
 
 	const toggleStickerWindow = forceState => {
+		if (!document.body.contains(main)) {
+			return toastError('Oh no! Magane was unexpectedly destroyed. Please reload Magane :(', { timeout: 6000 });
+		}
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
+			updateStickerWindowPosition();
 			document.addEventListener('click', maganeBlurHandler);
 		} else {
 			document.removeEventListener('click', maganeBlurHandler);
@@ -1429,13 +1455,7 @@
 
 <main bind:this={ main }>
 	<div id="magane"
-		style="top: { `${coords.top}px` }; left: { `${coords.left}px` }; display: { showIcon ? 'flex' : 'none' };">
-		<div class="magane-button channel-textarea-emoji channel-textarea-stickers"
-			class:active="{ stickerWindowActive }"
-			on:click="{ () => toggleStickerWindow() }"
-			on:contextmenu|stopPropagation|preventDefault="{ () => grabPacks() }">
-			<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button">
-		</div>
+		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` }">
 
 		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">

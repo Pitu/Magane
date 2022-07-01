@@ -22,23 +22,6 @@ div#magane {
 		text-size-adjust: 100%;
 	}
 
-	div.channel-textarea-stickers {
-		display: flex;
-		align-items: center;
-		cursor: pointer;
-
-		 &:hover, &.active {
-			filter: brightness(1.35);
-		}
-	}
-	img.channel-textarea-stickers-content {
-		width: 24px;
-		height: 24px;
-		padding: 4px;
-		margin-left: 2px;
-		margin-right: 2px;
-	}
-
 	div.stickerWindow {
 		z-index: 2000;
 		width: 600px;
@@ -642,5 +625,25 @@ div#magane {
 				background: rgba($scrollbarColor, 1);
 			}
 		}
+	}
+}
+
+div#maganeButton {
+	&.channel-textarea-stickers {
+		display: flex;
+		align-items: center;
+		cursor: pointer;
+
+		 &:hover, &.active {
+			filter: brightness(1.35);
+		}
+	}
+
+	img.channel-textarea-stickers-content {
+		width: 24px;
+		height: 24px;
+		padding: 4px;
+		margin-left: 2px;
+		margin-right: 2px;
 	}
 }
