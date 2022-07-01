@@ -1363,25 +1363,21 @@
 				.map(key => key.trim());
 
 			tmp = {};
-			if (keys.length >= 2) {
-				for (const key of keys) {
-					if (/alt/i.test(key)) {
-						tmp.altKey = true;
-					} else if (/meta/i.test(key)) {
-						tmp.metaKey = true;
-					} else if (/shift/i.test(key)) {
-						tmp.shiftKey = true;
-					} else if (/(control|ctrl|ctl)/i.test(key)) {
-						tmp.ctrlKey = true;
-					} else if (tmp.key) {
-						return toastError('Invalid hotkey. If used with modifier keys, only support 1 other key.',
-							{ timeout: 6000 });
-					} else {
-						tmp.key = key.toLocaleLowerCase();
-					}
+			for (const key of keys) {
+				if (/alt/i.test(key)) {
+					tmp.altKey = true;
+				} else if (/meta/i.test(key)) {
+					tmp.metaKey = true;
+				} else if (/shift/i.test(key)) {
+					tmp.shiftKey = true;
+				} else if (/(control|ctrl|ctl)/i.test(key)) {
+					tmp.ctrlKey = true;
+				} else if (tmp.key) {
+					return toastError('Invalid hotkey. If used with modifier keys, only support 1 other key.',
+						{ timeout: 6000 });
+				} else {
+					tmp.key = key.toLocaleLowerCase();
 				}
-			} else {
-				tmp.key = keys[0].toLocaleLowerCase();
 			}
 
 			hotkey = tmp;
