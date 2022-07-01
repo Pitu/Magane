@@ -58,13 +58,14 @@
 		'magane.settings'
 	];
 
-	const log = (message, type = 'log') =>
-		console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
+	const log = (message, type = 'log') => {
+		type = ['log', 'info', 'warn', 'error'].includes(type) ? type : 'log';
+		return console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
+	};
 
 	const toast = (message, options = {}) => {
 		if (!options.nolog || settings.disableToasts) {
-			const type = ['log', 'info', 'warn', 'error'].includes(options.type) ? options.type : 'log';
-			log(message, type);
+			log(message, options.type);
 		}
 		if (!settings.disableToasts) {
 			BdApi.showToast(message, options);
