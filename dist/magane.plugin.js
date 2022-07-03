@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.0
+ * @version 3.2.1
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -142,6 +142,33 @@ function get_current_component() {
 	return current_component;
 }
 
+function onMount(fn) {
+	get_current_component().$$.on_mount.push(fn);
+}
+
+function onDestroy(fn) {
+	get_current_component().$$.on_destroy.push(fn);
+}
+
+function createEventDispatcher() {
+	const component = get_current_component();
+	return (type, detail, {cancelable = !1} = {}) => {
+		const callbacks = component.$$.callbacks[type];
+		if (callbacks) {
+			const event = function custom_event(type, detail, {bubbles = !1, cancelable = !1} = {}) {
+				const e = document.createEvent("CustomEvent");
+				return e.initCustomEvent(type, bubbles, cancelable, detail), e;
+			}(type, detail, {
+				cancelable
+			});
+			return callbacks.slice().forEach(fn => {
+				fn.call(component, event);
+			}), !event.defaultPrevented;
+		}
+		return !0;
+	};
+}
+
 const dirty_components = [], binding_callbacks = [], render_callbacks = [], flush_callbacks = [], resolved_promise = Promise.resolve();
 
 let update_scheduled = !1;
@@ -240,6 +267,92 @@ function init(component, options, instance, create_fragment, not_equal, props, a
 		}(component, options.target, options.anchor, options.customElement), flush();
 	}
 	set_current_component(parent_component);
+}
+
+class SvelteComponent {
+	$destroy() {
+		!function destroy_component(component, detaching) {
+			const $$ = component.$$;
+			null !== $$.fragment && (run_all($$.on_destroy), $$.fragment && $$.fragment.d(detaching), 
+			$$.on_destroy = $$.fragment = null, $$.ctx = []);
+		}(this, 1), this.$destroy = noop;
+	}
+	$on(type, callback) {
+		const callbacks = this.$$.callbacks[type] || (this.$$.callbacks[type] = []);
+		return callbacks.push(callback), () => {
+			const index = callbacks.indexOf(callback);
+			-1 !== index && callbacks.splice(index, 1);
+		};
+	}
+	$set($$props) {
+		this.$$set && !function is_empty(obj) {
+			return 0 === Object.keys(obj).length;
+		}($$props) && (this.$$.skip_bound = !0, this.$$set($$props), this.$$.skip_bound = !1);
+	}
+}
+
+function create_fragment(ctx) {
+	let div, mounted, dispose;
+	return {
+		c() {
+			div = element("div"), div.innerHTML = '<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button"/>', 
+			attr(div, "id", "maganeButton"), attr(div, "class", "channel-textarea-emoji channel-textarea-stickers"), 
+			toggle_class(div, "active", ctx[1]);
+		},
+		m(target, anchor) {
+			var fn;
+			insert(target, div, anchor), ctx[3](div), mounted || (dispose = [ listen(div, "click", ctx[4]), listen(div, "contextmenu", stop_propagation((fn = ctx[5], 
+			function(event) {
+				return event.preventDefault(), fn.call(this, event);
+			}))) ], mounted = !0);
+		},
+		p(ctx, [dirty]) {
+			2 & dirty && toggle_class(div, "active", ctx[1]);
+		},
+		i: noop,
+		o: noop,
+		d(detaching) {
+			detaching && detach(div), ctx[3](null), mounted = !1, run_all(dispose);
+		}
+	};
+}
+
+function instance($$self, $$props, $$invalidate) {
+	let {element} = $$props, {active = !1} = $$props;
+	const dispatch = createEventDispatcher(), log = message => console.log("%c[MaganeButton]%c", "color: #3a71c1; font-weight: 700", "", message);
+	onMount(() => log("Mounted.")), onDestroy(() => log("Destroyed."));
+	return $$self.$$set = $$props => {
+		"element" in $$props && $$invalidate(0, element = $$props.element), "active" in $$props && $$invalidate(1, active = $$props.active);
+	}, [ element, active, dispatch, function div_binding($$value) {
+		binding_callbacks[$$value ? "unshift" : "push"](() => {
+			element = $$value, $$invalidate(0, element);
+		});
+	}, e => dispatch("click", e), e => dispatch("grabPacks", e) ];
+}
+
+class Button extends SvelteComponent {
+	constructor(options) {
+		super(), init(this, options, instance, create_fragment, safe_not_equal, {
+			element: 0,
+			active: 1
+		});
+	}
+	get element() {
+		return this.$$.ctx[0];
+	}
+	set element(element) {
+		this.$$set({
+			element
+		}), flush();
+	}
+	get active() {
+		return this.$$.ctx[1];
+	}
+	set active(active) {
+		this.$$set({
+			active
+		}), flush();
+	}
 }
 
 function noop$1() {}
@@ -349,32 +462,32 @@ const defaultOptions = {
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[116] = list[i], child_ctx;
+	return child_ctx[124] = list[i], child_ctx;
 }
 
 function get_each_context_1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[116] = list[i], child_ctx[120] = i, child_ctx;
+	return child_ctx[124] = list[i], child_ctx[128] = i, child_ctx;
 }
 
 function get_each_context_2(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[116] = list[i], child_ctx[120] = i, child_ctx;
+	return child_ctx[124] = list[i], child_ctx[128] = i, child_ctx;
 }
 
 function get_each_context_3(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[116] = list[i], child_ctx[120] = i, child_ctx;
+	return child_ctx[124] = list[i], child_ctx[128] = i, child_ctx;
 }
 
 function get_each_context_4(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[123] = list[i], child_ctx[120] = i, child_ctx;
+	return child_ctx[131] = list[i], child_ctx[128] = i, child_ctx;
 }
 
 function get_each_context_5(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[123] = list[i], child_ctx[120] = i, child_ctx;
+	return child_ctx[131] = list[i], child_ctx[128] = i, child_ctx;
 }
 
 function create_if_block_10(ctx) {
@@ -394,7 +507,7 @@ function create_if_block_10(ctx) {
 }
 
 function create_if_block_9(ctx) {
-	let div, span, t0, html_tag, t1, raw_value = ctx[25](ctx[7].length) + "", each_value_5 = ctx[7], each_blocks = [];
+	let div, span, t0, html_tag, t1, raw_value = ctx[26](ctx[8].length) + "", each_value_5 = ctx[8], each_blocks = [];
 	for (let i = 0; i < each_value_5.length; i += 1) each_blocks[i] = create_each_block_5(get_each_context_5(ctx, each_value_5, i));
 	return {
 		c() {
@@ -409,10 +522,10 @@ function create_if_block_9(ctx) {
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div, null);
 		},
 		p(ctx, dirty) {
-			if (128 & dirty[0] && raw_value !== (raw_value = ctx[25](ctx[7].length) + "") && html_tag.p(raw_value), 
-			11534720 & dirty[0]) {
+			if (256 & dirty[0] && raw_value !== (raw_value = ctx[26](ctx[8].length) + "") && html_tag.p(raw_value), 
+			23069440 & dirty[0]) {
 				let i;
-				for (each_value_5 = ctx[7], i = 0; i < each_value_5.length; i += 1) {
+				for (each_value_5 = ctx[8], i = 0; i < each_value_5.length; i += 1) {
 					const child_ctx = get_each_context_5(ctx, each_value_5, i);
 					each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block_5(child_ctx), 
 					each_blocks[i].c(), each_blocks[i].m(div, null));
@@ -429,29 +542,29 @@ function create_if_block_9(ctx) {
 
 function create_each_block_5(ctx) {
 	let div1, img, img_src_value, img_alt_value, img_title_value, t0, div0, t1, mounted, dispose;
-	function click_handler_1() {
-		return ctx[46](ctx[123]);
+	function click_handler() {
+		return ctx[45](ctx[131]);
 	}
-	function click_handler_2() {
-		return ctx[47](ctx[123]);
+	function click_handler_1() {
+		return ctx[46](ctx[131]);
 	}
 	return {
 		c() {
 			div1 = element("div"), img = element("img"), t0 = space(), div0 = element("div"), 
 			div0.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>', 
-			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[20](ctx[123].pack, ctx[123].id)) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[123].pack + " - " + ctx[123].id), attr(img, "title", img_title_value = (ctx[8][ctx[123].pack] ? ctx[8][ctx[123].pack].name : "N/A") + ("string" == typeof ctx[123].pack && ctx[123].pack.startsWith("custom-") ? " – " + ctx[123].id : "")), 
+			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[21](ctx[131].pack, ctx[131].id)) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[131].pack + " - " + ctx[131].id), attr(img, "title", img_title_value = (ctx[9][ctx[131].pack] ? ctx[9][ctx[131].pack].name : "N/A") + ("string" == typeof ctx[131].pack && ctx[131].pack.startsWith("custom-") ? " – " + ctx[131].id : "")), 
 			attr(div0, "class", "deleteFavorite"), attr(div0, "title", "Unfavorite"), attr(div1, "class", "sticker");
 		},
 		m(target, anchor) {
 			insert(target, div1, anchor), append(div1, img), append(div1, t0), append(div1, div0), 
-			append(div1, t1), mounted || (dispose = [ listen(img, "click", click_handler_1), listen(div0, "click", click_handler_2) ], 
+			append(div1, t1), mounted || (dispose = [ listen(img, "click", click_handler), listen(div0, "click", click_handler_1) ], 
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 128 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[20](ctx[123].pack, ctx[123].id)) && attr(img, "src", img_src_value), 
-			128 & dirty[0] && img_alt_value !== (img_alt_value = ctx[123].pack + " - " + ctx[123].id) && attr(img, "alt", img_alt_value), 
-			384 & dirty[0] && img_title_value !== (img_title_value = (ctx[8][ctx[123].pack] ? ctx[8][ctx[123].pack].name : "N/A") + ("string" == typeof ctx[123].pack && ctx[123].pack.startsWith("custom-") ? " – " + ctx[123].id : "")) && attr(img, "title", img_title_value);
+			ctx = new_ctx, 256 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[21](ctx[131].pack, ctx[131].id)) && attr(img, "src", img_src_value), 
+			256 & dirty[0] && img_alt_value !== (img_alt_value = ctx[131].pack + " - " + ctx[131].id) && attr(img, "alt", img_alt_value), 
+			768 & dirty[0] && img_title_value !== (img_title_value = (ctx[9][ctx[131].pack] ? ctx[9][ctx[131].pack].name : "N/A") + ("string" == typeof ctx[131].pack && ctx[131].pack.startsWith("custom-") ? " – " + ctx[131].id : "")) && attr(img, "title", img_title_value);
 		},
 		d(detaching) {
 			detaching && detach(div1), mounted = !1, run_all(dispose);
@@ -461,36 +574,13 @@ function create_each_block_5(ctx) {
 
 function create_else_block_1(ctx) {
 	let div, mounted, dispose;
-	function click_handler_5() {
-		return ctx[50](ctx[116], ctx[123]);
+	function click_handler_4() {
+		return ctx[49](ctx[124], ctx[131]);
 	}
 	return {
 		c() {
 			div = element("div"), div.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>', 
 			attr(div, "class", "deleteFavorite"), attr(div, "title", "Unfavorite");
-		},
-		m(target, anchor) {
-			insert(target, div, anchor), mounted || (dispose = listen(div, "click", click_handler_5), 
-			mounted = !0);
-		},
-		p(new_ctx, dirty) {
-			ctx = new_ctx;
-		},
-		d(detaching) {
-			detaching && detach(div), mounted = !1, dispose();
-		}
-	};
-}
-
-function create_if_block_8(ctx) {
-	let div, mounted, dispose;
-	function click_handler_4() {
-		return ctx[49](ctx[116], ctx[123]);
-	}
-	return {
-		c() {
-			div = element("div"), div.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>', 
-			attr(div, "class", "addFavorite"), attr(div, "title", "Favorite");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor), mounted || (dispose = listen(div, "click", click_handler_4), 
@@ -505,34 +595,57 @@ function create_if_block_8(ctx) {
 	};
 }
 
+function create_if_block_8(ctx) {
+	let div, mounted, dispose;
+	function click_handler_3() {
+		return ctx[48](ctx[124], ctx[131]);
+	}
+	return {
+		c() {
+			div = element("div"), div.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>', 
+			attr(div, "class", "addFavorite"), attr(div, "title", "Favorite");
+		},
+		m(target, anchor) {
+			insert(target, div, anchor), mounted || (dispose = listen(div, "click", click_handler_3), 
+			mounted = !0);
+		},
+		p(new_ctx, dirty) {
+			ctx = new_ctx;
+		},
+		d(detaching) {
+			detaching && detach(div), mounted = !1, dispose();
+		}
+	};
+}
+
 function create_each_block_4(ctx) {
 	let div, img, img_src_value, img_alt_value, img_title_value, t, show_if, mounted, dispose;
 	function func(...args) {
-		return ctx[43](ctx[116], ctx[123], ...args);
+		return ctx[44](ctx[124], ctx[131], ...args);
 	}
-	function click_handler_3() {
-		return ctx[48](ctx[116], ctx[123]);
+	function click_handler_2() {
+		return ctx[47](ctx[124], ctx[131]);
 	}
 	function select_block_type(ctx, dirty) {
-		return 640 & dirty[0] && (show_if = null), null == show_if && (show_if = !(-1 !== ctx[7].findIndex(func))), 
+		return 1280 & dirty[0] && (show_if = null), null == show_if && (show_if = !(-1 !== ctx[8].findIndex(func))), 
 		show_if ? create_if_block_8 : create_else_block_1;
 	}
 	let current_block_type = select_block_type(ctx, [ -1, -1, -1, -1, -1 ]), if_block = current_block_type(ctx);
 	return {
 		c() {
 			div = element("div"), img = element("img"), t = space(), if_block.c(), attr(img, "class", "image"), 
-			src_url_equal(img.src, img_src_value = "" + ctx[20](ctx[116].id, ctx[123], !1, ctx[120])) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[116].id + " - " + ctx[123]), attr(img, "title", img_title_value = "string" == typeof ctx[116].id && ctx[116].id.startsWith("custom-") ? ctx[123] : ""), 
+			src_url_equal(img.src, img_src_value = "" + ctx[21](ctx[124].id, ctx[131], !1, ctx[128])) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[124].id + " - " + ctx[131]), attr(img, "title", img_title_value = "string" == typeof ctx[124].id && ctx[124].id.startsWith("custom-") ? ctx[131] : ""), 
 			attr(div, "class", "sticker");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor), append(div, img), append(div, t), if_block.m(div, null), 
-			mounted || (dispose = listen(img, "click", click_handler_3), mounted = !0);
+			mounted || (dispose = listen(img, "click", click_handler_2), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 512 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[20](ctx[116].id, ctx[123], !1, ctx[120])) && attr(img, "src", img_src_value), 
-			512 & dirty[0] && img_alt_value !== (img_alt_value = ctx[116].id + " - " + ctx[123]) && attr(img, "alt", img_alt_value), 
-			512 & dirty[0] && img_title_value !== (img_title_value = "string" == typeof ctx[116].id && ctx[116].id.startsWith("custom-") ? ctx[123] : "") && attr(img, "title", img_title_value), 
+			ctx = new_ctx, 1024 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[21](ctx[124].id, ctx[131], !1, ctx[128])) && attr(img, "src", img_src_value), 
+			1024 & dirty[0] && img_alt_value !== (img_alt_value = ctx[124].id + " - " + ctx[131]) && attr(img, "alt", img_alt_value), 
+			1024 & dirty[0] && img_title_value !== (img_title_value = "string" == typeof ctx[124].id && ctx[124].id.startsWith("custom-") ? ctx[131] : "") && attr(img, "title", img_title_value), 
 			current_block_type === (current_block_type = select_block_type(ctx, dirty)) && if_block ? if_block.p(ctx, dirty) : (if_block.d(1), 
 			if_block = current_block_type(ctx), if_block && (if_block.c(), if_block.m(div, null)));
 		},
@@ -543,14 +656,14 @@ function create_each_block_4(ctx) {
 }
 
 function create_each_block_3(ctx) {
-	let div, span, t0, html_tag, span_id_value, t1, t2, t0_value = ctx[116].name + "", raw_value = ctx[25](ctx[116].files.length) + "", each_value_4 = ctx[116].files, each_blocks = [];
+	let div, span, t0, html_tag, span_id_value, t1, t2, t0_value = ctx[124].name + "", raw_value = ctx[26](ctx[124].files.length) + "", each_value_4 = ctx[124].files, each_blocks = [];
 	for (let i = 0; i < each_value_4.length; i += 1) each_blocks[i] = create_each_block_4(get_each_context_4(ctx, each_value_4, i));
 	return {
 		c() {
 			div = element("div"), span = element("span"), t0 = text(t0_value), html_tag = new HtmlTag(!1), 
 			t1 = space();
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-			t2 = space(), html_tag.a = null, attr(span, "id", span_id_value = "p" + ctx[116].id), 
+			t2 = space(), html_tag.a = null, attr(span, "id", span_id_value = "p" + ctx[124].id), 
 			attr(div, "class", "pack");
 		},
 		m(target, anchor) {
@@ -560,12 +673,12 @@ function create_each_block_3(ctx) {
 			append(div, t2);
 		},
 		p(ctx, dirty) {
-			if (512 & dirty[0] && t0_value !== (t0_value = ctx[116].name + "") && set_data(t0, t0_value), 
-			512 & dirty[0] && raw_value !== (raw_value = ctx[25](ctx[116].files.length) + "") && html_tag.p(raw_value), 
-			512 & dirty[0] && span_id_value !== (span_id_value = "p" + ctx[116].id) && attr(span, "id", span_id_value), 
-			15729280 & dirty[0]) {
+			if (1024 & dirty[0] && t0_value !== (t0_value = ctx[124].name + "") && set_data(t0, t0_value), 
+			1024 & dirty[0] && raw_value !== (raw_value = ctx[26](ctx[124].files.length) + "") && html_tag.p(raw_value), 
+			1024 & dirty[0] && span_id_value !== (span_id_value = "p" + ctx[124].id) && attr(span, "id", span_id_value), 
+			31458560 & dirty[0]) {
 				let i;
-				for (each_value_4 = ctx[116].files, i = 0; i < each_value_4.length; i += 1) {
+				for (each_value_4 = ctx[124].files, i = 0; i < each_value_4.length; i += 1) {
 					const child_ctx = get_each_context_4(ctx, each_value_4, i);
 					each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block_4(child_ctx), 
 					each_blocks[i].c(), each_blocks[i].m(div, t2));
@@ -582,21 +695,21 @@ function create_each_block_3(ctx) {
 
 function create_each_block_2(ctx) {
 	let div, div_title_value, mounted, dispose;
-	function click_handler_8() {
-		return ctx[53](ctx[116]);
+	function click_handler_7() {
+		return ctx[52](ctx[124]);
 	}
 	return {
 		c() {
-			div = element("div"), attr(div, "class", "pack"), attr(div, "title", div_title_value = ctx[116].name), 
-			set_style(div, "background-image", `url(${ctx[20](ctx[116].id, ctx[116].files[0], !1, 0)})`);
+			div = element("div"), attr(div, "class", "pack"), attr(div, "title", div_title_value = ctx[124].name), 
+			set_style(div, "background-image", `url(${ctx[21](ctx[124].id, ctx[124].files[0], !1, 0)})`);
 		},
 		m(target, anchor) {
-			insert(target, div, anchor), mounted || (dispose = listen(div, "click", click_handler_8), 
+			insert(target, div, anchor), mounted || (dispose = listen(div, "click", click_handler_7), 
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 512 & dirty[0] && div_title_value !== (div_title_value = ctx[116].name) && attr(div, "title", div_title_value), 
-			512 & dirty[0] && set_style(div, "background-image", `url(${ctx[20](ctx[116].id, ctx[116].files[0], !1, 0)})`);
+			ctx = new_ctx, 1024 & dirty[0] && div_title_value !== (div_title_value = ctx[124].name) && attr(div, "title", div_title_value), 
+			1024 & dirty[0] && set_style(div, "background-image", `url(${ctx[21](ctx[124].id, ctx[124].files[0], !1, 0)})`);
 		},
 		d(detaching) {
 			detaching && detach(div), mounted = !1, dispose();
@@ -605,8 +718,8 @@ function create_each_block_2(ctx) {
 }
 
 function create_if_block_4(ctx) {
-	let div, div_style_value, each_blocks = [], each_1_lookup = new Map, each_value_1 = ctx[9];
-	const get_key = ctx => ctx[116].id;
+	let div, div_style_value, each_blocks = [], each_1_lookup = new Map, each_value_1 = ctx[10];
+	const get_key = ctx => ctx[124].id;
 	for (let i = 0; i < each_value_1.length; i += 1) {
 		let child_ctx = get_each_context_1(ctx, each_value_1, i), key = get_key(child_ctx);
 		each_1_lookup.set(key, each_blocks[i] = create_each_block_1(key, child_ctx));
@@ -615,14 +728,14 @@ function create_if_block_4(ctx) {
 		c() {
 			div = element("div");
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-			attr(div, "class", "tab-content has-scroll-y"), attr(div, "style", div_style_value = 0 === ctx[6] ? "" : "display: none;");
+			attr(div, "class", "tab-content has-scroll-y"), attr(div, "style", div_style_value = 0 === ctx[7] ? "" : "display: none;");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div, null);
 		},
 		p(ctx, dirty) {
-			68751872 & dirty[0] | 5 & dirty[1] && (each_value_1 = ctx[9], each_blocks = function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+			137634816 & dirty[0] | 5 & dirty[1] && (each_value_1 = ctx[10], each_blocks = function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
 				let o = old_blocks.length, n = list.length, i = o;
 				const old_indexes = {};
 				for (;i--; ) old_indexes[old_blocks[i].key] = i;
@@ -651,7 +764,7 @@ function create_if_block_4(ctx) {
 				for (;n; ) insert(new_blocks[n - 1]);
 				return new_blocks;
 			}(each_blocks, dirty, get_key, 1, ctx, each_value_1, each_1_lookup, div, destroy_block, create_each_block_1, null, get_each_context_1)), 
-			64 & dirty[0] && div_style_value !== (div_style_value = 0 === ctx[6] ? "" : "display: none;") && attr(div, "style", div_style_value);
+			128 & dirty[0] && div_style_value !== (div_style_value = 0 === ctx[7] ? "" : "display: none;") && attr(div, "style", div_style_value);
 		},
 		d(detaching) {
 			detaching && detach(div);
@@ -665,16 +778,16 @@ function create_if_block_6(ctx) {
 	return {
 		c() {
 			div = element("div"), input = element("input"), attr(input, "class", "inputPackIndex"), 
-			attr(input, "type", "text"), attr(input, "data-pack", input_data_pack_value = ctx[116].id), 
-			input.value = input_value_value = ctx[120] + 1, attr(div, "class", "index");
+			attr(input, "type", "text"), attr(input, "data-pack", input_data_pack_value = ctx[124].id), 
+			input.value = input_value_value = ctx[128] + 1, attr(div, "class", "index");
 		},
 		m(target, anchor) {
-			insert(target, div, anchor), append(div, input), mounted || (dispose = [ listen(input, "click", click_handler_14), listen(input, "keypress", ctx[31]) ], 
+			insert(target, div, anchor), append(div, input), mounted || (dispose = [ listen(input, "click", click_handler_13), listen(input, "keypress", ctx[31]) ], 
 			mounted = !0);
 		},
 		p(ctx, dirty) {
-			512 & dirty[0] && input_data_pack_value !== (input_data_pack_value = ctx[116].id) && attr(input, "data-pack", input_data_pack_value), 
-			512 & dirty[0] && input_value_value !== (input_value_value = ctx[120] + 1) && input.value !== input_value_value && (input.value = input_value_value);
+			1024 & dirty[0] && input_data_pack_value !== (input_data_pack_value = ctx[124].id) && attr(input, "data-pack", input_data_pack_value), 
+			1024 & dirty[0] && input_value_value !== (input_value_value = ctx[128] + 1) && input.value !== input_value_value && (input.value = input_value_value);
 		},
 		d(detaching) {
 			detaching && detach(div), mounted = !1, run_all(dispose);
@@ -684,8 +797,8 @@ function create_if_block_6(ctx) {
 
 function create_if_block_5(ctx) {
 	let button, mounted, dispose;
-	function click_handler_16() {
-		return ctx[60](ctx[116]);
+	function click_handler_15() {
+		return ctx[59](ctx[124]);
 	}
 	return {
 		c() {
@@ -693,7 +806,7 @@ function create_if_block_5(ctx) {
 			attr(button, "title", "Update");
 		},
 		m(target, anchor) {
-			insert(target, button, anchor), mounted || (dispose = listen(button, "click", click_handler_16), 
+			insert(target, button, anchor), mounted || (dispose = listen(button, "click", click_handler_15), 
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
@@ -706,11 +819,11 @@ function create_if_block_5(ctx) {
 }
 
 function create_each_block_1(key_1, ctx) {
-	let div3, t0, div0, t1, div1, span0, t2, span0_title_value, t3, span1, t4, t5, html_tag, t6, div2, button, t8, div2_class_value, t9, mounted, dispose, t2_value = ctx[116].name + "", t4_value = ctx[116].count + "", raw_value = (ctx[16].hidePackAppendix ? "" : ctx[26](ctx[116].id)) + "", if_block0 = ctx[9].length > 1 && create_if_block_6(ctx);
-	function click_handler_15() {
-		return ctx[59](ctx[116]);
+	let div3, t0, div0, t1, div1, span0, t2, span0_title_value, t3, span1, t4, t5, html_tag, t6, div2, button, t8, div2_class_value, t9, mounted, dispose, t2_value = ctx[124].name + "", t4_value = ctx[124].count + "", raw_value = (ctx[18].hidePackAppendix ? "" : ctx[27](ctx[124].id)) + "", if_block0 = ctx[10].length > 1 && create_if_block_6(ctx);
+	function click_handler_14() {
+		return ctx[58](ctx[124]);
 	}
-	let if_block1 = ctx[12][ctx[116].id] && ctx[12][ctx[116].id].updateUrl && create_if_block_5(ctx);
+	let if_block1 = ctx[13][ctx[124].id] && ctx[13][ctx[124].id].updateUrl && create_if_block_5(ctx);
 	return {
 		key: key_1,
 		first: null,
@@ -720,10 +833,10 @@ function create_each_block_1(key_1, ctx) {
 			t3 = space(), span1 = element("span"), t4 = text(t4_value), t5 = text(" stickers"), 
 			html_tag = new HtmlTag(!1), t6 = space(), div2 = element("div"), button = element("button"), 
 			button.textContent = "Del", t8 = space(), if_block1 && if_block1.c(), t9 = space(), 
-			attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[20](ctx[116].id, ctx[116].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[16].hidePackAppendix ? "ID: " + ctx[116].id : ""), 
+			attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[21](ctx[124].id, ctx[124].files[0], !1, 0)})`), 
+			attr(span0, "title", span0_title_value = ctx[18].hidePackAppendix ? "ID: " + ctx[124].id : ""), 
 			html_tag.a = null, attr(div1, "class", "info"), attr(button, "class", "button is-danger"), 
-			attr(button, "title", "Unsubscribe"), attr(div2, "class", div2_class_value = "action" + (ctx[12][ctx[116].id] && ctx[12][ctx[116].id].updateUrl ? " is-tight" : "")), 
+			attr(button, "title", "Unsubscribe"), attr(div2, "class", div2_class_value = "action" + (ctx[13][ctx[124].id] && ctx[13][ctx[124].id].updateUrl ? " is-tight" : "")), 
 			attr(div3, "class", "pack"), this.first = div3;
 		},
 		m(target, anchor) {
@@ -731,20 +844,20 @@ function create_each_block_1(key_1, ctx) {
 			append(div3, div0), append(div3, t1), append(div3, div1), append(div1, span0), append(span0, t2), 
 			append(div1, t3), append(div1, span1), append(span1, t4), append(span1, t5), html_tag.m(raw_value, span1), 
 			append(div3, t6), append(div3, div2), append(div2, button), append(div2, t8), if_block1 && if_block1.m(div2, null), 
-			append(div3, t9), mounted || (dispose = listen(button, "click", click_handler_15), 
+			append(div3, t9), mounted || (dispose = listen(button, "click", click_handler_14), 
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			(ctx = new_ctx)[9].length > 1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_6(ctx), 
+			(ctx = new_ctx)[10].length > 1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_6(ctx), 
 			if_block0.c(), if_block0.m(div3, t0)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-			512 & dirty[0] && set_style(div0, "background-image", `url(${ctx[20](ctx[116].id, ctx[116].files[0], !1, 0)})`), 
-			512 & dirty[0] && t2_value !== (t2_value = ctx[116].name + "") && set_data(t2, t2_value), 
-			66048 & dirty[0] && span0_title_value !== (span0_title_value = ctx[16].hidePackAppendix ? "ID: " + ctx[116].id : "") && attr(span0, "title", span0_title_value), 
-			512 & dirty[0] && t4_value !== (t4_value = ctx[116].count + "") && set_data(t4, t4_value), 
-			66048 & dirty[0] && raw_value !== (raw_value = (ctx[16].hidePackAppendix ? "" : ctx[26](ctx[116].id)) + "") && html_tag.p(raw_value), 
-			ctx[12][ctx[116].id] && ctx[12][ctx[116].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_5(ctx), 
+			1024 & dirty[0] && set_style(div0, "background-image", `url(${ctx[21](ctx[124].id, ctx[124].files[0], !1, 0)})`), 
+			1024 & dirty[0] && t2_value !== (t2_value = ctx[124].name + "") && set_data(t2, t2_value), 
+			263168 & dirty[0] && span0_title_value !== (span0_title_value = ctx[18].hidePackAppendix ? "ID: " + ctx[124].id : "") && attr(span0, "title", span0_title_value), 
+			1024 & dirty[0] && t4_value !== (t4_value = ctx[124].count + "") && set_data(t4, t4_value), 
+			263168 & dirty[0] && raw_value !== (raw_value = (ctx[18].hidePackAppendix ? "" : ctx[27](ctx[124].id)) + "") && html_tag.p(raw_value), 
+			ctx[13][ctx[124].id] && ctx[13][ctx[124].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_5(ctx), 
 			if_block1.c(), if_block1.m(div2, null)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-			4608 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[12][ctx[116].id] && ctx[12][ctx[116].id].updateUrl ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
+			9216 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[13][ctx[124].id] && ctx[13][ctx[124].id].updateUrl ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
 		},
 		d(detaching) {
 			detaching && detach(div3), if_block0 && if_block0.d(), if_block1 && if_block1.d(), 
@@ -754,7 +867,7 @@ function create_each_block_1(key_1, ctx) {
 }
 
 function create_if_block(ctx) {
-	let div, each_value = ctx[11], each_blocks = [];
+	let div, each_value = ctx[12], each_blocks = [];
 	for (let i = 0; i < each_value.length; i += 1) each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	return {
 		c() {
@@ -767,9 +880,9 @@ function create_if_block(ctx) {
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div, null);
 		},
 		p(ctx, dirty) {
-			if (69016576 & dirty[0] | 6 & dirty[1]) {
+			if (138164224 & dirty[0] | 6 & dirty[1]) {
 				let i;
-				for (each_value = ctx[11], i = 0; i < each_value.length; i += 1) {
+				for (each_value = ctx[12], i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
 					each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block(child_ctx), 
 					each_blocks[i].c(), each_blocks[i].m(div, null));
@@ -786,36 +899,13 @@ function create_if_block(ctx) {
 
 function create_else_block(ctx) {
 	let button, mounted, dispose;
-	function click_handler_18() {
-		return ctx[63](ctx[116]);
+	function click_handler_17() {
+		return ctx[62](ctx[124]);
 	}
 	return {
 		c() {
 			button = element("button"), button.textContent = "Add", attr(button, "class", "button is-primary"), 
 			attr(button, "title", "Subscribe");
-		},
-		m(target, anchor) {
-			insert(target, button, anchor), mounted || (dispose = listen(button, "click", click_handler_18), 
-			mounted = !0);
-		},
-		p(new_ctx, dirty) {
-			ctx = new_ctx;
-		},
-		d(detaching) {
-			detaching && detach(button), mounted = !1, dispose();
-		}
-	};
-}
-
-function create_if_block_3(ctx) {
-	let button, mounted, dispose;
-	function click_handler_17() {
-		return ctx[62](ctx[116]);
-	}
-	return {
-		c() {
-			button = element("button"), button.textContent = "Del", attr(button, "class", "button is-danger"), 
-			attr(button, "title", "Unsubscribe");
 		},
 		m(target, anchor) {
 			insert(target, button, anchor), mounted || (dispose = listen(button, "click", click_handler_17), 
@@ -830,10 +920,33 @@ function create_if_block_3(ctx) {
 	};
 }
 
+function create_if_block_3(ctx) {
+	let button, mounted, dispose;
+	function click_handler_16() {
+		return ctx[61](ctx[124]);
+	}
+	return {
+		c() {
+			button = element("button"), button.textContent = "Del", attr(button, "class", "button is-danger"), 
+			attr(button, "title", "Unsubscribe");
+		},
+		m(target, anchor) {
+			insert(target, button, anchor), mounted || (dispose = listen(button, "click", click_handler_16), 
+			mounted = !0);
+		},
+		p(new_ctx, dirty) {
+			ctx = new_ctx;
+		},
+		d(detaching) {
+			detaching && detach(button), mounted = !1, dispose();
+		}
+	};
+}
+
 function create_if_block_1(ctx) {
-	let t, button, mounted, dispose, if_block = ctx[12][ctx[116].id].updateUrl && create_if_block_2(ctx);
-	function click_handler_20() {
-		return ctx[65](ctx[116]);
+	let t, button, mounted, dispose, if_block = ctx[13][ctx[124].id].updateUrl && create_if_block_2(ctx);
+	function click_handler_19() {
+		return ctx[64](ctx[124]);
 	}
 	return {
 		c() {
@@ -842,10 +955,10 @@ function create_if_block_1(ctx) {
 		},
 		m(target, anchor) {
 			if_block && if_block.m(target, anchor), insert(target, t, anchor), insert(target, button, anchor), 
-			mounted || (dispose = listen(button, "click", click_handler_20), mounted = !0);
+			mounted || (dispose = listen(button, "click", click_handler_19), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			(ctx = new_ctx)[12][ctx[116].id].updateUrl ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block_2(ctx), 
+			(ctx = new_ctx)[13][ctx[124].id].updateUrl ? if_block ? if_block.p(ctx, dirty) : (if_block = create_if_block_2(ctx), 
 			if_block.c(), if_block.m(t.parentNode, t)) : if_block && (if_block.d(1), if_block = null);
 		},
 		d(detaching) {
@@ -857,8 +970,8 @@ function create_if_block_1(ctx) {
 
 function create_if_block_2(ctx) {
 	let button, mounted, dispose;
-	function click_handler_19() {
-		return ctx[64](ctx[116]);
+	function click_handler_18() {
+		return ctx[63](ctx[124]);
 	}
 	return {
 		c() {
@@ -866,7 +979,7 @@ function create_if_block_2(ctx) {
 			attr(button, "title", "Update");
 		},
 		m(target, anchor) {
-			insert(target, button, anchor), mounted || (dispose = listen(button, "click", click_handler_19), 
+			insert(target, button, anchor), mounted || (dispose = listen(button, "click", click_handler_18), 
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
@@ -879,21 +992,21 @@ function create_if_block_2(ctx) {
 }
 
 function create_each_block(ctx) {
-	let div3, div0, t0, div1, span0, t1, span0_title_value, t2, span1, t3, t4, html_tag, t5, div2, show_if, t6, div2_class_value, t7, t1_value = ctx[116].name + "", t3_value = ctx[116].count + "", raw_value = (ctx[16].hidePackAppendix ? "" : ctx[26](ctx[116].id)) + "";
+	let div3, div0, t0, div1, span0, t1, span0_title_value, t2, span1, t3, t4, html_tag, t5, div2, show_if, t6, div2_class_value, t7, t1_value = ctx[124].name + "", t3_value = ctx[124].count + "", raw_value = (ctx[18].hidePackAppendix ? "" : ctx[27](ctx[124].id)) + "";
 	function select_block_type_1(ctx, dirty) {
-		return 3072 & dirty[0] && (show_if = null), null == show_if && (show_if = !!ctx[10].includes(ctx[116].id)), 
+		return 6144 & dirty[0] && (show_if = null), null == show_if && (show_if = !!ctx[11].includes(ctx[124].id)), 
 		show_if ? create_if_block_3 : create_else_block;
 	}
-	let current_block_type = select_block_type_1(ctx, [ -1, -1, -1, -1, -1 ]), if_block0 = current_block_type(ctx), if_block1 = ctx[12][ctx[116].id] && create_if_block_1(ctx);
+	let current_block_type = select_block_type_1(ctx, [ -1, -1, -1, -1, -1 ]), if_block0 = current_block_type(ctx), if_block1 = ctx[13][ctx[124].id] && create_if_block_1(ctx);
 	return {
 		c() {
 			div3 = element("div"), div0 = element("div"), t0 = space(), div1 = element("div"), 
 			span0 = element("span"), t1 = text(t1_value), t2 = space(), span1 = element("span"), 
 			t3 = text(t3_value), t4 = text(" stickers"), html_tag = new HtmlTag(!1), t5 = space(), 
 			div2 = element("div"), if_block0.c(), t6 = space(), if_block1 && if_block1.c(), 
-			t7 = space(), attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[20](ctx[116].id, ctx[116].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[16].hidePackAppendix ? "ID: " + ctx[116].id : ""), 
-			html_tag.a = null, attr(div1, "class", "info"), attr(div2, "class", div2_class_value = "action" + (ctx[12][ctx[116].id] ? " is-tight" : "")), 
+			t7 = space(), attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[21](ctx[124].id, ctx[124].files[0], !1, 0)})`), 
+			attr(span0, "title", span0_title_value = ctx[18].hidePackAppendix ? "ID: " + ctx[124].id : ""), 
+			html_tag.a = null, attr(div1, "class", "info"), attr(div2, "class", div2_class_value = "action" + (ctx[13][ctx[124].id] ? " is-tight" : "")), 
 			attr(div3, "class", "pack");
 		},
 		m(target, anchor) {
@@ -904,16 +1017,16 @@ function create_each_block(ctx) {
 			append(div3, t7);
 		},
 		p(ctx, dirty) {
-			2048 & dirty[0] && set_style(div0, "background-image", `url(${ctx[20](ctx[116].id, ctx[116].files[0], !1, 0)})`), 
-			2048 & dirty[0] && t1_value !== (t1_value = ctx[116].name + "") && set_data(t1, t1_value), 
-			67584 & dirty[0] && span0_title_value !== (span0_title_value = ctx[16].hidePackAppendix ? "ID: " + ctx[116].id : "") && attr(span0, "title", span0_title_value), 
-			2048 & dirty[0] && t3_value !== (t3_value = ctx[116].count + "") && set_data(t3, t3_value), 
-			67584 & dirty[0] && raw_value !== (raw_value = (ctx[16].hidePackAppendix ? "" : ctx[26](ctx[116].id)) + "") && html_tag.p(raw_value), 
+			4096 & dirty[0] && set_style(div0, "background-image", `url(${ctx[21](ctx[124].id, ctx[124].files[0], !1, 0)})`), 
+			4096 & dirty[0] && t1_value !== (t1_value = ctx[124].name + "") && set_data(t1, t1_value), 
+			266240 & dirty[0] && span0_title_value !== (span0_title_value = ctx[18].hidePackAppendix ? "ID: " + ctx[124].id : "") && attr(span0, "title", span0_title_value), 
+			4096 & dirty[0] && t3_value !== (t3_value = ctx[124].count + "") && set_data(t3, t3_value), 
+			266240 & dirty[0] && raw_value !== (raw_value = (ctx[18].hidePackAppendix ? "" : ctx[27](ctx[124].id)) + "") && html_tag.p(raw_value), 
 			current_block_type === (current_block_type = select_block_type_1(ctx, dirty)) && if_block0 ? if_block0.p(ctx, dirty) : (if_block0.d(1), 
 			if_block0 = current_block_type(ctx), if_block0 && (if_block0.c(), if_block0.m(div2, t6))), 
-			ctx[12][ctx[116].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
+			ctx[13][ctx[124].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
 			if_block1.c(), if_block1.m(div2, null)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-			6144 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[12][ctx[116].id] ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
+			12288 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[13][ctx[124].id] ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
 		},
 		d(detaching) {
 			detaching && detach(div3), if_block0.d(), if_block1 && if_block1.d();
@@ -921,10 +1034,10 @@ function create_each_block(ctx) {
 	};
 }
 
-function create_fragment(ctx) {
-	let main_1, div26, div0, t0, div25, div1, t1, t2, div1_class_value, t3, div8, div5, div4, div3, t4, t5, div7, div6, div8_class_value, t6, div24, div9, t7, div23, div22, div14, div10, t9, div11, t11, div12, t13, div13, t15, t16, div15, input0, t17, div15_style_value, t18, div18, div16, p0, t20, p1, t24, p2, t26, p3, input1, t27, button0, t29, div17, p4, t31, p5, t36, p6, t39, p7, input2, t40, button1, t42, p8, input3, t43, button2, t45, p9, button3, div18_style_value, t47, div21, div19, p10, t49, p11, label0, input4, t50, t51, p12, label1, input5, t52, t53, p13, label2, input6, t54, t55, p14, label3, input7, t56, t57, p15, label4, input8, t58, t59, p16, label5, input9, t60, t61, p17, label6, input10, t62, t63, div20, p18, t65, p19, input11, t66, button4, t68, p20, button5, div21_style_value, div24_style_value, div25_style_value, mounted, dispose, if_block0 = !ctx[7] && !ctx[9] && create_if_block_10(), if_block1 = ctx[7] && ctx[7].length && create_if_block_9(ctx), each_value_3 = ctx[9], each_blocks_1 = [];
+function create_fragment$1(ctx) {
+	let main_1, div26, div25, div0, t0, t1, div0_class_value, t2, div7, div4, div3, div2, t3, t4, div6, div5, div7_class_value, t5, div24, div8, t6, div23, div22, div13, div9, t8, div10, t10, div11, t12, div12, t14, t15, div14, input0, t16, div14_style_value, t17, div17, div15, p0, t19, p1, t23, p2, t25, p3, input1, t26, button0, t28, div16, p4, t30, p5, t35, p6, t38, p7, input2, t39, button1, t41, p8, input3, t42, button2, t44, p9, button3, div17_style_value, t46, div21, div18, p10, t48, p11, label0, input4, t49, t50, p12, label1, input5, t51, t52, p13, label2, input6, t53, t54, p14, label3, input7, t55, t56, p15, label4, input8, t57, t58, p16, label5, input9, t59, t60, p17, label6, input10, t61, t62, div19, p18, t64, p19, t66, p20, t68, p21, t70, p22, input11, t71, button4, t73, div20, p23, t75, p24, input12, t76, button5, t78, p25, button6, div21_style_value, div24_style_value, div25_style_value, div26_style_value, mounted, dispose, if_block0 = !ctx[8] && !ctx[10] && create_if_block_10(), if_block1 = ctx[8] && ctx[8].length && create_if_block_9(ctx), each_value_3 = ctx[10], each_blocks_1 = [];
 	for (let i = 0; i < each_value_3.length; i += 1) each_blocks_1[i] = create_each_block_3(get_each_context_3(ctx, each_value_3, i));
-	let if_block2 = ctx[22] && ctx[22].length && function create_if_block_7(ctx) {
+	let if_block2 = ctx[23] && ctx[23].length && function create_if_block_7(ctx) {
 		let div1, mounted, dispose;
 		return {
 			c() {
@@ -932,7 +1045,7 @@ function create_fragment(ctx) {
 				attr(div1, "title", "Favorites");
 			},
 			m(target, anchor) {
-				insert(target, div1, anchor), mounted || (dispose = listen(div1, "click", ctx[52]), 
+				insert(target, div1, anchor), mounted || (dispose = listen(div1, "click", ctx[51]), 
 				mounted = !0);
 			},
 			p: noop,
@@ -940,211 +1053,214 @@ function create_fragment(ctx) {
 				detaching && detach(div1), mounted = !1, dispose();
 			}
 		};
-	}(ctx), each_value_2 = ctx[9], each_blocks = [];
+	}(ctx), each_value_2 = ctx[10], each_blocks = [];
 	for (let i = 0; i < each_value_2.length; i += 1) each_blocks[i] = create_each_block_2(get_each_context_2(ctx, each_value_2, i));
-	let if_block3 = ctx[5][0] && create_if_block_4(ctx), if_block4 = ctx[5][1] && create_if_block(ctx);
+	let if_block3 = ctx[6][0] && create_if_block_4(ctx), if_block4 = ctx[6][1] && create_if_block(ctx);
 	return {
 		c() {
-			main_1 = element("main"), div26 = element("div"), div0 = element("div"), div0.innerHTML = '<img class="channel-textarea-stickers-content" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20width%3D%2224%22%20height%3D%2224%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M18.5%2011c-4.136%200-7.5%203.364-7.5%207.5c0%20.871.157%201.704.432%202.482l9.551-9.551A7.462%207.462%200%200%200%2018.5%2011z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3Cpath%20d%3D%22M12%202C6.486%202%202%206.486%202%2012c0%204.583%203.158%208.585%207.563%209.69A9.431%209.431%200%200%201%209%2018.5C9%2013.262%2013.262%209%2018.5%209c1.12%200%202.191.205%203.19.563C20.585%205.158%2016.583%202%2012%202z%22%20fill%3D%22%23b9bbbe%22%2F%3E%3C%2Fsvg%3E" alt="Magane menu button"/>', 
-			t0 = space(), div25 = element("div"), div1 = element("div"), if_block0 && if_block0.c(), 
-			t1 = space(), if_block1 && if_block1.c(), t2 = space();
+			main_1 = element("main"), div26 = element("div"), div25 = element("div"), div0 = element("div"), 
+			if_block0 && if_block0.c(), t0 = space(), if_block1 && if_block1.c(), t1 = space();
 			for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].c();
-			t3 = space(), div8 = element("div"), div5 = element("div"), div4 = element("div"), 
-			div3 = element("div"), div3.innerHTML = '<div class="icon-plus"></div>', t4 = space(), 
-			if_block2 && if_block2.c(), t5 = space(), div7 = element("div"), div6 = element("div");
+			t2 = space(), div7 = element("div"), div4 = element("div"), div3 = element("div"), 
+			div2 = element("div"), div2.innerHTML = '<div class="icon-plus"></div>', t3 = space(), 
+			if_block2 && if_block2.c(), t4 = space(), div6 = element("div"), div5 = element("div");
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-			t6 = space(), div24 = element("div"), div9 = element("div"), t7 = space(), div23 = element("div"), 
-			div22 = element("div"), div14 = element("div"), div10 = element("div"), div10.textContent = "Installed", 
-			t9 = space(), div11 = element("div"), div11.textContent = "Packs", t11 = space(), 
-			div12 = element("div"), div12.textContent = "Import", t13 = space(), div13 = element("div"), 
-			div13.textContent = "Misc", t15 = space(), if_block3 && if_block3.c(), t16 = space(), 
-			div15 = element("div"), input0 = element("input"), t17 = space(), if_block4 && if_block4.c(), 
-			t18 = space(), div18 = element("div"), div16 = element("div"), p0 = element("p"), 
-			p0.textContent = "LINE Store Proxy", t20 = space(), p1 = element("p"), p1.innerHTML = 'If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.', 
-			t24 = space(), p2 = element("p"), p2.textContent = "e.g. https://store.line.me/stickershop/product/17573/ja", 
-			t26 = space(), p3 = element("p"), input1 = element("input"), t27 = space(), button0 = element("button"), 
-			button0.textContent = "Add", t29 = space(), div17 = element("div"), p4 = element("p"), 
-			p4.textContent = "Remote Packs", t31 = space(), p5 = element("p"), p5.innerHTML = 'You can paste URL to a JSON config file of a remote pack in here.<br/>\n\t\t\t\t\t\t\t\t\tThis also supports public album links of any file hosting websites running <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>.', 
-			t36 = space(), p6 = element("p"), p6.innerHTML = "e.g. https://example.com/packs/my_custom_pack.json<br/>\n\t\t\t\t\t\t\t\t\thttps://chibisafe.moe/a/my_album", 
-			t39 = space(), p7 = element("p"), input2 = element("input"), t40 = space(), button1 = element("button"), 
-			button1.textContent = "Add", t42 = space(), p8 = element("p"), input3 = element("input"), 
-			t43 = space(), button2 = element("button"), button2.textContent = "Load local JSON", 
-			t45 = space(), p9 = element("p"), button3 = element("button"), button3.textContent = "Update all remote packs", 
-			t47 = space(), div21 = element("div"), div19 = element("div"), p10 = element("p"), 
-			p10.textContent = "Settings", t49 = space(), p11 = element("p"), label0 = element("label"), 
-			input4 = element("input"), t50 = text("\n\t\t\t\t\t\t\t\t\t\tDisable Toasts"), t51 = space(), 
-			p12 = element("p"), label1 = element("label"), input5 = element("input"), t52 = text("\n\t\t\t\t\t\t\t\t\t\tClose window when sending a sticker"), 
-			t53 = space(), p13 = element("p"), label2 = element("label"), input6 = element("input"), 
-			t54 = text("\n\t\t\t\t\t\t\t\t\t\tUse left toolbar instead of bottom toolbar on main window"), 
-			t55 = space(), p14 = element("p"), label3 = element("label"), input7 = element("input"), 
-			t56 = text("\n\t\t\t\t\t\t\t\t\t\tHide pack's appendix in packs list (e.g. its numerical ID)"), 
-			t57 = space(), p15 = element("p"), label4 = element("label"), input8 = element("input"), 
-			t58 = text("\n\t\t\t\t\t\t\t\t\t\tDisable downscaling of manually imported LINE Store packs"), 
-			t59 = space(), p16 = element("p"), label5 = element("label"), input9 = element("input"), 
-			t60 = text("\n\t\t\t\t\t\t\t\t\t\tDisable obfuscation of files names for imported custom packs"), 
-			t61 = space(), p17 = element("p"), label6 = element("label"), input10 = element("input"), 
-			t62 = text("\n\t\t\t\t\t\t\t\t\t\tMark stickers as spoilers when sending"), t63 = space(), 
-			div20 = element("div"), p18 = element("p"), p18.textContent = "Database", t65 = space(), 
-			p19 = element("p"), input11 = element("input"), t66 = space(), button4 = element("button"), 
-			button4.textContent = "Replace Database", t68 = space(), p20 = element("p"), button5 = element("button"), 
-			button5.textContent = "Export Database", attr(div0, "class", "magane-button channel-textarea-emoji channel-textarea-stickers"), 
-			toggle_class(div0, "active", ctx[3]), attr(div1, "class", div1_class_value = "stickers has-scroll-y " + (ctx[16].useLeftToolbar ? "has-left-toolbar" : "")), 
-			attr(div1, "style", ""), attr(div3, "class", "pack"), attr(div3, "title", "Manage subscribed packs"), 
-			attr(div4, "class", "packs-wrapper"), attr(div5, "class", "packs packs-controls"), 
-			attr(div6, "class", "packs-wrapper"), attr(div7, "class", "packs"), attr(div7, "style", ""), 
-			attr(div8, "class", div8_class_value = "packs-toolbar " + (ctx[16].useLeftToolbar ? "has-scroll-y" : "has-scroll-x")), 
-			attr(div9, "class", "modal-close"), attr(div10, "class", "tab"), toggle_class(div10, "is-active", 0 === ctx[6]), 
-			attr(div11, "class", "tab"), toggle_class(div11, "is-active", 1 === ctx[6]), attr(div12, "class", "tab"), 
-			toggle_class(div12, "is-active", 2 === ctx[6]), attr(div13, "class", "tab"), toggle_class(div13, "is-active", 3 === ctx[6]), 
-			attr(div14, "class", "tabs"), attr(input0, "class", "inputQuery"), attr(input0, "type", "text"), 
-			attr(input0, "placeholder", "Search"), attr(div15, "class", "tab-content avail-packs"), 
-			attr(div15, "style", div15_style_value = 1 === ctx[6] ? "" : "display: none;"), 
+			t5 = space(), div24 = element("div"), div8 = element("div"), t6 = space(), div23 = element("div"), 
+			div22 = element("div"), div13 = element("div"), div9 = element("div"), div9.textContent = "Installed", 
+			t8 = space(), div10 = element("div"), div10.textContent = "Packs", t10 = space(), 
+			div11 = element("div"), div11.textContent = "Import", t12 = space(), div12 = element("div"), 
+			div12.textContent = "Misc", t14 = space(), if_block3 && if_block3.c(), t15 = space(), 
+			div14 = element("div"), input0 = element("input"), t16 = space(), if_block4 && if_block4.c(), 
+			t17 = space(), div17 = element("div"), div15 = element("div"), p0 = element("p"), 
+			p0.textContent = "LINE Store Proxy", t19 = space(), p1 = element("p"), p1.innerHTML = 'If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.', 
+			t23 = space(), p2 = element("p"), p2.textContent = "e.g. https://store.line.me/stickershop/product/17573/ja", 
+			t25 = space(), p3 = element("p"), input1 = element("input"), t26 = space(), button0 = element("button"), 
+			button0.textContent = "Add", t28 = space(), div16 = element("div"), p4 = element("p"), 
+			p4.textContent = "Remote Packs", t30 = space(), p5 = element("p"), p5.innerHTML = 'You can paste URL to a JSON config file of a remote pack in here.<br/>\n\t\t\t\t\t\t\t\t\tThis also supports public album links of any file hosting websites running <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>.', 
+			t35 = space(), p6 = element("p"), p6.innerHTML = "e.g. https://example.com/packs/my_custom_pack.json<br/>\n\t\t\t\t\t\t\t\t\thttps://chibisafe.moe/a/my_album", 
+			t38 = space(), p7 = element("p"), input2 = element("input"), t39 = space(), button1 = element("button"), 
+			button1.textContent = "Add", t41 = space(), p8 = element("p"), input3 = element("input"), 
+			t42 = space(), button2 = element("button"), button2.textContent = "Load local JSON", 
+			t44 = space(), p9 = element("p"), button3 = element("button"), button3.textContent = "Update all remote packs", 
+			t46 = space(), div21 = element("div"), div18 = element("div"), p10 = element("p"), 
+			p10.textContent = "Settings", t48 = space(), p11 = element("p"), label0 = element("label"), 
+			input4 = element("input"), t49 = text("\n\t\t\t\t\t\t\t\t\t\tDisable Toasts"), t50 = space(), 
+			p12 = element("p"), label1 = element("label"), input5 = element("input"), t51 = text("\n\t\t\t\t\t\t\t\t\t\tClose window when sending a sticker"), 
+			t52 = space(), p13 = element("p"), label2 = element("label"), input6 = element("input"), 
+			t53 = text("\n\t\t\t\t\t\t\t\t\t\tUse left toolbar instead of bottom toolbar on main window"), 
+			t54 = space(), p14 = element("p"), label3 = element("label"), input7 = element("input"), 
+			t55 = text("\n\t\t\t\t\t\t\t\t\t\tHide pack's appendix in packs list (e.g. its numerical ID)"), 
+			t56 = space(), p15 = element("p"), label4 = element("label"), input8 = element("input"), 
+			t57 = text("\n\t\t\t\t\t\t\t\t\t\tDisable downscaling of manually imported LINE Store packs"), 
+			t58 = space(), p16 = element("p"), label5 = element("label"), input9 = element("input"), 
+			t59 = text("\n\t\t\t\t\t\t\t\t\t\tDisable obfuscation of files names for imported custom packs"), 
+			t60 = space(), p17 = element("p"), label6 = element("label"), input10 = element("input"), 
+			t61 = text("\n\t\t\t\t\t\t\t\t\t\tMark stickers as spoilers when sending"), t62 = space(), 
+			div19 = element("div"), p18 = element("p"), p18.textContent = "Hotkey", t64 = space(), 
+			p19 = element("p"), p19.innerHTML = '<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>', 
+			t66 = space(), p20 = element("p"), p20.textContent = "Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (Ctrl, Alt, etc.) + other keys.", 
+			t68 = space(), p21 = element("p"), p21.textContent = "e.g. M, Ctrl+Q, Alt+Shift+Y", 
+			t70 = space(), p22 = element("p"), input11 = element("input"), t71 = space(), button4 = element("button"), 
+			button4.textContent = "Set", t73 = space(), div20 = element("div"), p23 = element("p"), 
+			p23.textContent = "Database", t75 = space(), p24 = element("p"), input12 = element("input"), 
+			t76 = space(), button5 = element("button"), button5.textContent = "Replace Database", 
+			t78 = space(), p25 = element("p"), button6 = element("button"), button6.textContent = "Export Database", 
+			attr(div0, "class", div0_class_value = "stickers has-scroll-y " + (ctx[18].useLeftToolbar ? "has-left-toolbar" : "")), 
+			attr(div0, "style", ""), attr(div2, "class", "pack"), attr(div2, "title", "Manage subscribed packs"), 
+			attr(div3, "class", "packs-wrapper"), attr(div4, "class", "packs packs-controls"), 
+			attr(div5, "class", "packs-wrapper"), attr(div6, "class", "packs"), attr(div6, "style", ""), 
+			attr(div7, "class", div7_class_value = "packs-toolbar " + (ctx[18].useLeftToolbar ? "has-scroll-y" : "has-scroll-x")), 
+			attr(div8, "class", "modal-close"), attr(div9, "class", "tab"), toggle_class(div9, "is-active", 0 === ctx[7]), 
+			attr(div10, "class", "tab"), toggle_class(div10, "is-active", 1 === ctx[7]), attr(div11, "class", "tab"), 
+			toggle_class(div11, "is-active", 2 === ctx[7]), attr(div12, "class", "tab"), toggle_class(div12, "is-active", 3 === ctx[7]), 
+			attr(div13, "class", "tabs"), attr(input0, "class", "inputQuery"), attr(input0, "type", "text"), 
+			attr(input0, "placeholder", "Search"), attr(div14, "class", "tab-content avail-packs"), 
+			attr(div14, "style", div14_style_value = 1 === ctx[7] ? "" : "display: none;"), 
 			attr(p0, "class", "section-title"), attr(input1, "class", "inputQuery"), attr(input1, "type", "text"), 
 			attr(input1, "placeholder", "LINE Sticker Pack URL"), attr(button0, "class", "button is-primary"), 
-			attr(p3, "class", "input-grouped"), attr(div16, "class", "section line-proxy"), 
+			attr(p3, "class", "input-grouped"), attr(div15, "class", "section line-proxy"), 
 			attr(p4, "class", "section-title"), attr(input2, "class", "inputQuery"), attr(input2, "type", "text"), 
 			attr(input2, "placeholder", "Remote Pack JSON or Chibisafe Album URL"), attr(button1, "class", "button is-primary"), 
 			attr(p7, "class", "input-grouped"), attr(input3, "id", "localRemotePackInput"), 
 			attr(input3, "type", "file"), set_style(input3, "display", "none"), attr(input3, "accept", "application/JSON"), 
 			attr(button2, "class", "button has-width-full"), attr(button3, "class", "button is-primary has-width-full"), 
-			attr(div17, "class", "section remote-packs"), attr(div18, "class", "tab-content has-scroll-y import"), 
-			attr(div18, "style", div18_style_value = 2 === ctx[6] ? "" : "display: none;"), 
+			attr(div16, "class", "section remote-packs"), attr(div17, "class", "tab-content has-scroll-y import"), 
+			attr(div17, "style", div17_style_value = 2 === ctx[7] ? "" : "display: none;"), 
 			attr(p10, "class", "section-title"), attr(input4, "name", "disableToasts"), attr(input4, "type", "checkbox"), 
 			attr(input5, "name", "closeWindowOnSend"), attr(input5, "type", "checkbox"), attr(input6, "name", "useLeftToolbar"), 
 			attr(input6, "type", "checkbox"), attr(input7, "name", "hidePackAppendix"), attr(input7, "type", "checkbox"), 
 			attr(input8, "name", "disableDownscale"), attr(input8, "type", "checkbox"), attr(input9, "name", "disableImportedObfuscation"), 
 			attr(input9, "type", "checkbox"), attr(input10, "name", "markAsSpoiler"), attr(input10, "type", "checkbox"), 
-			attr(div19, "class", "section settings"), attr(p18, "class", "section-title"), attr(input11, "id", "replaceDatabaseInput"), 
-			attr(input11, "type", "file"), set_style(input11, "display", "none"), attr(input11, "accept", "application/JSON"), 
-			attr(button4, "class", "button is-danger has-width-full"), attr(button5, "class", "button is-primary has-width-full"), 
+			attr(div18, "class", "section settings"), attr(p18, "class", "section-title"), attr(input11, "class", "inputQuery"), 
+			attr(input11, "type", "text"), attr(button4, "class", "button is-primary"), attr(p22, "class", "input-grouped"), 
+			attr(div19, "class", "section hotkey"), attr(p23, "class", "section-title"), attr(input12, "id", "replaceDatabaseInput"), 
+			attr(input12, "type", "file"), set_style(input12, "display", "none"), attr(input12, "accept", "application/JSON"), 
+			attr(button5, "class", "button is-danger has-width-full"), attr(button6, "class", "button is-primary has-width-full"), 
 			attr(div20, "class", "section database"), attr(div21, "class", "tab-content has-scroll-y misc"), 
-			attr(div21, "style", div21_style_value = 3 === ctx[6] ? "" : "display: none;"), 
+			attr(div21, "style", div21_style_value = 3 === ctx[7] ? "" : "display: none;"), 
 			attr(div22, "class", "stickersConfig"), attr(div23, "class", "modal-content"), attr(div24, "class", "stickersModal"), 
-			attr(div24, "style", div24_style_value = ctx[4] ? "" : "display: none;"), attr(div25, "class", "stickerWindow"), 
-			attr(div25, "style", div25_style_value = "bottom: " + ctx[0].wbottom + "px; right: " + ctx[0].wright + "px; " + (ctx[3] ? "" : "display: none;")), 
-			attr(div26, "id", "magane"), set_style(div26, "top", ctx[0].top + "px"), set_style(div26, "left", ctx[0].left + "px"), 
-			set_style(div26, "display", ctx[2] ? "flex" : "none");
+			attr(div24, "style", div24_style_value = ctx[5] ? "" : "display: none;"), attr(div25, "class", "stickerWindow"), 
+			attr(div25, "style", div25_style_value = "bottom: " + ctx[0].wbottom + "px; right: " + ctx[0].wright + "px; " + (ctx[4] ? "" : "display: none;")), 
+			attr(div26, "id", "magane"), attr(div26, "style", div26_style_value = (ctx[2] ? "" : `top: ${ctx[0].top}px; left: ${ctx[0].left}px;`) + " " + (ctx[3] ? "display: none;" : ""));
 		},
 		m(target, anchor) {
-			insert(target, main_1, anchor), append(main_1, div26), append(div26, div0), append(div26, t0), 
-			append(div26, div25), append(div25, div1), if_block0 && if_block0.m(div1, null), 
-			append(div1, t1), if_block1 && if_block1.m(div1, null), append(div1, t2);
-			for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].m(div1, null);
-			append(div25, t3), append(div25, div8), append(div8, div5), append(div5, div4), 
-			append(div4, div3), append(div4, t4), if_block2 && if_block2.m(div4, null), append(div8, t5), 
-			append(div8, div7), append(div7, div6);
-			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div6, null);
-			var fn;
-			append(div25, t6), append(div25, div24), append(div24, div9), append(div24, t7), 
-			append(div24, div23), append(div23, div22), append(div22, div14), append(div14, div10), 
-			append(div14, t9), append(div14, div11), append(div14, t11), append(div14, div12), 
-			append(div14, t13), append(div14, div13), append(div22, t15), if_block3 && if_block3.m(div22, null), 
-			append(div22, t16), append(div22, div15), append(div15, input0), set_input_value(input0, ctx[15]), 
-			append(div15, t17), if_block4 && if_block4.m(div15, null), append(div22, t18), append(div22, div18), 
-			append(div18, div16), append(div16, p0), append(div16, t20), append(div16, p1), 
-			append(div16, t24), append(div16, p2), append(div16, t26), append(div16, p3), append(p3, input1), 
-			set_input_value(input1, ctx[13]), append(p3, t27), append(p3, button0), append(div18, t29), 
-			append(div18, div17), append(div17, p4), append(div17, t31), append(div17, p5), 
-			append(div17, t36), append(div17, p6), append(div17, t39), append(div17, p7), append(p7, input2), 
-			set_input_value(input2, ctx[14]), append(p7, t40), append(p7, button1), append(div17, t42), 
-			append(div17, p8), append(p8, input3), append(p8, t43), append(p8, button2), append(div17, t45), 
-			append(div17, p9), append(p9, button3), append(div22, t47), append(div22, div21), 
-			append(div21, div19), append(div19, p10), append(div19, t49), append(div19, p11), 
-			append(p11, label0), append(label0, input4), input4.checked = ctx[16].disableToasts, 
-			append(label0, t50), append(div19, t51), append(div19, p12), append(p12, label1), 
-			append(label1, input5), input5.checked = ctx[16].closeWindowOnSend, append(label1, t52), 
-			append(div19, t53), append(div19, p13), append(p13, label2), append(label2, input6), 
-			input6.checked = ctx[16].useLeftToolbar, append(label2, t54), append(div19, t55), 
-			append(div19, p14), append(p14, label3), append(label3, input7), input7.checked = ctx[16].hidePackAppendix, 
-			append(label3, t56), append(div19, t57), append(div19, p15), append(p15, label4), 
-			append(label4, input8), input8.checked = ctx[16].disableDownscale, append(label4, t58), 
-			append(div19, t59), append(div19, p16), append(p16, label5), append(label5, input9), 
-			input9.checked = ctx[16].disableImportedObfuscation, append(label5, t60), append(div19, t61), 
-			append(div19, p17), append(p17, label6), append(label6, input10), input10.checked = ctx[16].markAsSpoiler, 
-			append(label6, t62), append(div21, t63), append(div21, div20), append(div20, p18), 
-			append(div20, t65), append(div20, p19), append(p19, input11), append(p19, t66), 
-			append(p19, button4), append(div20, t68), append(div20, p20), append(p20, button5), 
-			ctx[81](main_1), mounted || (dispose = [ listen(div0, "click", ctx[44]), listen(div0, "contextmenu", stop_propagation((fn = ctx[45], 
-			function(event) {
-				return event.preventDefault(), fn.call(this, event);
-			}))), listen(div3, "click", ctx[51]), listen(div9, "click", ctx[54]), listen(div10, "click", ctx[55]), listen(div11, "click", ctx[56]), listen(div12, "click", ctx[57]), listen(div13, "click", ctx[58]), listen(input0, "keyup", ctx[24]), listen(input0, "input", ctx[61]), listen(input1, "input", ctx[66]), listen(button0, "click", ctx[67]), listen(input2, "input", ctx[68]), listen(button1, "click", ctx[69]), listen(input3, "click", click_handler_23), listen(input3, "change", ctx[36]), listen(button2, "click", ctx[70]), listen(button3, "click", ctx[71]), listen(input4, "change", ctx[72]), listen(input5, "change", ctx[73]), listen(input6, "change", ctx[74]), listen(input7, "change", ctx[75]), listen(input8, "change", ctx[76]), listen(input9, "change", ctx[77]), listen(input10, "change", ctx[78]), listen(div19, "change", ctx[39]), listen(input11, "click", click_handler_26), listen(input11, "change", ctx[40]), listen(button4, "click", ctx[79]), listen(button5, "click", ctx[80]) ], 
+			insert(target, main_1, anchor), append(main_1, div26), append(div26, div25), append(div25, div0), 
+			if_block0 && if_block0.m(div0, null), append(div0, t0), if_block1 && if_block1.m(div0, null), 
+			append(div0, t1);
+			for (let i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].m(div0, null);
+			append(div25, t2), append(div25, div7), append(div7, div4), append(div4, div3), 
+			append(div3, div2), append(div3, t3), if_block2 && if_block2.m(div3, null), append(div7, t4), 
+			append(div7, div6), append(div6, div5);
+			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div5, null);
+			append(div25, t5), append(div25, div24), append(div24, div8), append(div24, t6), 
+			append(div24, div23), append(div23, div22), append(div22, div13), append(div13, div9), 
+			append(div13, t8), append(div13, div10), append(div13, t10), append(div13, div11), 
+			append(div13, t12), append(div13, div12), append(div22, t14), if_block3 && if_block3.m(div22, null), 
+			append(div22, t15), append(div22, div14), append(div14, input0), set_input_value(input0, ctx[17]), 
+			append(div14, t16), if_block4 && if_block4.m(div14, null), append(div22, t17), append(div22, div17), 
+			append(div17, div15), append(div15, p0), append(div15, t19), append(div15, p1), 
+			append(div15, t23), append(div15, p2), append(div15, t25), append(div15, p3), append(p3, input1), 
+			set_input_value(input1, ctx[14]), append(p3, t26), append(p3, button0), append(div17, t28), 
+			append(div17, div16), append(div16, p4), append(div16, t30), append(div16, p5), 
+			append(div16, t35), append(div16, p6), append(div16, t38), append(div16, p7), append(p7, input2), 
+			set_input_value(input2, ctx[15]), append(p7, t39), append(p7, button1), append(div16, t41), 
+			append(div16, p8), append(p8, input3), append(p8, t42), append(p8, button2), append(div16, t44), 
+			append(div16, p9), append(p9, button3), append(div22, t46), append(div22, div21), 
+			append(div21, div18), append(div18, p10), append(div18, t48), append(div18, p11), 
+			append(p11, label0), append(label0, input4), input4.checked = ctx[18].disableToasts, 
+			append(label0, t49), append(div18, t50), append(div18, p12), append(p12, label1), 
+			append(label1, input5), input5.checked = ctx[18].closeWindowOnSend, append(label1, t51), 
+			append(div18, t52), append(div18, p13), append(p13, label2), append(label2, input6), 
+			input6.checked = ctx[18].useLeftToolbar, append(label2, t53), append(div18, t54), 
+			append(div18, p14), append(p14, label3), append(label3, input7), input7.checked = ctx[18].hidePackAppendix, 
+			append(label3, t55), append(div18, t56), append(div18, p15), append(p15, label4), 
+			append(label4, input8), input8.checked = ctx[18].disableDownscale, append(label4, t57), 
+			append(div18, t58), append(div18, p16), append(p16, label5), append(label5, input9), 
+			input9.checked = ctx[18].disableImportedObfuscation, append(label5, t59), append(div18, t60), 
+			append(div18, p17), append(p17, label6), append(label6, input10), input10.checked = ctx[18].markAsSpoiler, 
+			append(label6, t61), append(div21, t62), append(div21, div19), append(div19, p18), 
+			append(div19, t64), append(div19, p19), append(div19, t66), append(div19, p20), 
+			append(div19, t68), append(div19, p21), append(div19, t70), append(div19, p22), 
+			append(p22, input11), set_input_value(input11, ctx[16]), append(p22, t71), append(p22, button4), 
+			append(div21, t73), append(div21, div20), append(div20, p23), append(div20, t75), 
+			append(div20, p24), append(p24, input12), append(p24, t76), append(p24, button5), 
+			append(div20, t78), append(div20, p25), append(p25, button6), ctx[82](main_1), mounted || (dispose = [ listen(div2, "click", ctx[50]), listen(div8, "click", ctx[53]), listen(div9, "click", ctx[54]), listen(div10, "click", ctx[55]), listen(div11, "click", ctx[56]), listen(div12, "click", ctx[57]), listen(input0, "keyup", ctx[25]), listen(input0, "input", ctx[60]), listen(input1, "input", ctx[65]), listen(button0, "click", ctx[66]), listen(input2, "input", ctx[67]), listen(button1, "click", ctx[68]), listen(input3, "click", click_handler_22), listen(input3, "change", ctx[36]), listen(button2, "click", ctx[69]), listen(button3, "click", ctx[70]), listen(input4, "change", ctx[71]), listen(input5, "change", ctx[72]), listen(input6, "change", ctx[73]), listen(input7, "change", ctx[74]), listen(input8, "change", ctx[75]), listen(input9, "change", ctx[76]), listen(input10, "change", ctx[77]), listen(div18, "change", ctx[39]), listen(input11, "input", ctx[78]), listen(button4, "click", ctx[79]), listen(input12, "click", click_handler_26), listen(input12, "change", ctx[41]), listen(button5, "click", ctx[80]), listen(button6, "click", ctx[81]) ], 
 			mounted = !0);
 		},
 		p(ctx, dirty) {
-			if (8 & dirty[0] && toggle_class(div0, "active", ctx[3]), ctx[7] || ctx[9] ? if_block0 && (if_block0.d(1), 
-			if_block0 = null) : if_block0 || (if_block0 = create_if_block_10(), if_block0.c(), 
-			if_block0.m(div1, t1)), ctx[7] && ctx[7].length ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_9(ctx), 
-			if_block1.c(), if_block1.m(div1, t2)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-			49283712 & dirty[0]) {
+			if (ctx[8] || ctx[10] ? if_block0 && (if_block0.d(1), if_block0 = null) : if_block0 || (if_block0 = create_if_block_10(), 
+			if_block0.c(), if_block0.m(div0, t0)), ctx[8] && ctx[8].length ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_9(ctx), 
+			if_block1.c(), if_block1.m(div0, t1)) : if_block1 && (if_block1.d(1), if_block1 = null), 
+			98567424 & dirty[0]) {
 				let i;
-				for (each_value_3 = ctx[9], i = 0; i < each_value_3.length; i += 1) {
+				for (each_value_3 = ctx[10], i = 0; i < each_value_3.length; i += 1) {
 					const child_ctx = get_each_context_3(ctx, each_value_3, i);
 					each_blocks_1[i] ? each_blocks_1[i].p(child_ctx, dirty) : (each_blocks_1[i] = create_each_block_3(child_ctx), 
-					each_blocks_1[i].c(), each_blocks_1[i].m(div1, null));
+					each_blocks_1[i].c(), each_blocks_1[i].m(div0, null));
 				}
 				for (;i < each_blocks_1.length; i += 1) each_blocks_1[i].d(1);
 				each_blocks_1.length = each_value_3.length;
 			}
-			if (65536 & dirty[0] && div1_class_value !== (div1_class_value = "stickers has-scroll-y " + (ctx[16].useLeftToolbar ? "has-left-toolbar" : "")) && attr(div1, "class", div1_class_value), 
-			ctx[22] && ctx[22].length && if_block2.p(ctx, dirty), 1074790912 & dirty[0]) {
+			if (262144 & dirty[0] && div0_class_value !== (div0_class_value = "stickers has-scroll-y " + (ctx[18].useLeftToolbar ? "has-left-toolbar" : "")) && attr(div0, "class", div0_class_value), 
+			ctx[23] && ctx[23].length && if_block2.p(ctx, dirty), 1075840000 & dirty[0]) {
 				let i;
-				for (each_value_2 = ctx[9], i = 0; i < each_value_2.length; i += 1) {
+				for (each_value_2 = ctx[10], i = 0; i < each_value_2.length; i += 1) {
 					const child_ctx = get_each_context_2(ctx, each_value_2, i);
 					each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block_2(child_ctx), 
-					each_blocks[i].c(), each_blocks[i].m(div6, null));
+					each_blocks[i].c(), each_blocks[i].m(div5, null));
 				}
 				for (;i < each_blocks.length; i += 1) each_blocks[i].d(1);
 				each_blocks.length = each_value_2.length;
 			}
-			65536 & dirty[0] && div8_class_value !== (div8_class_value = "packs-toolbar " + (ctx[16].useLeftToolbar ? "has-scroll-y" : "has-scroll-x")) && attr(div8, "class", div8_class_value), 
-			64 & dirty[0] && toggle_class(div10, "is-active", 0 === ctx[6]), 64 & dirty[0] && toggle_class(div11, "is-active", 1 === ctx[6]), 
-			64 & dirty[0] && toggle_class(div12, "is-active", 2 === ctx[6]), 64 & dirty[0] && toggle_class(div13, "is-active", 3 === ctx[6]), 
-			ctx[5][0] ? if_block3 ? if_block3.p(ctx, dirty) : (if_block3 = create_if_block_4(ctx), 
-			if_block3.c(), if_block3.m(div22, t16)) : if_block3 && (if_block3.d(1), if_block3 = null), 
-			32768 & dirty[0] && input0.value !== ctx[15] && set_input_value(input0, ctx[15]), 
-			ctx[5][1] ? if_block4 ? if_block4.p(ctx, dirty) : (if_block4 = create_if_block(ctx), 
-			if_block4.c(), if_block4.m(div15, null)) : if_block4 && (if_block4.d(1), if_block4 = null), 
-			64 & dirty[0] && div15_style_value !== (div15_style_value = 1 === ctx[6] ? "" : "display: none;") && attr(div15, "style", div15_style_value), 
-			8192 & dirty[0] && input1.value !== ctx[13] && set_input_value(input1, ctx[13]), 
-			16384 & dirty[0] && input2.value !== ctx[14] && set_input_value(input2, ctx[14]), 
-			64 & dirty[0] && div18_style_value !== (div18_style_value = 2 === ctx[6] ? "" : "display: none;") && attr(div18, "style", div18_style_value), 
-			65536 & dirty[0] && (input4.checked = ctx[16].disableToasts), 65536 & dirty[0] && (input5.checked = ctx[16].closeWindowOnSend), 
-			65536 & dirty[0] && (input6.checked = ctx[16].useLeftToolbar), 65536 & dirty[0] && (input7.checked = ctx[16].hidePackAppendix), 
-			65536 & dirty[0] && (input8.checked = ctx[16].disableDownscale), 65536 & dirty[0] && (input9.checked = ctx[16].disableImportedObfuscation), 
-			65536 & dirty[0] && (input10.checked = ctx[16].markAsSpoiler), 64 & dirty[0] && div21_style_value !== (div21_style_value = 3 === ctx[6] ? "" : "display: none;") && attr(div21, "style", div21_style_value), 
-			16 & dirty[0] && div24_style_value !== (div24_style_value = ctx[4] ? "" : "display: none;") && attr(div24, "style", div24_style_value), 
-			9 & dirty[0] && div25_style_value !== (div25_style_value = "bottom: " + ctx[0].wbottom + "px; right: " + ctx[0].wright + "px; " + (ctx[3] ? "" : "display: none;")) && attr(div25, "style", div25_style_value), 
-			1 & dirty[0] && set_style(div26, "top", ctx[0].top + "px"), 1 & dirty[0] && set_style(div26, "left", ctx[0].left + "px"), 
-			4 & dirty[0] && set_style(div26, "display", ctx[2] ? "flex" : "none");
+			262144 & dirty[0] && div7_class_value !== (div7_class_value = "packs-toolbar " + (ctx[18].useLeftToolbar ? "has-scroll-y" : "has-scroll-x")) && attr(div7, "class", div7_class_value), 
+			128 & dirty[0] && toggle_class(div9, "is-active", 0 === ctx[7]), 128 & dirty[0] && toggle_class(div10, "is-active", 1 === ctx[7]), 
+			128 & dirty[0] && toggle_class(div11, "is-active", 2 === ctx[7]), 128 & dirty[0] && toggle_class(div12, "is-active", 3 === ctx[7]), 
+			ctx[6][0] ? if_block3 ? if_block3.p(ctx, dirty) : (if_block3 = create_if_block_4(ctx), 
+			if_block3.c(), if_block3.m(div22, t15)) : if_block3 && (if_block3.d(1), if_block3 = null), 
+			131072 & dirty[0] && input0.value !== ctx[17] && set_input_value(input0, ctx[17]), 
+			ctx[6][1] ? if_block4 ? if_block4.p(ctx, dirty) : (if_block4 = create_if_block(ctx), 
+			if_block4.c(), if_block4.m(div14, null)) : if_block4 && (if_block4.d(1), if_block4 = null), 
+			128 & dirty[0] && div14_style_value !== (div14_style_value = 1 === ctx[7] ? "" : "display: none;") && attr(div14, "style", div14_style_value), 
+			16384 & dirty[0] && input1.value !== ctx[14] && set_input_value(input1, ctx[14]), 
+			32768 & dirty[0] && input2.value !== ctx[15] && set_input_value(input2, ctx[15]), 
+			128 & dirty[0] && div17_style_value !== (div17_style_value = 2 === ctx[7] ? "" : "display: none;") && attr(div17, "style", div17_style_value), 
+			262144 & dirty[0] && (input4.checked = ctx[18].disableToasts), 262144 & dirty[0] && (input5.checked = ctx[18].closeWindowOnSend), 
+			262144 & dirty[0] && (input6.checked = ctx[18].useLeftToolbar), 262144 & dirty[0] && (input7.checked = ctx[18].hidePackAppendix), 
+			262144 & dirty[0] && (input8.checked = ctx[18].disableDownscale), 262144 & dirty[0] && (input9.checked = ctx[18].disableImportedObfuscation), 
+			262144 & dirty[0] && (input10.checked = ctx[18].markAsSpoiler), 65536 & dirty[0] && input11.value !== ctx[16] && set_input_value(input11, ctx[16]), 
+			128 & dirty[0] && div21_style_value !== (div21_style_value = 3 === ctx[7] ? "" : "display: none;") && attr(div21, "style", div21_style_value), 
+			32 & dirty[0] && div24_style_value !== (div24_style_value = ctx[5] ? "" : "display: none;") && attr(div24, "style", div24_style_value), 
+			17 & dirty[0] && div25_style_value !== (div25_style_value = "bottom: " + ctx[0].wbottom + "px; right: " + ctx[0].wright + "px; " + (ctx[4] ? "" : "display: none;")) && attr(div25, "style", div25_style_value), 
+			13 & dirty[0] && div26_style_value !== (div26_style_value = (ctx[2] ? "" : `top: ${ctx[0].top}px; left: ${ctx[0].left}px;`) + " " + (ctx[3] ? "display: none;" : "")) && attr(div26, "style", div26_style_value);
 		},
 		i: noop,
 		o: noop,
 		d(detaching) {
 			detaching && detach(main_1), if_block0 && if_block0.d(), if_block1 && if_block1.d(), 
 			destroy_each(each_blocks_1, detaching), if_block2 && if_block2.d(), destroy_each(each_blocks, detaching), 
-			if_block3 && if_block3.d(), if_block4 && if_block4.d(), ctx[81](null), mounted = !1, 
+			if_block3 && if_block3.d(), if_block4 && if_block4.d(), ctx[82](null), mounted = !1, 
 			run_all(dispose);
 		}
 	};
 }
 
-"object" != typeof global.MAGANE_STYLES && (global.MAGANE_STYLES = {}), global.MAGANE_STYLES.main_scss = '/** Magane: main.scss **/\ndiv#magane {\n  display: flex;\n  flex-direction: row;\n  height: 44px;\n  position: absolute;\n  z-index: 99;\n}\ndiv#magane button, div#magane input, div#magane select, div#magane label, div#magane span, div#magane p, div#magane a, div#magane li, div#magane ul, div#magane div {\n  font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;\n  color: var(--header-secondary);\n  font-weight: 400;\n  line-height: 1.5;\n  font-size: 16px;\n  text-rendering: optimizeLegibility;\n  -webkit-text-size-adjust: 100%;\n\t -moz-text-size-adjust: 100%;\n\t\t  text-size-adjust: 100%;\n}\ndiv#magane div.channel-textarea-stickers {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n}\ndiv#magane div.channel-textarea-stickers:hover, div#magane div.channel-textarea-stickers.active {\n  filter: brightness(1.35);\n}\ndiv#magane img.channel-textarea-stickers-content {\n  width: 24px;\n  height: 24px;\n  padding: 4px;\n  margin-left: 2px;\n  margin-right: 2px;\n}\ndiv#magane div.stickerWindow {\n  z-index: 2000;\n  width: 600px;\n  min-height: 200px;\n  position: fixed;\n  background: var(--background-secondary);\n  max-height: 600px;\n  transition: all 0.2s ease;\n  border-radius: 4px;\n  box-shadow: var(--elevation-stroke), var(--elevation-high);\n}\ndiv#magane div.stickerWindow div.stickers {\n  height: 550px !important;\n  margin-bottom: 100px;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers.has-left-toolbar {\n  height: 600px !important;\n  margin-left: 50px;\n}\ndiv#magane div.stickerWindow div.stickers h3.getStarted {\n  text-align: center;\n  padding-top: 40%;\n  pointer-events: none;\n}\ndiv#magane div.stickerWindow div.stickers div.pack {\n  float: left;\n  display: flex;\n  flex-flow: wrap;\n  justify-content: center;\n  padding: 25px;\n  width: 100%;\n  box-sizing: border-box;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span {\n  color: var(--header-secondary);\n  width: 100%;\n  cursor: auto;\n  padding-left: 10px;\n  margin: 10px 0px;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts {\n  padding-left: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts span {\n  padding: 0 0.5em;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100px;\n  height: 100px;\n  float: left;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker .image {\n  cursor: pointer;\n  max-height: 100%;\n  max-width: 100%;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  width: 20px;\n  height: 20px;\n  position: absolute;\n  right: 0;\n  transition: all 0.2s ease;\n  display: none;\n  z-index: 2;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  transition: all 0.2s ease;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite {\n  bottom: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path {\n  fill: #2ECC71;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  top: 0px;\n  transform: rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25) rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  fill: #F04747;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.deleteFavorite {\n  display: block;\n  cursor: pointer;\n}\ndiv#magane div.stickerWindow div.packs-toolbar {\n  position: absolute;\n  bottom: 0;\n  background: var(--background-tertiary);\n  display: flex;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x {\n  width: 100%;\n  height: 50px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs {\n  flex: 1 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs.packs-controls {\n  flex: 0 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs div.packs-wrapper {\n  white-space: nowrap;\n  float: left;\n  width: 100%;\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y {\n  width: 50px;\n  height: 100%;\n  flex-direction: column;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs {\n  flex: 1 1 auto;\n  height: 100%;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs.packs-controls {\n  flex: 0 0 auto;\n  height: auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs div.packs-wrapper {\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack {\n  display: inline-block;\n  height: 40px;\n  width: 40px;\n  margin: 5px;\n  cursor: pointer;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n  transition: all 0.2s ease;\n  filter: grayscale(100%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack:hover,\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.pack.active {\n  transform: scale(1.25);\n  filter: grayscale(0%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack > div {\n  background-image: url("/assets/f24711dae4f6d6b28335e866a93e9d9b.png");\n  width: 22px;\n  height: 22px;\n  background-size: 924px 704px;\n  background-repeat: no-repeat;\n  margin-top: 8px;\n  margin-left: 9px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-favorite {\n  background-position: -462px -132px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-plus {\n  background-position: -374px -484px;\n  /* make it greenish */\n  filter: hue-rotate(260deg) brightness(3) contrast(4.5);\n}\ndiv#magane .stickersModal {\n  z-index: 2001;\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  align-items: center;\n  justify-content: center;\n}\ndiv#magane .stickersModal.is-active {\n  display: flex;\n}\ndiv#magane .stickersModal .inputQuery {\n  width: calc(100% - 30px);\n  height: 36px;\n  box-sizing: border-box;\n  margin: 0 15px 10px;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .inputPackIndex {\n  width: 55px;\n  height: 36px;\n  box-sizing: border-box;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-background {\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  width: 100%;\n  height: 100%;\n  background-color: rgba(10, 10, 10, 0.86);\n}\ndiv#magane .stickersModal .modal-content,\ndiv#magane .stickersModal .modal-card {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n  background: var(--background-tertiary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig {\n  height: 100%;\n  width: 100%;\n  display: flex;\n  flex-direction: column;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs {\n  width: 100%;\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab {\n  color: var(--header-secondary);\n  display: inline-block;\n  border: none;\n  border-top: 0px transparent;\n  border-left: 0px transparent;\n  border-right: 0px transparent;\n  border-width: 1px;\n  border-style: solid;\n  border-bottom-color: var(--header-secondary);\n  padding: 20px;\n  cursor: pointer;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab:hover, div#magane .stickersModal .modal-content .stickersConfig .tabs .tab.is-active {\n  border-bottom-color: var(--interactive-active);\n  color: var(--interactive-active);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content {\n  height: calc(100% - 66px); /* .tabs height */\n  width: 100%;\n  padding: 10px 0;\n  box-sizing: border-box;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs {\n  display: flex;\n  flex-direction: column;\n  padding-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs .packs {\n  height: 100%;\n  width: 100%;\n  padding-bottom: 10px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section {\n  padding: 0 24px 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section .section-title, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section .section-title {\n  font-weight: 800;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section > p:last-of-type, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section > p:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a {\n  /* inherit Discord\'s link color */\n  color: var(--text-link);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a:hover, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a:hover {\n  text-decoration: underline;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped {\n  display: flex;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped input, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped input {\n  margin: 0;\n  width: auto;\n  flex-grow: 1;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped button, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped button {\n  margin-left: 4px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack {\n  height: 75px;\n  width: 100%;\n  float: left;\n  display: flex;\n  padding: 0 20px;\n  box-sizing: border-box;\n  margin-bottom: 5px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  flex: 0 0 auto;\n  min-width: 75px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  flex: 1 0 auto;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action.is-tight button {\n  width: auto;\n  padding-right: 0.5em;\n  padding-left: 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack {\n  width: 36px;\n  height: 36px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before, div#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index {\n  padding-top: 20px;\n  text-align: left;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  height: 75px;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle {\n  padding: 20px;\n  cursor: move;\n  padding-top: 30px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle span {\n  background: #555;\n  height: 2px;\n  width: 100%;\n  display: block;\n  margin-bottom: 6px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  padding-top: 20px;\n  text-align: right;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info {\n  flex: 1 1 auto;\n  padding: 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span {\n  display: block;\n  width: 100%;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span:nth-of-type(1) {\n  font-weight: bold;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(1) {\n  padding: 0 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(2) {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview img {\n  height: 100%;\n  width: 100%;\n}\ndiv#magane .stickersModal .modal-close {\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  background-color: rgba(10, 10, 10, 0.2);\n  border: none;\n  border-radius: 290486px;\n  cursor: pointer;\n  display: inline-block;\n  flex-grow: 0;\n  flex-shrink: 0;\n  font-size: 0;\n  outline: none;\n  vertical-align: top;\n  background: none;\n  position: absolute;\n  right: 20px;\n  top: 20px;\n  height: 32px;\n  max-height: 32px;\n  max-width: 32px;\n  min-height: 32px;\n  min-width: 32px;\n  width: 32px;\n  z-index: 1;\n}\ndiv#magane .stickersModal .modal-close:before, div#magane .stickersModal .modal-close:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-close:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-close:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-close:hover, div#magane .stickersModal .modal-close:focus {\n  background-color: rgba(10, 10, 10, 0.3);\n}\ndiv#magane .button {\n  align-items: center;\n  border: 1px solid transparent;\n  border-radius: 3px;\n  box-shadow: none;\n  display: inline-flex;\n  font-size: 1rem;\n  padding: calc(0.375em - 1px) 0.75em;\n  position: relative;\n  vertical-align: top;\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  cursor: pointer;\n  justify-content: center;\n  text-align: center;\n  white-space: nowrap;\n  border-color: transparent;\n  color: var(--header-secondary);\n  background-color: var(--background-secondary);\n  width: 62px; /* consistent width */\n}\ndiv#magane .button.is-danger {\n  color: #ffffff;\n  border-color: rgba(240, 71, 71, 0.3);\n  background: #f04747;\n}\ndiv#magane .button:hover, div#magane .button.is-primary:hover {\n  transform: scale3d(1.1, 1.1, 1.1);\n}\ndiv#magane .button.has-width-full {\n  width: 100%;\n}\ndiv#magane .button.has-width-full:hover {\n  /* TODO: Figure out how to do a more consistent scaling,\n\tregardless of the button\'s dynamic size. */\n  transform: scale3d(1.04, 1.04, 1.04);\n}\ndiv#magane .has-scroll-x {\n  overflow-x: overlay;\n}\ndiv#magane .has-scroll-y {\n  overflow-y: overlay;\n}\ndiv#magane ::-webkit-scrollbar {\n  /* Let\'s make the scrollbars pretty */\n  width: 6px;\n  height: 6px;\n}\ndiv#magane ::-webkit-scrollbar-track {\n  margin: 0;\n  background: transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-track-piece {\n  border: 0 solid transparent;\n  background: transparent;\n  margin: 0;\n}\ndiv#magane ::-webkit-scrollbar-thumb {\n  background: rgba(105, 96, 128, 0.5);\n  border: 0 solid transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-thumb:hover {\n  background: rgba(105, 96, 128, 0.75);\n}\ndiv#magane ::-webkit-scrollbar-thumb:active {\n  background: #696080;\n}';
+"object" != typeof global.MAGANE_STYLES && (global.MAGANE_STYLES = {}), global.MAGANE_STYLES.main_scss = '/** Magane: main.scss **/\ndiv#magane {\n  display: flex;\n  flex-direction: row;\n  height: 44px;\n  position: absolute;\n  z-index: 99;\n}\ndiv#magane button, div#magane input, div#magane select, div#magane label, div#magane span, div#magane p, div#magane a, div#magane li, div#magane ul, div#magane div {\n  font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;\n  color: var(--header-secondary);\n  font-weight: 400;\n  line-height: 1.5;\n  font-size: 16px;\n  text-rendering: optimizeLegibility;\n  -webkit-text-size-adjust: 100%;\n\t -moz-text-size-adjust: 100%;\n\t\t  text-size-adjust: 100%;\n}\ndiv#magane div.stickerWindow {\n  z-index: 2000;\n  width: 600px;\n  min-height: 200px;\n  position: fixed;\n  background: var(--background-secondary);\n  max-height: 600px;\n  transition: all 0.2s ease;\n  border-radius: 4px;\n  box-shadow: var(--elevation-stroke), var(--elevation-high);\n}\ndiv#magane div.stickerWindow div.stickers {\n  height: 550px !important;\n  margin-bottom: 100px;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers.has-left-toolbar {\n  height: 600px !important;\n  margin-left: 50px;\n}\ndiv#magane div.stickerWindow div.stickers h3.getStarted {\n  text-align: center;\n  padding-top: 40%;\n  pointer-events: none;\n}\ndiv#magane div.stickerWindow div.stickers div.pack {\n  float: left;\n  display: flex;\n  flex-flow: wrap;\n  justify-content: center;\n  padding: 25px;\n  width: 100%;\n  box-sizing: border-box;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span {\n  color: var(--header-secondary);\n  width: 100%;\n  cursor: auto;\n  padding-left: 10px;\n  margin: 10px 0px;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts {\n  padding-left: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts span {\n  padding: 0 0.5em;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100px;\n  height: 100px;\n  float: left;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker .image {\n  cursor: pointer;\n  max-height: 100%;\n  max-width: 100%;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  width: 20px;\n  height: 20px;\n  position: absolute;\n  right: 0;\n  transition: all 0.2s ease;\n  display: none;\n  z-index: 2;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  transition: all 0.2s ease;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite {\n  bottom: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path {\n  fill: #2ECC71;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  top: 0px;\n  transform: rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25) rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  fill: #F04747;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.deleteFavorite {\n  display: block;\n  cursor: pointer;\n}\ndiv#magane div.stickerWindow div.packs-toolbar {\n  position: absolute;\n  bottom: 0;\n  background: var(--background-tertiary);\n  display: flex;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x {\n  width: 100%;\n  height: 50px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs {\n  flex: 1 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs.packs-controls {\n  flex: 0 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs div.packs-wrapper {\n  white-space: nowrap;\n  float: left;\n  width: 100%;\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y {\n  width: 50px;\n  height: 100%;\n  flex-direction: column;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs {\n  flex: 1 1 auto;\n  height: 100%;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs.packs-controls {\n  flex: 0 0 auto;\n  height: auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs div.packs-wrapper {\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack {\n  display: inline-block;\n  height: 40px;\n  width: 40px;\n  margin: 5px;\n  cursor: pointer;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n  transition: all 0.2s ease;\n  filter: grayscale(100%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack:hover,\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.pack.active {\n  transform: scale(1.25);\n  filter: grayscale(0%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack > div {\n  background-image: url("/assets/f24711dae4f6d6b28335e866a93e9d9b.png");\n  width: 22px;\n  height: 22px;\n  background-size: 924px 704px;\n  background-repeat: no-repeat;\n  margin-top: 8px;\n  margin-left: 9px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-favorite {\n  background-position: -462px -132px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-plus {\n  background-position: -374px -484px;\n  /* make it greenish */\n  filter: hue-rotate(260deg) brightness(3) contrast(4.5);\n}\ndiv#magane .stickersModal {\n  z-index: 2001;\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  align-items: center;\n  justify-content: center;\n}\ndiv#magane .stickersModal.is-active {\n  display: flex;\n}\ndiv#magane .stickersModal .inputQuery {\n  width: calc(100% - 30px);\n  height: 36px;\n  box-sizing: border-box;\n  margin: 0 15px 10px;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .inputPackIndex {\n  width: 55px;\n  height: 36px;\n  box-sizing: border-box;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-background {\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  width: 100%;\n  height: 100%;\n  background-color: rgba(10, 10, 10, 0.86);\n}\ndiv#magane .stickersModal .modal-content,\ndiv#magane .stickersModal .modal-card {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n  background: var(--background-tertiary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig {\n  height: 100%;\n  width: 100%;\n  display: flex;\n  flex-direction: column;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs {\n  width: 100%;\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab {\n  color: var(--header-secondary);\n  display: inline-block;\n  border: none;\n  border-top: 0px transparent;\n  border-left: 0px transparent;\n  border-right: 0px transparent;\n  border-width: 1px;\n  border-style: solid;\n  border-bottom-color: var(--header-secondary);\n  padding: 20px;\n  cursor: pointer;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab:hover, div#magane .stickersModal .modal-content .stickersConfig .tabs .tab.is-active {\n  border-bottom-color: var(--interactive-active);\n  color: var(--interactive-active);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content {\n  height: calc(100% - 66px); /* .tabs height */\n  width: 100%;\n  padding: 10px 0;\n  box-sizing: border-box;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs {\n  display: flex;\n  flex-direction: column;\n  padding-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs .packs {\n  height: 100%;\n  width: 100%;\n  padding-bottom: 10px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section {\n  padding: 0 24px 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section .section-title, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section .section-title {\n  font-weight: 800;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section > p:last-of-type, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section > p:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a {\n  /* inherit Discord\'s link color */\n  color: var(--text-link);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a:hover, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a:hover {\n  text-decoration: underline;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped {\n  display: flex;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped input, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped input {\n  margin: 0;\n  width: auto;\n  flex-grow: 1;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped button, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped button {\n  margin-left: 4px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack {\n  height: 75px;\n  width: 100%;\n  float: left;\n  display: flex;\n  padding: 0 20px;\n  box-sizing: border-box;\n  margin-bottom: 5px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  flex: 0 0 auto;\n  min-width: 75px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  flex: 1 0 auto;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action.is-tight button {\n  width: auto;\n  padding-right: 0.5em;\n  padding-left: 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack {\n  width: 36px;\n  height: 36px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before, div#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index {\n  padding-top: 20px;\n  text-align: left;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  height: 75px;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle {\n  padding: 20px;\n  cursor: move;\n  padding-top: 30px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle span {\n  background: #555;\n  height: 2px;\n  width: 100%;\n  display: block;\n  margin-bottom: 6px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  padding-top: 20px;\n  text-align: right;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info {\n  flex: 1 1 auto;\n  padding: 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span {\n  display: block;\n  width: 100%;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span:nth-of-type(1) {\n  font-weight: bold;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(1) {\n  padding: 0 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(2) {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview img {\n  height: 100%;\n  width: 100%;\n}\ndiv#magane .stickersModal .modal-close {\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  background-color: rgba(10, 10, 10, 0.2);\n  border: none;\n  border-radius: 290486px;\n  cursor: pointer;\n  display: inline-block;\n  flex-grow: 0;\n  flex-shrink: 0;\n  font-size: 0;\n  outline: none;\n  vertical-align: top;\n  background: none;\n  position: absolute;\n  right: 20px;\n  top: 20px;\n  height: 32px;\n  max-height: 32px;\n  max-width: 32px;\n  min-height: 32px;\n  min-width: 32px;\n  width: 32px;\n  z-index: 1;\n}\ndiv#magane .stickersModal .modal-close:before, div#magane .stickersModal .modal-close:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-close:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-close:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-close:hover, div#magane .stickersModal .modal-close:focus {\n  background-color: rgba(10, 10, 10, 0.3);\n}\ndiv#magane .button {\n  align-items: center;\n  border: 1px solid transparent;\n  border-radius: 3px;\n  box-shadow: none;\n  display: inline-flex;\n  font-size: 1rem;\n  padding: calc(0.375em - 1px) 0.75em;\n  position: relative;\n  vertical-align: top;\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  cursor: pointer;\n  justify-content: center;\n  text-align: center;\n  white-space: nowrap;\n  border-color: transparent;\n  color: var(--header-secondary);\n  background-color: var(--background-secondary);\n  width: 62px; /* consistent width */\n}\ndiv#magane .button.is-danger {\n  color: #ffffff;\n  border-color: rgba(240, 71, 71, 0.3);\n  background: #f04747;\n}\ndiv#magane .button:hover, div#magane .button.is-primary:hover {\n  transform: scale3d(1.1, 1.1, 1.1);\n}\ndiv#magane .button.has-width-full {\n  width: 100%;\n}\ndiv#magane .button.has-width-full:hover {\n  /* TODO: Figure out how to do a more consistent scaling,\n\tregardless of the button\'s dynamic size. */\n  transform: scale3d(1.04, 1.04, 1.04);\n}\ndiv#magane .has-scroll-x {\n  overflow-x: overlay;\n}\ndiv#magane .has-scroll-y {\n  overflow-y: overlay;\n}\ndiv#magane ::-webkit-scrollbar {\n  /* Let\'s make the scrollbars pretty */\n  width: 6px;\n  height: 6px;\n}\ndiv#magane ::-webkit-scrollbar-track {\n  margin: 0;\n  background: transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-track-piece {\n  border: 0 solid transparent;\n  background: transparent;\n  margin: 0;\n}\ndiv#magane ::-webkit-scrollbar-thumb {\n  background: rgba(105, 96, 128, 0.5);\n  border: 0 solid transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-thumb:hover {\n  background: rgba(105, 96, 128, 0.75);\n}\ndiv#magane ::-webkit-scrollbar-thumb:active {\n  background: #696080;\n}\n\ndiv#maganeButton.channel-textarea-stickers {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n}\ndiv#maganeButton.channel-textarea-stickers:hover, div#maganeButton.channel-textarea-stickers.active {\n  filter: brightness(1.35);\n}\ndiv#maganeButton img.channel-textarea-stickers-content {\n  width: 24px;\n  height: 24px;\n  padding: 4px;\n  margin-left: 2px;\n  margin-right: 2px;\n}';
 
-const localPackIdRegex = /^(startswith|emojis|custom)-/, click_handler_14 = event => event.target.select(), click_handler_23 = event => event.stopPropagation(), click_handler_26 = event => event.stopPropagation();
+const localPackIdRegex = /^(startswith|emojis|custom)-/, click_handler_13 = event => event.target.select(), click_handler_22 = event => event.stopPropagation(), click_handler_26 = event => event.stopPropagation();
 
-function instance($$self, $$props, $$invalidate) {
+function instance$1($$self, $$props, $$invalidate) {
 	window.magane = {};
 	const modules = {}, coords = {
 		top: 0,
 		left: 0
 	};
-	let main = null, base = null, textArea = null, showIcon = !1, isThereTopBar = null, baseURL = "", stickerWindowActive = !1, stickerAddModalActive = !1;
+	let main = null, base = null, textArea = null, isMaganeBD = null, buttonComponent = null, hideMagane = !1, baseURL = "", stickerWindowActive = !1, stickerAddModalActive = !1;
 	const stickerAddModalTabsInit = {};
 	let activeTab = null, favoriteStickers = [];
 	const favoriteStickersData = {};
 	let availablePacks = [], subscribedPacks = [], subscribedPacksSimple = [], filteredPacks = [];
 	const localPacks = {};
-	let linePackSearch = null, remotePackUrl = null, onCooldown = !1, storage = null, packsSearch = null, resizeObserver = null;
+	let linePackSearch = null, remotePackUrl = null, hotkeyInput = null, hotkey = {}, onCooldown = !1, storage = null, packsSearch = null, resizeObserver = null;
 	const waitForTimeouts = {}, settings = {
 		disableToasts: !1,
 		closeWindowOnSend: !1,
@@ -1152,47 +1268,52 @@ function instance($$self, $$props, $$invalidate) {
 		useLeftToolbar: !1,
 		disableImportedObfuscation: !1,
 		markAsSpoiler: !1,
-		hidePackAppendix: !1
-	}, allowedStorageKeys = [ "magane.available", "magane.subscribed", "magane.favorites", "magane.settings" ], log = (message, type = "log") => console[type]("%c[Magane]%c", "color: #3a71c1; font-weight: 700", "", message), toast = (message, options = {}) => {
-		if (!options.nolog || settings.disableToasts) {
-			const type = [ "log", "info", "warn", "error" ].includes(options.type) ? options.type : "log";
-			log(message, type);
-		}
-		settings.disableToasts || BdApi.showToast(message, options);
+		hidePackAppendix: !1,
+		hotkey: null
+	}, defaultSettings = Object.freeze(Object.assign({}, settings)), allowedStorageKeys = [ "magane.available", "magane.subscribed", "magane.favorites", "magane.settings" ], log = (message, type = "log") => (type = [ "log", "info", "warn", "error" ].includes(type) ? type : "log", 
+	console[type]("%c[Magane]%c", "color: #3a71c1; font-weight: 700", "", message)), toast = (message, options = {}) => {
+		options.nolog && !settings.disableToasts || log(message, options.type), settings.disableToasts || BdApi.showToast(message, options);
 	}, toastInfo = (message, options = {}) => (options.type = "info", toast(message, options)), toastSuccess = (message, options = {}) => (options.type = "success", 
 	toast(message, options)), toastError = (message, options = {}) => (options.type = "error", 
 	toast(message, options)), toastWarn = (message, options = {}) => (options.type = "warn", 
-	toast(message, options)), waitFor = (selector, logname) => {
-		let poll;
-		return logname && log(`Waiting for ${logname}…`), new Promise(resolve => {
-			(poll = () => {
-				const element = document.querySelector(selector);
-				if (element) return delete waitForTimeouts[selector], resolve(element);
-				waitForTimeouts[selector] = setTimeout(poll, 500);
-			})();
-		});
-	}, updateButtonPosition = async () => {
-		if (waitForTimeouts['[class*="baseLayer"]:is([style=""], :not([style]))']) return;
-		$$invalidate(2, showIcon = !1), await waitFor('[class*="baseLayer"]:is([style=""], :not([style]))'), 
-		log("Updating button's position…");
-		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
-		if (!buttonsContainer) return;
-		$$invalidate(2, showIcon = !0);
-		const props = buttonsContainer.getBoundingClientRect();
-		base === document.body ? ($$invalidate(0, coords.top = props.top, coords), $$invalidate(0, coords.left = props.left - 36, coords)) : ($$invalidate(0, coords.top = isThereTopBar ? props.top - 22 : props.top, coords), 
-		$$invalidate(0, coords.left = props.left - 72 - 36, coords)), $$invalidate(0, coords.wbottom = base.clientHeight - coords.top + 8, coords), 
-		$$invalidate(0, coords.wright = base.clientWidth - coords.left - (props.width + 36) - 6, coords);
-	}, initResizeObserver = async firstrun => {
-		resizeObserver ? resizeObserver.disconnect() : resizeObserver = new ResizeObserver(entries => {
+	toast(message, options)), destroyButtonComponent = () => {
+		buttonComponent && buttonComponent.$destroy();
+	}, initResizeObserver = async () => {
+		resizeObserver || (resizeObserver = new ResizeObserver(entries => {
 			for (const entry of entries) {
 				if (!entry.contentRect) return;
-				entry.contentRect.width || entry.contentRect.height ? updateButtonPosition() : ($$invalidate(2, showIcon = !1), 
-				initResizeObserver());
+				if (entry.contentRect.width || entry.contentRect.height) return;
+				initResizeObserver();
 			}
-		}), textArea = await waitFor('[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])', "textarea"), 
-		firstrun && updateButtonPosition(), resizeObserver.observe(textArea);
+		})), document.body.contains(textArea) || (resizeObserver.disconnect(), destroyButtonComponent(), 
+		textArea = await ((selector, logname) => {
+			let poll;
+			return logname && log(`Waiting for ${logname}…`), new Promise(resolve => {
+				(poll = () => {
+					const element = document.querySelector(selector);
+					if (element) return delete waitForTimeouts[selector], resolve(element);
+					waitForTimeouts[selector] = setTimeout(poll, 500);
+				})();
+			});
+		})('[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])', "textarea"), 
+		resizeObserver.observe(textArea)), buttonComponent && document.body.contains(buttonComponent.element) || (() => {
+			const buttonsContainer = textArea.querySelector('[class^="buttons"]');
+			buttonsContainer && (buttonComponent = new Button({
+				target: buttonsContainer,
+				anchor: buttonsContainer.firstElementChild
+			}), buttonComponent.$on("click", () => toggleStickerWindow()), buttonComponent.$on("grabPacks", () => grabPacks()));
+		})();
 	}, saveToLocalStorage = (key, payload) => {
 		storage.setItem(key, JSON.stringify(payload));
+	}, loadSettings = () => {
+		const storedSettings = storage.getItem("magane.settings");
+		if (storedSettings) try {
+			const parsed = JSON.parse(storedSettings);
+			for (const key of Object.keys(settings)) void 'undefined' !== parsed[key] && null !== parsed[key] && $$invalidate(18, settings[key] = parsed[key], settings);
+			$$invalidate(16, hotkeyInput = settings.hotkey), parseThenInitHotkey();
+		} catch (ex) {
+			console.error(ex);
+		}
 	}, grabPacks = async () => {
 		const response = await fetch("https://magane.moe/api/packs"), packs = await response.json();
 		baseURL = packs.baseURL;
@@ -1201,28 +1322,28 @@ function instance($$self, $$props, $$invalidate) {
 			const availLocalPacks = JSON.parse(storedLocalPacks), filteredLocalPacks = availLocalPacks.filter(pack => "object" == typeof pack && void 'undefined' !== pack.id && localPackIdRegex.test(pack.id));
 			availLocalPacks.length !== filteredLocalPacks.length && saveToLocalStorage("magane.available", filteredLocalPacks), 
 			filteredLocalPacks.forEach(pack => {
-				$$invalidate(12, localPacks[pack.id] = pack, localPacks);
+				$$invalidate(13, localPacks[pack.id] = pack, localPacks);
 			}), availablePacks.push(...filteredLocalPacks);
 		} catch (ex) {
 			console.error(ex);
 		}
-		availablePacks.push(...packs.packs), availablePacks = availablePacks, $$invalidate(11, filteredPacks = availablePacks);
+		availablePacks.push(...packs.packs), availablePacks = availablePacks, $$invalidate(12, filteredPacks = availablePacks);
 		const subbedPacks = storage.getItem("magane.subscribed");
 		if (subbedPacks) try {
-			$$invalidate(9, subscribedPacks = JSON.parse(subbedPacks));
+			$$invalidate(10, subscribedPacks = JSON.parse(subbedPacks));
 			for (const subbedPacks of subscribedPacks) subscribedPacksSimple.push(subbedPacks.id);
 			subscribedPacks.forEach(pack => {
-				localPackIdRegex.test(pack.id) && $$invalidate(12, localPacks[pack.id] = pack, localPacks);
+				localPackIdRegex.test(pack.id) && $$invalidate(13, localPacks[pack.id] = pack, localPacks);
 			});
 		} catch (ex) {
 			console.error(ex);
 		}
 		const favStickers = storage.getItem("magane.favorites");
 		if (favStickers) try {
-			$$invalidate(7, favoriteStickers = JSON.parse(favStickers).filter(sticker => {
+			$$invalidate(8, favoriteStickers = JSON.parse(favStickers).filter(sticker => {
 				if (favoriteStickersData[sticker.pack]) return !0;
 				const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
-				return -1 !== index ? ($$invalidate(8, favoriteStickersData[sticker.pack] = {
+				return -1 !== index ? ($$invalidate(9, favoriteStickersData[sticker.pack] = {
 					name: availablePacks[index].name
 				}, favoriteStickersData), !0) : void 0;
 			}));
@@ -1230,12 +1351,12 @@ function instance($$self, $$props, $$invalidate) {
 			console.error(ex);
 		}
 	}, subscribeToPack = pack => {
-		-1 === subscribedPacks.findIndex(p => p.id === pack.id) && ($$invalidate(9, subscribedPacks = [ ...subscribedPacks, pack ]), 
-		$$invalidate(10, subscribedPacksSimple = [ ...subscribedPacksSimple, pack.id ]), 
+		-1 === subscribedPacks.findIndex(p => p.id === pack.id) && ($$invalidate(10, subscribedPacks = [ ...subscribedPacks, pack ]), 
+		$$invalidate(11, subscribedPacksSimple = [ ...subscribedPacksSimple, pack.id ]), 
 		saveToLocalStorage("magane.subscribed", subscribedPacks), log("Subscribed to pack > " + pack.name));
 	}, unsubscribeToPack = pack => {
 		for (let i = 0; i < subscribedPacks.length; i++) if (subscribedPacks[i].id === pack.id) return subscribedPacks.splice(i, 1), 
-		subscribedPacksSimple.splice(i, 1), $$invalidate(9, subscribedPacks), $$invalidate(10, subscribedPacksSimple), 
+		subscribedPacksSimple.splice(i, 1), $$invalidate(10, subscribedPacks), $$invalidate(11, subscribedPacksSimple), 
 		log("Unsubscribed from pack > " + pack.name), void saveToLocalStorage("magane.subscribed", subscribedPacks);
 	}, formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
@@ -1283,7 +1404,7 @@ function instance($$self, $$props, $$invalidate) {
 			log("Fetching sticker from remote: " + url);
 			const response = await fetch(url, {
 				cache: "force-cache"
-			}), myBlob = await response.arrayBuffer();
+			}), blob = await response.blob();
 			let filename = id;
 			if ("string" == typeof pack) if (localPacks[pack].animated && (pack.startsWith("startswith-") || pack.startsWith("emojis-"))) filename = filename.replace(/\.png$/i, ".gif"), 
 			toastWarn("Animated stickers/emojis from LINE Store currently cannot be animated."); else if (pack.startsWith("custom-")) if (settings.disableImportedObfuscation) filename = id; else {
@@ -1291,7 +1412,7 @@ function instance($$self, $$props, $$invalidate) {
 				filename = `${Date.now().toString()}${ext ? ext[1] : ""}`;
 			}
 			settings.markAsSpoiler && (filename = "SPOILER_" + filename);
-			const file = new File([ Buffer.from(myBlob) ], filename);
+			const file = new File([ blob ], filename);
 			log(`Sending sticker as ${filename}…`);
 			let messageContent = "";
 			const textAreaInstance = (() => {
@@ -1323,7 +1444,7 @@ function instance($$self, $$props, $$invalidate) {
 		if (-1 !== favoriteStickers.findIndex(f => f.pack === pack && f.id === id)) return;
 		if (!favoriteStickersData[pack]) {
 			const data = subscribedPacks.find(p => p.id === pack);
-			data && $$invalidate(8, favoriteStickersData[pack] = {
+			data && $$invalidate(9, favoriteStickersData[pack] = {
 				name: data.name
 			}, favoriteStickersData);
 		}
@@ -1331,13 +1452,13 @@ function instance($$self, $$props, $$invalidate) {
 			pack,
 			id
 		};
-		$$invalidate(7, favoriteStickers = [ ...favoriteStickers, favorite ]), saveToLocalStorage("magane.favorites", favoriteStickers), 
+		$$invalidate(8, favoriteStickers = [ ...favoriteStickers, favorite ]), saveToLocalStorage("magane.favorites", favoriteStickers), 
 		log(`Favorited sticker > ${id} of pack ${pack}`), toastSuccess("Favorited!", {
 			nolog: !0
 		});
 	}, unfavoriteSticker = (pack, id) => {
 		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
-		-1 !== index && (favoriteStickers.splice(index, 1), $$invalidate(7, favoriteStickers), 
+		-1 !== index && (favoriteStickers.splice(index, 1), $$invalidate(8, favoriteStickers), 
 		favoriteStickers.some(s => s.pack === pack) || delete favoriteStickersData[pack], 
 		saveToLocalStorage("magane.favorites", favoriteStickers), log(`Unfavorited sticker > ${id} of pack ${pack}`), 
 		toastInfo("Unfavorited!", {
@@ -1345,7 +1466,7 @@ function instance($$self, $$props, $$invalidate) {
 		}));
 	}, filterPacks = () => {
 		const query = "string" == typeof packsSearch && packsSearch.trim().toLowerCase();
-		$$invalidate(11, filteredPacks = query ? availablePacks.filter(pack => pack.name.toLowerCase().indexOf(query) >= 0 || String(pack.id).indexOf(query) >= 0) : availablePacks);
+		$$invalidate(12, filteredPacks = query ? availablePacks.filter(pack => pack.name.toLowerCase().indexOf(query) >= 0 || String(pack.id).indexOf(query) >= 0) : availablePacks);
 	}, _appendPack = (id, e, opts = {}) => {
 		let foundIndex, availLocalPacks = [];
 		const storedLocalPacks = storage.getItem("magane.available");
@@ -1357,7 +1478,7 @@ function instance($$self, $$props, $$invalidate) {
 		const result = {
 			pack: e
 		};
-		if (localPackIdRegex.test(id) && $$invalidate(12, localPacks[id] = e, localPacks), 
+		if (localPackIdRegex.test(id) && $$invalidate(13, localPacks[id] = e, localPacks), 
 		foundIndex >= 0) {
 			availLocalPacks[foundIndex] = e;
 			const sharedIndex = availablePacks.findIndex(p => p.id === id);
@@ -1365,6 +1486,20 @@ function instance($$self, $$props, $$invalidate) {
 		} else availLocalPacks.unshift(e), availablePacks.unshift(e), availablePacks = availablePacks;
 		return saveToLocalStorage("magane.available", availLocalPacks), filterPacks(), opts.overwrite ? log("Overwritten pack with ID " + id) : log("Added a new pack with ID " + id), 
 		result;
+	}, migrateStringPackIds = async () => {
+		let dirty = !1;
+		const favorites = JSON.parse(storage.getItem("magane.favorites")), subscribed = JSON.parse(storage.getItem("magane.subscribed"));
+		favorites && favorites.forEach(item => {
+			if ("number" == typeof item.pack) return;
+			const result = parseInt(item.pack, 10);
+			isNaN(item.pack) || (item.pack = result, dirty = !0);
+		}), subscribed && subscribed.forEach(item => {
+			if ("number" == typeof item.id) return;
+			const result = parseInt(item.id, 10);
+			isNaN(item.id) || (item.id = result, dirty = !0);
+		}), dirty && (toastInfo("Found packs/stickers to migrate, migrating now..."), storage.setItem("magane.favorites", JSON.stringify(favorites)), 
+		storage.setItem("magane.subscribed", JSON.stringify(subscribed)), await grabPacks(), 
+		toastSuccess("Migration successful."));
 	}, parseFunctionArgs = (args, argNames, minArgs) => {
 		const isFirstArgAnObj = "object" == typeof args[0];
 		if (!isFirstArgAnObj && "number" == typeof minArgs && args.length < minArgs) throw new Error(`This function expects at least ${minArgs} parameter(s).`);
@@ -1430,7 +1565,7 @@ function instance($$self, $$props, $$invalidate) {
 		if (storedLocalPacks) try {
 			const availLocalPacks = JSON.parse(storedLocalPacks), index = availLocalPacks.findIndex(p => p.id === id);
 			if (-1 === index) throw new Error("Unable to find pack with ID " + id);
-			$$invalidate(7, favoriteStickers = favoriteStickers.filter(s => s.pack !== id)), 
+			$$invalidate(8, favoriteStickers = favoriteStickers.filter(s => s.pack !== id)), 
 			delete favoriteStickersData[id], saveToLocalStorage("magane.favorites", favoriteStickers);
 			const subbedPack = subscribedPacks.find(p => p.id === id);
 			subbedPack && unsubscribeToPack(subbedPack), availLocalPacks.splice(index, 1), saveToLocalStorage("magane.available", availLocalPacks);
@@ -1451,9 +1586,7 @@ function instance($$self, $$props, $$invalidate) {
 			throw ex;
 		}
 	};
-	!function onMount(fn) {
-		get_current_component().$$.on_mount.push(fn);
-	}(async () => {
+	onMount(async () => {
 		try {
 			toast("Loading Magane…"), modules.channelStore = BdApi.findModuleByProps("getChannel", "getDMFromUserId"), 
 			modules.selectedChannelStore = BdApi.findModuleByProps("getLastSelectedChannelId"), 
@@ -1465,38 +1598,18 @@ function instance($$self, $$props, $$invalidate) {
 				const iframe = document.createElement("iframe");
 				document.head.append(iframe), storage = Object.getOwnPropertyDescriptor(iframe.contentWindow.frames, "localStorage").get.call(window), 
 				iframe.remove();
-			})(), (() => {
-				const storedSettings = storage.getItem("magane.settings");
-				if (storedSettings) try {
-					const parsed = JSON.parse(storedSettings);
-					for (const key of Object.keys(settings)) void 'undefined' !== parsed[key] && null !== parsed[key] && $$invalidate(16, settings[key] = parsed[key], settings);
-				} catch (ex) {
-					console.error(ex);
-				}
-			})(), await grabPacks(), await (async () => {
-				let dirty = !1;
-				const favorites = JSON.parse(storage.getItem("magane.favorites")), subscribed = JSON.parse(storage.getItem("magane.subscribed"));
-				favorites && favorites.forEach(item => {
-					if ("number" == typeof item.pack) return;
-					const result = parseInt(item.pack, 10);
-					isNaN(item.pack) || (item.pack = result, dirty = !0);
-				}), subscribed && subscribed.forEach(item => {
-					if ("number" == typeof item.id) return;
-					const result = parseInt(item.id, 10);
-					isNaN(item.id) || (item.id = result, dirty = !0);
-				}), dirty && (toastInfo("Found packs/stickers to migrate, migrating now..."), storage.setItem("magane.favorites", JSON.stringify(favorites)), 
-				storage.setItem("magane.subscribed", JSON.stringify(subscribed)), await grabPacks(), 
-				toastSuccess("Migration successful."));
-			})(), toastSuccess("Magane is now ready!"), (async () => {
-				base = main.parentNode.parentNode, base === document.body ? log("Magane is mounted with MaganeBD.") : (log("Magane is mounted with legacy BD plugin."), 
-				isThereTopBar = Boolean(document.querySelector('[class*="titleBar-"]'))), initResizeObserver(!0);
+			})(), loadSettings(), await grabPacks(), await migrateStringPackIds(), toastSuccess("Magane is now ready!"), 
+			(async () => {
+				base = main.parentNode.parentNode, $$invalidate(2, isMaganeBD = base === document.body), 
+				log(isMaganeBD ? "Magane is mounted with MaganeBD." : "Magane is mounted with legacy method."), 
+				initResizeObserver();
 			})();
 		} catch (error) {
 			console.error(error), toastError("Unexpected error occurred when initializing Magane. Check your console for details.");
 		}
-	}), function onDestroy(fn) {
-		get_current_component().$$.on_destroy.push(fn);
-	}(() => {
+	}), onDestroy(() => {
+		document.removeEventListener("click", maganeBlurHandler), document.removeEventListener("keyup", onKeydownEvent), 
+		destroyButtonComponent();
 		for (const timeout of Object.values(waitForTimeouts)) clearTimeout(timeout);
 		resizeObserver && resizeObserver.disconnect(), delete window.magane, log("Internal components cleaned up.");
 	});
@@ -1505,21 +1618,33 @@ function instance($$self, $$props, $$invalidate) {
 		if (stickerWindow) {
 			const {x, y, width, height} = stickerWindow.getBoundingClientRect();
 			if (e.target) {
-				if (main.querySelector(".magane-button").contains(e.target)) return;
+				if (buttonComponent && buttonComponent.element.contains(e.target)) return;
 				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
 			}
 			e.clientX <= x + width && e.clientX >= x && e.clientY <= y + height && e.clientY >= y || toggleStickerWindow();
 		}
 	}, toggleStickerWindow = forceState => {
+		if (!document.body.contains(main)) return toastError("Oh no! Magane was unexpectedly destroyed. Please reload Magane :(", {
+			timeout: 6000
+		});
 		const active = void 'undefined' === forceState ? !stickerWindowActive : forceState;
-		active ? document.addEventListener("click", maganeBlurHandler) : document.removeEventListener("click", maganeBlurHandler), 
-		$$invalidate(3, stickerWindowActive = active);
+		active ? ((() => {
+			const buttonsContainer = textArea.querySelector('[class^="buttons"]');
+			if (!buttonsContainer) return;
+			const props = buttonsContainer.getBoundingClientRect();
+			if (log("Updating window's position…"), $$invalidate(0, coords.wbottom = base.clientHeight - props.top + 8, coords), 
+			$$invalidate(0, coords.wright = base.clientWidth - props.right - 6, coords), !isMaganeBD) {
+				const baseProps = base.getBoundingClientRect();
+				$$invalidate(0, coords.wbottom += baseProps.top, coords), $$invalidate(0, coords.wright += baseProps.left, coords);
+			}
+		})(), document.addEventListener("click", maganeBlurHandler)) : document.removeEventListener("click", maganeBlurHandler), 
+		$$invalidate(4, stickerWindowActive = active), buttonComponent.active = active;
 	}, toggleStickerModal = () => {
 		const active = !stickerAddModalActive;
-		active && null === activeTab && activateTab(0), $$invalidate(4, stickerAddModalActive = active);
+		active && null === activeTab && activateTab(0), $$invalidate(5, stickerAddModalActive = active);
 	}, activateTab = value => {
-		$$invalidate(6, activeTab = value), stickerAddModalTabsInit[activeTab] || $$invalidate(5, stickerAddModalTabsInit[activeTab] = !0, stickerAddModalTabsInit);
+		$$invalidate(7, activeTab = value), stickerAddModalTabsInit[activeTab] || $$invalidate(6, stickerAddModalTabsInit[activeTab] = !0, stickerAddModalTabsInit);
 	}, scrollToStickers = id => {
 		scrollTo({
 			element: id.replace(/([.])/g, "\\$1"),
@@ -1605,12 +1730,12 @@ function instance($$self, $$props, $$invalidate) {
 			const stored = _appendPack(pack.id, pack, {
 				overwrite: !0
 			});
-			$$invalidate(7, favoriteStickers = favoriteStickers.filter(s => s.pack !== id || -1 !== stored.pack.files.findIndex(f => f === s.id))), 
-			favoriteStickers.some(s => s.pack === id) ? $$invalidate(8, favoriteStickersData[id].name = stored.pack.name, favoriteStickersData) : delete favoriteStickersData[id], 
+			$$invalidate(8, favoriteStickers = favoriteStickers.filter(s => s.pack !== id || -1 !== stored.pack.files.findIndex(f => f === s.id))), 
+			favoriteStickers.some(s => s.pack === id) ? $$invalidate(9, favoriteStickersData[id].name = stored.pack.name, favoriteStickersData) : delete favoriteStickersData[id], 
 			saveToLocalStorage("magane.favorites", favoriteStickers);
 			const subIndex = subscribedPacks.findIndex(p => p.id === id);
-			return -1 !== subIndex && ($$invalidate(9, subscribedPacks[subIndex] = stored.pack, subscribedPacks), 
-			$$invalidate(10, subscribedPacksSimple[subIndex] = stored.pack.id, subscribedPacksSimple), 
+			return -1 !== subIndex && ($$invalidate(10, subscribedPacks[subIndex] = stored.pack, subscribedPacks), 
+			$$invalidate(11, subscribedPacksSimple[subIndex] = stored.pack.id, subscribedPacksSimple), 
 			saveToLocalStorage("magane.subscribed", subscribedPacks)), silent || toastSuccess(`Updated pack ${stored.pack.name}.`, {
 				nolog: !0,
 				timeout: 6000
@@ -1649,7 +1774,7 @@ function instance($$self, $$props, $$invalidate) {
 			toastSuccess(`Added a new pack ${stored.pack.name}.`, {
 				nolog: !0,
 				timeout: 6000
-			}), $$invalidate(13, linePackSearch = null);
+			}), $$invalidate(14, linePackSearch = null);
 		} catch (error) {
 			console.error(error), toastError(error.toString(), {
 				nolog: !0
@@ -1675,7 +1800,7 @@ function instance($$self, $$props, $$invalidate) {
 				toastSuccess(`Added a new pack ${stored.pack.name}.`, {
 					nolog: !0,
 					timeout: 6000
-				}), $$invalidate(14, remotePackUrl = null);
+				}), $$invalidate(15, remotePackUrl = null);
 			} catch (error) {
 				console.error(error), toastError(error.toString(), {
 					nolog: !0
@@ -1711,6 +1836,26 @@ function instance($$self, $$props, $$invalidate) {
 				}
 			}
 		});
+	}, onKeydownEvent = event => {
+		for (const prop in hotkey) if ("key" === prop) {
+			if (hotkey[prop] !== event[prop].toLocaleLowerCase()) return;
+		} else if (hotkey[prop] !== event[prop]) return;
+		event.preventDefault(), buttonComponent && document.body.contains(buttonComponent.element) && toggleStickerWindow();
+	}, parseThenInitHotkey = save => {
+		let tmp;
+		if (hotkeyInput) {
+			const keys = hotkeyInput.split("+").map(key => key.trim());
+			tmp = {};
+			for (const key of keys) if (/alt/i.test(key)) tmp.altKey = !0; else if (/meta/i.test(key)) tmp.metaKey = !0; else if (/shift/i.test(key)) tmp.shiftKey = !0; else if (/(control|ctrl|ctl)/i.test(key)) tmp.ctrlKey = !0; else {
+				if (tmp.key) return toastError("Invalid hotkey. If used with modifier keys, only support 1 other key.", {
+					timeout: 6000
+				});
+				tmp.key = key.toLocaleLowerCase();
+			}
+			hotkey = tmp, document.addEventListener("keyup", onKeydownEvent);
+		} else hotkey = null, document.removeEventListener("keyup", onKeydownEvent);
+		save && ($$invalidate(18, settings.hotkey = hotkeyInput, settings), log("settings['hotkey'] = " + settings.hotkey), 
+		saveToLocalStorage("magane.settings", settings), toastSuccess(hotkey ? "Hotkey saved." : "Hotkey cleared."));
 	}, replaceDatabase = () => {
 		document.getElementById("replaceDatabaseInput").click();
 	}, exportDatabase = () => {
@@ -1731,11 +1876,11 @@ function instance($$self, $$props, $$invalidate) {
 		}
 		element.remove(), hrefUrl && window.URL.revokeObjectURL(hrefUrl);
 	};
-	return [ coords, main, showIcon, stickerWindowActive, stickerAddModalActive, stickerAddModalTabsInit, activeTab, favoriteStickers, favoriteStickersData, subscribedPacks, subscribedPacksSimple, filteredPacks, localPacks, linePackSearch, remotePackUrl, packsSearch, settings, grabPacks, subscribeToPack, unsubscribeToPack, formatUrl, sendSticker, favoriteSticker, unfavoriteSticker, filterPacks, count => `<span class="counts"><span>–</span>${count} sticker${1 === count ? "" : "s"}</span>`, id => {
+	return [ coords, main, isMaganeBD, hideMagane, stickerWindowActive, stickerAddModalActive, stickerAddModalTabsInit, activeTab, favoriteStickers, favoriteStickersData, subscribedPacks, subscribedPacksSimple, filteredPacks, localPacks, linePackSearch, remotePackUrl, hotkeyInput, packsSearch, settings, subscribeToPack, unsubscribeToPack, formatUrl, sendSticker, favoriteSticker, unfavoriteSticker, filterPacks, count => `<span class="counts"><span>–</span>${count} sticker${1 === count ? "" : "s"}</span>`, id => {
 		let tmp = "" + id;
 		return "string" == typeof id && (id.startsWith("startswith-") ? tmp = "LINE " + id.replace("startswith-", "") : id.startsWith("emojis-") ? tmp = "LINE Emojis " + id.replace("emojis-", "") : id.startsWith("custom-") && (tmp = id.replace("custom-", ""))), 
 		`<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
-	}, toggleStickerWindow, toggleStickerModal, activateTab, scrollToStickers, event => {
+	}, toggleStickerModal, activateTab, scrollToStickers, event => {
 		const value = event.target.value.trim();
 		if (13 !== event.keyCode || !value.length) return;
 		let newIndex = Number(value);
@@ -1749,7 +1894,7 @@ function instance($$self, $$props, $$invalidate) {
 		const packData = subscribedPacks.splice(oldIndex, 1);
 		subscribedPacksSimple.splice(oldIndex, 1), subscribedPacks.splice(newIndex, 0, packData[0]), 
 		subscribedPacksSimple.splice(newIndex, 0, packData[0].id), event.target.blur(), 
-		event.target.value = String(oldIndex), $$invalidate(9, subscribedPacks), $$invalidate(10, subscribedPacksSimple), 
+		event.target.value = String(oldIndex), $$invalidate(10, subscribedPacks), $$invalidate(11, subscribedPacksSimple), 
 		saveToLocalStorage("magane.subscribed", subscribedPacks), toastSuccess(`Moved pack from position ${oldIndex + 1} to ${newIndex + 1}.`);
 	}, deleteLocalPack, updateRemotePack, parseLinePack, parseRemotePackUrl, event => {
 		const {files} = event.target;
@@ -1786,7 +1931,7 @@ function instance($$self, $$props, $$invalidate) {
 		toastSuccess("Settings saved!", {
 			nolog: !0
 		});
-	}, event => {
+	}, parseThenInitHotkey, event => {
 		const {files} = event.target;
 		if (!files.length) return !1;
 		const reader = new FileReader;
@@ -1815,37 +1960,38 @@ function instance($$self, $$props, $$invalidate) {
 				confirmText: "Replace",
 				cancelText: "Cancel",
 				danger: !0,
-				onConfirm: () => {
+				onConfirm: async () => {
 					for (const key of valid) saveToLocalStorage(key, result[key]);
 					for (const key of invalid) storage.removeItem(key);
-					BdApi.showConfirmationModal("Reload Now", "Please reload Discord immediately (Ctrl + R) to complete Magane database replacement.", {
-						cancelText: "Later",
-						onConfirm: () => window.location.reload()
-					});
+					$$invalidate(3, hideMagane = !0), toast("Reloading Magane database…"), Object.assign(settings, defaultSettings), 
+					loadSettings(), await grabPacks(), await migrateStringPackIds(), toastSuccess("Magane is now ready!"), 
+					$$invalidate(3, hideMagane = !1);
 				}
 			});
 		}, log(`Reading ${files[0].name}…`), reader.readAsText(files[0]);
-	}, replaceDatabase, exportDatabase, (pack, sticker, f) => f.pack === pack.id && f.id === sticker, () => toggleStickerWindow(), () => grabPacks(), sticker => sendSticker(sticker.pack, sticker.id), sticker => unfavoriteSticker(sticker.pack, sticker.id), (pack, sticker) => sendSticker(pack.id, sticker), (pack, sticker) => favoriteSticker(pack.id, sticker), (pack, sticker) => unfavoriteSticker(pack.id, sticker), () => toggleStickerModal(), () => scrollToStickers("#pfavorites"), pack => scrollToStickers("#p" + pack.id), () => toggleStickerModal(), () => activateTab(0), () => activateTab(1), () => activateTab(2), () => activateTab(3), pack => unsubscribeToPack(pack), pack => updateRemotePack(pack.id), function input0_input_handler() {
-		packsSearch = this.value, $$invalidate(15, packsSearch);
+	}, replaceDatabase, exportDatabase, (pack, sticker, f) => f.pack === pack.id && f.id === sticker, sticker => sendSticker(sticker.pack, sticker.id), sticker => unfavoriteSticker(sticker.pack, sticker.id), (pack, sticker) => sendSticker(pack.id, sticker), (pack, sticker) => favoriteSticker(pack.id, sticker), (pack, sticker) => unfavoriteSticker(pack.id, sticker), () => toggleStickerModal(), () => scrollToStickers("#pfavorites"), pack => scrollToStickers("#p" + pack.id), () => toggleStickerModal(), () => activateTab(0), () => activateTab(1), () => activateTab(2), () => activateTab(3), pack => unsubscribeToPack(pack), pack => updateRemotePack(pack.id), function input0_input_handler() {
+		packsSearch = this.value, $$invalidate(17, packsSearch);
 	}, pack => unsubscribeToPack(pack), pack => subscribeToPack(pack), pack => updateRemotePack(pack.id), pack => deleteLocalPack(pack.id), function input1_input_handler() {
-		linePackSearch = this.value, $$invalidate(13, linePackSearch);
+		linePackSearch = this.value, $$invalidate(14, linePackSearch);
 	}, () => parseLinePack(), function input2_input_handler() {
-		remotePackUrl = this.value, $$invalidate(14, remotePackUrl);
+		remotePackUrl = this.value, $$invalidate(15, remotePackUrl);
 	}, () => parseRemotePackUrl(), () => loadLocalRemotePack(), () => bulkUpdateRemotePacks(), function input4_change_handler() {
-		settings.disableToasts = this.checked, $$invalidate(16, settings);
+		settings.disableToasts = this.checked, $$invalidate(18, settings);
 	}, function input5_change_handler() {
-		settings.closeWindowOnSend = this.checked, $$invalidate(16, settings);
+		settings.closeWindowOnSend = this.checked, $$invalidate(18, settings);
 	}, function input6_change_handler() {
-		settings.useLeftToolbar = this.checked, $$invalidate(16, settings);
+		settings.useLeftToolbar = this.checked, $$invalidate(18, settings);
 	}, function input7_change_handler() {
-		settings.hidePackAppendix = this.checked, $$invalidate(16, settings);
+		settings.hidePackAppendix = this.checked, $$invalidate(18, settings);
 	}, function input8_change_handler() {
-		settings.disableDownscale = this.checked, $$invalidate(16, settings);
+		settings.disableDownscale = this.checked, $$invalidate(18, settings);
 	}, function input9_change_handler() {
-		settings.disableImportedObfuscation = this.checked, $$invalidate(16, settings);
+		settings.disableImportedObfuscation = this.checked, $$invalidate(18, settings);
 	}, function input10_change_handler() {
-		settings.markAsSpoiler = this.checked, $$invalidate(16, settings);
-	}, () => replaceDatabase(), () => exportDatabase(), function main_1_binding($$value) {
+		settings.markAsSpoiler = this.checked, $$invalidate(18, settings);
+	}, function input11_input_handler() {
+		hotkeyInput = this.value, $$invalidate(16, hotkeyInput);
+	}, () => parseThenInitHotkey(!0), () => replaceDatabase(), () => exportDatabase(), function main_1_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
 			main = $$value, $$invalidate(1, main);
 		});
@@ -1856,29 +2002,9 @@ var App$2 = function getCjsExportFromNamespace(n) {
 	return n && n.default || n;
 }(Object.freeze({
 	__proto__: null,
-	default: class App extends class SvelteComponent {
-		$destroy() {
-			!function destroy_component(component, detaching) {
-				const $$ = component.$$;
-				null !== $$.fragment && (run_all($$.on_destroy), $$.fragment && $$.fragment.d(detaching), 
-				$$.on_destroy = $$.fragment = null, $$.ctx = []);
-			}(this, 1), this.$destroy = noop;
-		}
-		$on(type, callback) {
-			const callbacks = this.$$.callbacks[type] || (this.$$.callbacks[type] = []);
-			return callbacks.push(callback), () => {
-				const index = callbacks.indexOf(callback);
-				-1 !== index && callbacks.splice(index, 1);
-			};
-		}
-		$set($$props) {
-			this.$$set && !function is_empty(obj) {
-				return 0 === Object.keys(obj).length;
-			}($$props) && (this.$$.skip_bound = !0, this.$$set($$props), this.$$.skip_bound = !1);
-		}
-	} {
+	default: class App extends SvelteComponent {
 		constructor(options) {
-			super(), init(this, options, instance, create_fragment, safe_not_equal, {}, null, [ -1, -1, -1, -1, -1 ]);
+			super(), init(this, options, instance$1, create_fragment$1, safe_not_equal, {}, null, [ -1, -1, -1, -1, -1 ]);
 		}
 	}
 }));
