@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.1
+ * @version 3.2.2
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -1131,7 +1131,7 @@ function create_fragment$1(ctx) {
 			attr(input6, "type", "checkbox"), attr(input7, "name", "hidePackAppendix"), attr(input7, "type", "checkbox"), 
 			attr(input8, "name", "disableDownscale"), attr(input8, "type", "checkbox"), attr(input9, "name", "disableImportedObfuscation"), 
 			attr(input9, "type", "checkbox"), attr(input10, "name", "markAsSpoiler"), attr(input10, "type", "checkbox"), 
-			attr(div18, "class", "section settings"), attr(p18, "class", "section-title"), attr(input11, "class", "inputQuery"), 
+			attr(div18, "class", "section settings"), attr(p18, "class", "section-title"), attr(input11, "class", "inputQuery supress-magane-hotkey"), 
 			attr(input11, "type", "text"), attr(button4, "class", "button is-primary"), attr(p22, "class", "input-grouped"), 
 			attr(div19, "class", "section hotkey"), attr(p23, "class", "section-title"), attr(input12, "id", "replaceDatabaseInput"), 
 			attr(input12, "type", "file"), set_style(input12, "display", "none"), attr(input12, "accept", "application/JSON"), 
@@ -1837,22 +1837,33 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 		});
 	}, onKeydownEvent = event => {
-		for (const prop in hotkey) if ("key" === prop) {
+		for (const prop in hotkey) if ("key" === prop || "code" === prop) {
 			if (hotkey[prop] !== event[prop].toLocaleLowerCase()) return;
 		} else if (hotkey[prop] !== event[prop]) return;
-		event.preventDefault(), buttonComponent && document.body.contains(buttonComponent.element) && toggleStickerWindow();
+		event.target && event.target.classList.contains("supress-magane-hotkey") || buttonComponent && document.body.contains(buttonComponent.element) && (event.preventDefault(), 
+		toggleStickerWindow());
 	}, parseThenInitHotkey = save => {
-		let tmp;
-		if (hotkeyInput) {
-			const keys = hotkeyInput.split("+").map(key => key.trim());
-			tmp = {};
-			for (const key of keys) if (/alt/i.test(key)) tmp.altKey = !0; else if (/meta/i.test(key)) tmp.metaKey = !0; else if (/shift/i.test(key)) tmp.shiftKey = !0; else if (/(control|ctrl|ctl)/i.test(key)) tmp.ctrlKey = !0; else {
-				if (tmp.key) return toastError("Invalid hotkey. If used with modifier keys, only support 1 other key.", {
-					timeout: 6000
-				});
-				tmp.key = key.toLocaleLowerCase();
+		const keys = hotkeyInput.split("+").map(key => key.trim());
+		if ($$invalidate(16, hotkeyInput = keys.join("+")), hotkeyInput && keys.length) {
+			const tmp = {
+				key: null,
+				code: null,
+				altKey: !1,
+				metaKey: !1,
+				shiftKey: !1,
+				ctrlKey: !1
+			};
+			for (let i = 0; i < keys.length; i++) {
+				let key = keys[i].toLocaleLowerCase();
+				if (i === keys.length - 1) /^(ctrl|ctl)/.test(key) && (key = key.replace(/^(ctrl|ctl)/, "control")), 
+				/(right|left)$/.test(key) ? (tmp.code = key, tmp.key = key.replace(/(right|left)$/, "")) : tmp.key = key; else if (/^alt/.test(key)) tmp.altKey = !0; else if (/^meta/.test(key)) tmp.metaKey = !0; else if (/^shift/.test(key)) tmp.shiftKey = !0; else {
+					if (!/^(control|ctrl|ctl)/.test(key)) return toastError("Invalid hotkey. If used with modifier keys, only support 1 other key.", {
+						timeout: 6000
+					});
+					tmp.ctrlKey = !0;
+				}
 			}
-			hotkey = tmp, document.addEventListener("keyup", onKeydownEvent);
+			tmp.code || delete tmp.code, hotkey = tmp, document.addEventListener("keyup", onKeydownEvent);
 		} else hotkey = null, document.removeEventListener("keyup", onKeydownEvent);
 		save && ($$invalidate(18, settings.hotkey = hotkeyInput, settings), log("settings['hotkey'] = " + settings.hotkey), 
 		saveToLocalStorage("magane.settings", settings), toastSuccess(hotkey ? "Hotkey saved." : "Hotkey cleared."));
