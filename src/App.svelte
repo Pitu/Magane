@@ -1341,43 +1341,68 @@
 
 	const onKeydownEvent = event => {
 		for (const prop in hotkey) {
-			if (prop === 'key') {
+			if (prop === 'key' || prop === 'code') {
 				if (hotkey[prop] !== event[prop].toLocaleLowerCase()) return;
 			} else if (hotkey[prop] !== event[prop]) {
 				return;
 			}
 		}
 
-		event.preventDefault();
-
+		if (event.target && event.target.classList.contains('supress-magane-hotkey')) return;
 		if (buttonComponent && document.body.contains(buttonComponent.element)) {
+			event.preventDefault();
 			toggleStickerWindow();
 		}
 	};
 
 	const parseThenInitHotkey = save => {
-		let tmp;
-		if (hotkeyInput) {
-			const keys = hotkeyInput
-				.split('+')
-				.map(key => key.trim());
+		// Clean input
+		const keys = hotkeyInput
+			.split('+')
+			.map(key => key.trim());
+		hotkeyInput = keys.join('+');
+		if (hotkeyInput && keys.length) {
+			// Preset with "key" & "code" ordered first for earlier if-checks in listener event
+			const tmp = {
+				key: null,
+				code: null,
+				altKey: false,
+				metaKey: false,
+				shiftKey: false,
+				ctrlKey: false
+			};
 
-			tmp = {};
-			for (const key of keys) {
-				if (/alt/i.test(key)) {
+			for (let i = 0; i < keys.length; i++) {
+				let key = keys[i].toLocaleLowerCase();
+				// If last key, assume not modifiers, thus parse extra information
+				if (i === keys.length - 1) {
+					if (/^(ctrl|ctl)/.test(key)) {
+						key = key.replace(/^(ctrl|ctl)/, 'control');
+					}
+					if (/(right|left)$/.test(key)) {
+						tmp.code = key;
+						tmp.key = key.replace(/(right|left)$/, '');
+					} else {
+						tmp.key = key;
+					}
+				// Otherwise..
+				} else if (/^alt/.test(key)) {
 					tmp.altKey = true;
-				} else if (/meta/i.test(key)) {
+				} else if (/^meta/.test(key)) {
 					tmp.metaKey = true;
-				} else if (/shift/i.test(key)) {
+				} else if (/^shift/.test(key)) {
 					tmp.shiftKey = true;
-				} else if (/(control|ctrl|ctl)/i.test(key)) {
+				} else if (/^(control|ctrl|ctl)/.test(key)) {
 					tmp.ctrlKey = true;
-				} else if (tmp.key) {
+				} else {
 					return toastError('Invalid hotkey. If used with modifier keys, only support 1 other key.',
 						{ timeout: 6000 });
-				} else {
-					tmp.key = key.toLocaleLowerCase();
 				}
+			}
+
+			// Useless if unset with side suffix
+			if (!tmp.code) {
+				delete tmp.code;
 			}
 
 			hotkey = tmp;
@@ -1867,7 +1892,7 @@
 								<p class="input-grouped">
 									<input
 										bind:value={ hotkeyInput }
-										class="inputQuery"
+										class="inputQuery supress-magane-hotkey"
 										type="text" />
 									<button class="button is-primary"
 										on:click="{ () => parseThenInitHotkey(true) }">Set</button>
