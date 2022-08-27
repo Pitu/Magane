@@ -244,9 +244,16 @@
 	};
 
 	const grabPacks = async () => {
-		const response = await fetch('https://magane.moe/api/packs');
-		const packs = await response.json();
-		baseURL = packs.baseURL;
+		let packs;
+		try {
+			const response = await fetch('https://magane.moe/api/packs');
+			packs = await response.json();
+			baseURL = packs.baseURL;
+		} catch (error) {
+			// Toast and log to console, but allow to continue as-is
+			toastError('Unable to fetch Magane\'s API. Magane will load as-is, but built-in remote packs will temporarily be unavailable.', { timeout: 10000 });
+			console.error(error);
+		}
 
 		// Load local packs first to have them always before built-in packs
 		const storedLocalPacks = storage.getItem('magane.available');
@@ -275,7 +282,11 @@
 			}
 		}
 
-		availablePacks.push(...packs.packs);
+		// Then append remote packs after local packs
+		if (packs) {
+			availablePacks.push(...packs.packs);
+		}
+		// Refresh UI
 		availablePacks = availablePacks;
 		filteredPacks = availablePacks;
 
@@ -353,9 +364,17 @@
 		let url;
 		if (typeof pack === 'number') {
 			// Magane's built-in packs
-			url = `${baseURL}${pack}/${id}`;
-			if (!sending) {
-				url = url.replace(/\.(gif|png)$/i, '_key.$1');
+			if (baseURL) {
+				url = `${baseURL || ''}${pack}/${id}`;
+				if (!sending) {
+					url = url.replace(/\.(gif|png)$/i, '_key.$1');
+				}
+			} else if (sending) {
+				// Let sendSticker() handle displaying error
+				throw new Error('Magane\'s API was unavailable. Please reload Magane if the API is already back online.');
+			} else {
+				// Placeholder thumb (red cross emoji) if baseURL is missing (i.e. failed to fetch it from Magane's API)
+				url = '/assets/8becd37ab9d13cdfe37c08c496a9def3.svg';
 			}
 		} else if (pack.startsWith('startswith-')) {
 			// LINE Store packs
@@ -532,7 +551,7 @@
 			}
 		} catch (error) {
 			console.error(error);
-			toastError('Unexpected error occurred when sending sticker. Check your console for details.');
+			toastError(error.toString(), { nolog: true, timeout: 5000 });
 		}
 
 		onCooldown = false;
