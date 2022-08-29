@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.2
+ * @version 3.2.3
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -1315,8 +1315,15 @@ function instance$1($$self, $$props, $$invalidate) {
 			console.error(ex);
 		}
 	}, grabPacks = async () => {
-		const response = await fetch("https://magane.moe/api/packs"), packs = await response.json();
-		baseURL = packs.baseURL;
+		let packs;
+		try {
+			const response = await fetch("https://magane.moe/api/packs");
+			packs = await response.json(), baseURL = packs.baseURL;
+		} catch (error) {
+			toastError("Unable to fetch Magane's API. Magane will load as-is, but built-in remote packs will temporarily be unavailable.", {
+				timeout: 10000
+			}), console.error(error);
+		}
 		const storedLocalPacks = storage.getItem("magane.available");
 		if (storedLocalPacks) try {
 			const availLocalPacks = JSON.parse(storedLocalPacks), filteredLocalPacks = availLocalPacks.filter(pack => "object" == typeof pack && void 'undefined' !== pack.id && localPackIdRegex.test(pack.id));
@@ -1327,7 +1334,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		} catch (ex) {
 			console.error(ex);
 		}
-		availablePacks.push(...packs.packs), availablePacks = availablePacks, $$invalidate(12, filteredPacks = availablePacks);
+		packs && availablePacks.push(...packs.packs), availablePacks = availablePacks, $$invalidate(12, filteredPacks = availablePacks);
 		const subbedPacks = storage.getItem("magane.subscribed");
 		if (subbedPacks) try {
 			$$invalidate(10, subscribedPacks = JSON.parse(subbedPacks));
@@ -1360,7 +1367,11 @@ function instance$1($$self, $$props, $$invalidate) {
 		log("Unsubscribed from pack > " + pack.name), void saveToLocalStorage("magane.subscribed", subscribedPacks);
 	}, formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
-		if ("number" == typeof pack) url = `${baseURL}${pack}/${id}`, sending || (url = url.replace(/\.(gif|png)$/i, "_key.$1")); else if (pack.startsWith("startswith-")) {
+		if ("number" == typeof pack) if (baseURL) url = `${baseURL || ""}${pack}/${id}`, 
+		sending || (url = url.replace(/\.(gif|png)$/i, "_key.$1")); else {
+			if (sending) throw new Error("Magane's API was unavailable. Please reload Magane if the API is already back online.");
+			url = "/assets/8becd37ab9d13cdfe37c08c496a9def3.svg";
+		} else if (pack.startsWith("startswith-")) {
 			url = "https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true".replace(/%id%/g, id.split(".")[0]);
 			let append = sending ? "&h=180p" : "&h=100p";
 			localPacks[pack].animated && (url = url.replace(/sticker(@2x)?\.png/, "sticker_animation$1.png"), 
@@ -1437,7 +1448,10 @@ function instance$1($$self, $$props, $$invalidate) {
 				richValue: modules.richUtils.toRichValue("")
 			});
 		} catch (error) {
-			console.error(error), toastError("Unexpected error occurred when sending sticker. Check your console for details.");
+			console.error(error), toastError(error.toString(), {
+				nolog: !0,
+				timeout: 5000
+			});
 		}
 		onCooldown = !1;
 	}, favoriteSticker = (pack, id) => {
