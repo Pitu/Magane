@@ -980,7 +980,7 @@
 
 	const toggleStickerWindow = forceState => {
 		if (!document.body.contains(main)) {
-			return toastError('Oh no! Magane was unexpectedly destroyed. Please reload Magane :(', { timeout: 6000 });
+			return toastError('Oh no! Magane was unexpectedly destroyed.. Please consider updating to MaganeBD instead.', { timeout: 6000 });
 		}
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
