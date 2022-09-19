@@ -11,7 +11,8 @@
 	const modules = {};
 
 	const coords = { top: 0, left: 0 };
-	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled"])';
+	const selectorVoiceChatWrapper = '[class^="channelChatWrapper-"]';
+	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled-"])';
 	let main = null;
 	let base = null;
 	let textArea = null;
@@ -40,16 +41,18 @@
 	let storage = null;
 	let packsSearch = null;
 	let resizeObserver = null;
+	let isWarnedAboutViewportHeight = false;
 	const waitForTimeouts = {};
 
 	const settings = {
 		disableToasts: false,
 		closeWindowOnSend: false,
-		disableDownscale: false,
 		useLeftToolbar: false,
+		hidePackAppendix: false,
+		disableDownscale: false,
 		disableImportedObfuscation: false,
 		markAsSpoiler: false,
-		hidePackAppendix: false,
+		ignoreViewportSize: false,
 		hotkey: null
 	};
 	const defaultSettings = Object.freeze(Object.assign({}, settings));
@@ -96,15 +99,20 @@
 		return toast(message, options);
 	};
 
-	const waitFor = (selector, logname) => {
-		if (logname) log(`Waiting for ${logname}\u2026`);
+	const waitFor = (selector, options) => {
+		if (options.logname) {
+			log(`Waiting for ${options.logname}\u2026`);
+		}
 		let poll;
 		return new Promise(resolve => {
 			(poll = () => {
 				const element = document.querySelector(selector);
 				if (element) {
-					delete waitForTimeouts[selector];
-					return resolve(element);
+					// If an assert function is provided, ensure that it passes
+					if (typeof options.assert !== 'function' || options.assert(element)) {
+						delete waitForTimeouts[selector];
+						return resolve(element);
+					}
 				}
 				waitForTimeouts[selector] = setTimeout(poll, 500);
 			})();
@@ -167,7 +175,20 @@
 		if (!document.body.contains(textArea)) {
 			resizeObserver.disconnect();
 			destroyButtonComponent();
-			textArea = await waitFor(selectorTextArea, 'textarea');
+			// Wait for new valid textArea
+			textArea = await waitFor(selectorTextArea, {
+				logname: 'textarea',
+				assert: element => {
+					// If voice channel's chat wrapper is currently active,
+					// assert that found element is a child of it,
+					// otherwise let waitFor() to continue to poll.
+					// This is necesary because Discord does not immediately destroy the old element
+					// as it is building a chat wrapper when in a voice channel.
+					const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
+					return !voiceChatWrapper || voiceChatWrapper.contains(element);
+				}
+			});
+			// Re-attach observer to new valid textArea
 			resizeObserver.observe(textArea);
 		}
 
@@ -930,10 +951,13 @@
 		// eslint-disable-next-line no-use-before-define
 		document.removeEventListener('keyup', onKeydownEvent);
 		destroyButtonComponent();
+		// Clear all pending timeouts
 		for (const timeout of Object.values(waitForTimeouts)) {
 			clearTimeout(timeout);
 		}
-		if (resizeObserver) resizeObserver.disconnect();
+		if (resizeObserver) {
+			resizeObserver.disconnect();
+		}
 		delete window.magane;
 		log('Internal components cleaned up.');
 	});
@@ -958,12 +982,20 @@
 
 	const toggleStickerWindow = forceState => {
 		if (!document.body.contains(main)) {
-			return toastError('Oh no! Magane was unexpectedly destroyed. Please reload Magane :(', { timeout: 6000 });
+			return toastError('Oh no! Magane was unexpectedly destroyed.. Please consider updating to MaganeBD instead.', { timeout: 6000 });
 		}
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
 			updateStickerWindowPosition();
 			document.addEventListener('click', maganeBlurHandler);
+			// One-time warning for viewport height <= 700px when opening Magane window
+			if (!settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
+				const viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+				if (viewportHeight <= 700) {
+					toastWarn('Viewport height is less than 700px, Magane window may not display properly.', { timeout: 6000 });
+					isWarnedAboutViewportHeight = true;
+				}
+			}
 		} else {
 			document.removeEventListener('click', maganeBlurHandler);
 		}
@@ -1894,6 +1926,15 @@
 											type="checkbox"
 											bind:checked={ settings.markAsSpoiler } />
 										Mark stickers as spoilers when sending
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="ignoreViewportSize"
+											type="checkbox"
+											bind:checked={ settings.ignoreViewportSize } />
+										Do not warn if viewport height is insufficient
 									</label>
 								</p>
 							</div>
