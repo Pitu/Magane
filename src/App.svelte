@@ -41,16 +41,18 @@
 	let storage = null;
 	let packsSearch = null;
 	let resizeObserver = null;
+	let isWarnedAboutViewportHeight = false;
 	const waitForTimeouts = {};
 
 	const settings = {
 		disableToasts: false,
 		closeWindowOnSend: false,
-		disableDownscale: false,
 		useLeftToolbar: false,
+		hidePackAppendix: false,
+		disableDownscale: false,
 		disableImportedObfuscation: false,
 		markAsSpoiler: false,
-		hidePackAppendix: false,
+		ignoreViewportSize: false,
 		hotkey: null
 	};
 	const defaultSettings = Object.freeze(Object.assign({}, settings));
@@ -986,6 +988,14 @@
 		if (active) {
 			updateStickerWindowPosition();
 			document.addEventListener('click', maganeBlurHandler);
+			// One-time warning for viewport height <= 700px when opening Magane window
+			if (!settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
+				const viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+				if (viewportHeight <= 700) {
+					toastWarn('Viewport height is less than 700px, Magane window may not display properly.', { timeout: 6000 });
+					isWarnedAboutViewportHeight = true;
+				}
+			}
 		} else {
 			document.removeEventListener('click', maganeBlurHandler);
 		}
@@ -1916,6 +1926,15 @@
 											type="checkbox"
 											bind:checked={ settings.markAsSpoiler } />
 										Mark stickers as spoilers when sending
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="ignoreViewportSize"
+											type="checkbox"
+											bind:checked={ settings.ignoreViewportSize } />
+										Do not warn if viewport height is insufficient
 									</label>
 								</p>
 							</div>
