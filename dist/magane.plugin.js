@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.4
+ * @version 3.2.5
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -1035,7 +1035,7 @@ function create_each_block(ctx) {
 }
 
 function create_fragment$1(ctx) {
-	let main_1, div26, div25, div0, t0, t1, div0_class_value, t2, div7, div4, div3, div2, t3, t4, div6, div5, div7_class_value, t5, div24, div8, t6, div23, div22, div13, div9, t8, div10, t10, div11, t12, div12, t14, t15, div14, input0, t16, div14_style_value, t17, div17, div15, p0, t19, p1, t23, p2, t25, p3, input1, t26, button0, t28, div16, p4, t30, p5, t35, p6, t38, p7, input2, t39, button1, t41, p8, input3, t42, button2, t44, p9, button3, div17_style_value, t46, div21, div18, p10, t48, p11, label0, input4, t49, t50, p12, label1, input5, t51, t52, p13, label2, input6, t53, t54, p14, label3, input7, t55, t56, p15, label4, input8, t57, t58, p16, label5, input9, t59, t60, p17, label6, input10, t61, t62, p18, label7, input11, t63, t64, div19, p19, t66, p20, t68, p21, t70, p22, t72, p23, input12, t73, button4, t75, div20, p24, t77, p25, input13, t78, button5, t80, p26, button6, div21_style_value, div24_style_value, div25_style_value, div26_style_value, mounted, dispose, if_block0 = !ctx[8] && !ctx[10] && create_if_block_10(), if_block1 = ctx[8] && ctx[8].length && create_if_block_9(ctx), each_value_3 = ctx[10], each_blocks_1 = [];
+	let main_1, div26, div25, div0, t0, t1, div0_class_value, t2, div7, div4, div3, div2, t3, t4, div6, div5, div7_class_value, t5, div24, div8, t6, div23, div22, div13, div9, t8, div10, t10, div11, t12, div12, t14, t15, div14, input0, t16, div14_style_value, t17, div17, div15, p0, t19, p1, t23, p2, t25, p3, input1, t26, button0, t28, div16, p4, t30, p5, t35, p6, t38, p7, input2, t39, button1, t41, p8, input3, t42, button2, t44, p9, button3, div17_style_value, t46, div21, div18, p10, t48, p11, label0, input4, t49, t50, p12, label1, input5, t51, t52, p13, label2, input6, t53, t54, p14, label3, input7, t55, t56, p15, label4, input8, t57, t58, p16, label5, input9, t59, t60, p17, label6, input10, t61, t62, p18, label7, input11, t63, t64, p19, label8, input12, t65, t66, div19, p20, t68, p21, t70, p22, t72, p23, t74, p24, input13, t75, button4, t77, div20, p25, t79, p26, input14, t80, button5, t82, p27, button6, div21_style_value, div24_style_value, div25_style_value, div26_style_value, mounted, dispose, if_block0 = !ctx[8] && !ctx[10] && create_if_block_10(), if_block1 = ctx[8] && ctx[8].length && create_if_block_9(ctx), each_value_3 = ctx[10], each_blocks_1 = [];
 	for (let i = 0; i < each_value_3.length; i += 1) each_blocks_1[i] = create_each_block_3(get_each_context_3(ctx, each_value_3, i));
 	let if_block2 = ctx[23] && ctx[23].length && function create_if_block_7(ctx) {
 		let div1, mounted, dispose;
@@ -1097,15 +1097,17 @@ function create_fragment$1(ctx) {
 			t60 = space(), p17 = element("p"), label6 = element("label"), input10 = element("input"), 
 			t61 = text("\n\t\t\t\t\t\t\t\t\t\tMark stickers as spoilers when sending"), t62 = space(), 
 			p18 = element("p"), label7 = element("label"), input11 = element("input"), t63 = text("\n\t\t\t\t\t\t\t\t\t\tDo not warn if viewport height is insufficient"), 
-			t64 = space(), div19 = element("div"), p19 = element("p"), p19.textContent = "Hotkey", 
-			t66 = space(), p20 = element("p"), p20.innerHTML = '<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>', 
-			t68 = space(), p21 = element("p"), p21.textContent = "Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (Ctrl, Alt, etc.) + other keys.", 
-			t70 = space(), p22 = element("p"), p22.textContent = "e.g. M, Ctrl+Q, Alt+Shift+Y", 
-			t72 = space(), p23 = element("p"), input12 = element("input"), t73 = space(), button4 = element("button"), 
-			button4.textContent = "Set", t75 = space(), div20 = element("div"), p24 = element("p"), 
-			p24.textContent = "Database", t77 = space(), p25 = element("p"), input13 = element("input"), 
-			t78 = space(), button5 = element("button"), button5.textContent = "Replace Database", 
-			t80 = space(), p26 = element("p"), button6 = element("button"), button6.textContent = "Export Database", 
+			t64 = space(), p19 = element("p"), label8 = element("label"), input12 = element("input"), 
+			t65 = text("\n\t\t\t\t\t\t\t\t\t\tDo not send text chat input alongside sticker"), 
+			t66 = space(), div19 = element("div"), p20 = element("p"), p20.textContent = "Hotkey", 
+			t68 = space(), p21 = element("p"), p21.innerHTML = '<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>', 
+			t70 = space(), p22 = element("p"), p22.textContent = "Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (Ctrl, Alt, etc.) + other keys.", 
+			t72 = space(), p23 = element("p"), p23.textContent = "e.g. M, Ctrl+Q, Alt+Shift+Y", 
+			t74 = space(), p24 = element("p"), input13 = element("input"), t75 = space(), button4 = element("button"), 
+			button4.textContent = "Set", t77 = space(), div20 = element("div"), p25 = element("p"), 
+			p25.textContent = "Database", t79 = space(), p26 = element("p"), input14 = element("input"), 
+			t80 = space(), button5 = element("button"), button5.textContent = "Replace Database", 
+			t82 = space(), p27 = element("p"), button6 = element("button"), button6.textContent = "Export Database", 
 			attr(div0, "class", div0_class_value = "stickers has-scroll-y " + (ctx[18].useLeftToolbar ? "has-left-toolbar" : "")), 
 			attr(div0, "style", ""), attr(div2, "class", "pack"), attr(div2, "title", "Manage subscribed packs"), 
 			attr(div3, "class", "packs-wrapper"), attr(div4, "class", "packs packs-controls"), 
@@ -1133,10 +1135,11 @@ function create_fragment$1(ctx) {
 			attr(input8, "name", "disableDownscale"), attr(input8, "type", "checkbox"), attr(input9, "name", "disableImportedObfuscation"), 
 			attr(input9, "type", "checkbox"), attr(input10, "name", "markAsSpoiler"), attr(input10, "type", "checkbox"), 
 			attr(input11, "name", "ignoreViewportSize"), attr(input11, "type", "checkbox"), 
-			attr(div18, "class", "section settings"), attr(p19, "class", "section-title"), attr(input12, "class", "inputQuery supress-magane-hotkey"), 
-			attr(input12, "type", "text"), attr(button4, "class", "button is-primary"), attr(p23, "class", "input-grouped"), 
-			attr(div19, "class", "section hotkey"), attr(p24, "class", "section-title"), attr(input13, "id", "replaceDatabaseInput"), 
-			attr(input13, "type", "file"), set_style(input13, "display", "none"), attr(input13, "accept", "application/JSON"), 
+			attr(input12, "name", "disableSendingWithChatInput"), attr(input12, "type", "checkbox"), 
+			attr(div18, "class", "section settings"), attr(p20, "class", "section-title"), attr(input13, "class", "inputQuery supress-magane-hotkey"), 
+			attr(input13, "type", "text"), attr(button4, "class", "button is-primary"), attr(p24, "class", "input-grouped"), 
+			attr(div19, "class", "section hotkey"), attr(p25, "class", "section-title"), attr(input14, "id", "replaceDatabaseInput"), 
+			attr(input14, "type", "file"), set_style(input14, "display", "none"), attr(input14, "accept", "application/JSON"), 
 			attr(button5, "class", "button is-danger has-width-full"), attr(button6, "class", "button is-primary has-width-full"), 
 			attr(div20, "class", "section database"), attr(div21, "class", "tab-content has-scroll-y misc"), 
 			attr(div21, "style", div21_style_value = 3 === ctx[7] ? "" : "display: none;"), 
@@ -1182,13 +1185,15 @@ function create_fragment$1(ctx) {
 			append(div18, p17), append(p17, label6), append(label6, input10), input10.checked = ctx[18].markAsSpoiler, 
 			append(label6, t61), append(div18, t62), append(div18, p18), append(p18, label7), 
 			append(label7, input11), input11.checked = ctx[18].ignoreViewportSize, append(label7, t63), 
-			append(div21, t64), append(div21, div19), append(div19, p19), append(div19, t66), 
-			append(div19, p20), append(div19, t68), append(div19, p21), append(div19, t70), 
-			append(div19, p22), append(div19, t72), append(div19, p23), append(p23, input12), 
-			set_input_value(input12, ctx[16]), append(p23, t73), append(p23, button4), append(div21, t75), 
-			append(div21, div20), append(div20, p24), append(div20, t77), append(div20, p25), 
-			append(p25, input13), append(p25, t78), append(p25, button5), append(div20, t80), 
-			append(div20, p26), append(p26, button6), ctx[83](main_1), mounted || (dispose = [ listen(div2, "click", ctx[50]), listen(div8, "click", ctx[53]), listen(div9, "click", ctx[54]), listen(div10, "click", ctx[55]), listen(div11, "click", ctx[56]), listen(div12, "click", ctx[57]), listen(input0, "keyup", ctx[25]), listen(input0, "input", ctx[60]), listen(input1, "input", ctx[65]), listen(button0, "click", ctx[66]), listen(input2, "input", ctx[67]), listen(button1, "click", ctx[68]), listen(input3, "click", click_handler_22), listen(input3, "change", ctx[36]), listen(button2, "click", ctx[69]), listen(button3, "click", ctx[70]), listen(input4, "change", ctx[71]), listen(input5, "change", ctx[72]), listen(input6, "change", ctx[73]), listen(input7, "change", ctx[74]), listen(input8, "change", ctx[75]), listen(input9, "change", ctx[76]), listen(input10, "change", ctx[77]), listen(input11, "change", ctx[78]), listen(div18, "change", ctx[39]), listen(input12, "input", ctx[79]), listen(button4, "click", ctx[80]), listen(input13, "click", click_handler_26), listen(input13, "change", ctx[41]), listen(button5, "click", ctx[81]), listen(button6, "click", ctx[82]) ], 
+			append(div18, t64), append(div18, p19), append(p19, label8), append(label8, input12), 
+			input12.checked = ctx[18].disableSendingWithChatInput, append(label8, t65), append(div21, t66), 
+			append(div21, div19), append(div19, p20), append(div19, t68), append(div19, p21), 
+			append(div19, t70), append(div19, p22), append(div19, t72), append(div19, p23), 
+			append(div19, t74), append(div19, p24), append(p24, input13), set_input_value(input13, ctx[16]), 
+			append(p24, t75), append(p24, button4), append(div21, t77), append(div21, div20), 
+			append(div20, p25), append(div20, t79), append(div20, p26), append(p26, input14), 
+			append(p26, t80), append(p26, button5), append(div20, t82), append(div20, p27), 
+			append(p27, button6), ctx[84](main_1), mounted || (dispose = [ listen(div2, "click", ctx[50]), listen(div8, "click", ctx[53]), listen(div9, "click", ctx[54]), listen(div10, "click", ctx[55]), listen(div11, "click", ctx[56]), listen(div12, "click", ctx[57]), listen(input0, "keyup", ctx[25]), listen(input0, "input", ctx[60]), listen(input1, "input", ctx[65]), listen(button0, "click", ctx[66]), listen(input2, "input", ctx[67]), listen(button1, "click", ctx[68]), listen(input3, "click", click_handler_22), listen(input3, "change", ctx[36]), listen(button2, "click", ctx[69]), listen(button3, "click", ctx[70]), listen(input4, "change", ctx[71]), listen(input5, "change", ctx[72]), listen(input6, "change", ctx[73]), listen(input7, "change", ctx[74]), listen(input8, "change", ctx[75]), listen(input9, "change", ctx[76]), listen(input10, "change", ctx[77]), listen(input11, "change", ctx[78]), listen(input12, "change", ctx[79]), listen(div18, "change", ctx[39]), listen(input13, "input", ctx[80]), listen(button4, "click", ctx[81]), listen(input14, "click", click_handler_26), listen(input14, "change", ctx[41]), listen(button5, "click", ctx[82]), listen(button6, "click", ctx[83]) ], 
 			mounted = !0);
 		},
 		p(ctx, dirty) {
@@ -1232,7 +1237,7 @@ function create_fragment$1(ctx) {
 			262144 & dirty[0] && (input6.checked = ctx[18].useLeftToolbar), 262144 & dirty[0] && (input7.checked = ctx[18].hidePackAppendix), 
 			262144 & dirty[0] && (input8.checked = ctx[18].disableDownscale), 262144 & dirty[0] && (input9.checked = ctx[18].disableImportedObfuscation), 
 			262144 & dirty[0] && (input10.checked = ctx[18].markAsSpoiler), 262144 & dirty[0] && (input11.checked = ctx[18].ignoreViewportSize), 
-			65536 & dirty[0] && input12.value !== ctx[16] && set_input_value(input12, ctx[16]), 
+			262144 & dirty[0] && (input12.checked = ctx[18].disableSendingWithChatInput), 65536 & dirty[0] && input13.value !== ctx[16] && set_input_value(input13, ctx[16]), 
 			128 & dirty[0] && div21_style_value !== (div21_style_value = 3 === ctx[7] ? "" : "display: none;") && attr(div21, "style", div21_style_value), 
 			32 & dirty[0] && div24_style_value !== (div24_style_value = ctx[5] ? "" : "display: none;") && attr(div24, "style", div24_style_value), 
 			17 & dirty[0] && div25_style_value !== (div25_style_value = "bottom: " + ctx[0].wbottom + "px; right: " + ctx[0].wright + "px; " + (ctx[4] ? "" : "display: none;")) && attr(div25, "style", div25_style_value), 
@@ -1243,7 +1248,7 @@ function create_fragment$1(ctx) {
 		d(detaching) {
 			detaching && detach(main_1), if_block0 && if_block0.d(), if_block1 && if_block1.d(), 
 			destroy_each(each_blocks_1, detaching), if_block2 && if_block2.d(), destroy_each(each_blocks, detaching), 
-			if_block3 && if_block3.d(), if_block4 && if_block4.d(), ctx[83](null), mounted = !1, 
+			if_block3 && if_block3.d(), if_block4 && if_block4.d(), ctx[84](null), mounted = !1, 
 			run_all(dispose);
 		}
 	};
@@ -1275,6 +1280,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		disableImportedObfuscation: !1,
 		markAsSpoiler: !1,
 		ignoreViewportSize: !1,
+		disableSendingWithChatInput: !1,
 		hotkey: null
 	}, defaultSettings = Object.freeze(Object.assign({}, settings)), allowedStorageKeys = [ "magane.available", "magane.subscribed", "magane.favorites", "magane.settings" ], log = (message, type = "log") => (type = [ "log", "info", "warn", "error" ].includes(type) ? type : "log", 
 	console[type]("%c[Magane]%c", "color: #3a71c1; font-weight: 700", "", message)), toast = (message, options = {}) => {
@@ -1284,6 +1290,15 @@ function instance$1($$self, $$props, $$invalidate) {
 	toast(message, options)), toastWarn = (message, options = {}) => (options.type = "warn", 
 	toast(message, options)), destroyButtonComponent = () => {
 		buttonComponent && buttonComponent.$destroy();
+	}, updateStickerWindowPosition = () => {
+		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
+		if (!buttonsContainer) return;
+		const props = buttonsContainer.getBoundingClientRect();
+		if (log("Updating window's position…"), $$invalidate(0, coords.wbottom = base.clientHeight - props.top + 8, coords), 
+		$$invalidate(0, coords.wright = base.clientWidth - props.right - 6, coords), !isMaganeBD) {
+			const baseProps = base.getBoundingClientRect();
+			$$invalidate(0, coords.wbottom += baseProps.top, coords), $$invalidate(0, coords.wright += baseProps.left, coords);
+		}
 	}, initResizeObserver = async () => {
 		resizeObserver || (resizeObserver = new ResizeObserver(entries => {
 			for (const entry of entries) {
@@ -1308,7 +1323,8 @@ function instance$1($$self, $$props, $$invalidate) {
 				const voiceChatWrapper = document.querySelector('[class^="channelChatWrapper-"]');
 				return !voiceChatWrapper || voiceChatWrapper.contains(element);
 			}
-		}), resizeObserver.observe(textArea)), buttonComponent && document.body.contains(buttonComponent.element) || (() => {
+		}), resizeObserver.observe(textArea), stickerWindowActive && updateStickerWindowPosition()), 
+		buttonComponent && document.body.contains(buttonComponent.element) || (() => {
 			const buttonsContainer = textArea.querySelector('[class^="buttons"]');
 			buttonsContainer && (buttonComponent = new Button({
 				target: buttonsContainer,
@@ -1407,19 +1423,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		});
 		onCooldown = !0;
 		try {
-			const userId = modules.userStore.getCurrentUser().id, channelId = modules.selectedChannelStore.getChannelId(), channel = modules.channelStore.getChannel(channelId);
-			if (!((permissions, user, context) => {
-				if (!user) return !1;
-				if (!permissions || !context.guild_id) return !0;
-				permissions = Array.isArray(permissions) ? permissions : [ permissions ];
-				for (const permission of permissions) if (!modules.permissionRoleUtils.can({
-					permission,
-					user,
-					context
-				}) && !modules.computePermissions.can(permission, user, context)) return !1;
-				return !0;
-			})([ modules.discordPermissions.ATTACH_FILES, modules.discordPermissions.SEND_MESSAGES ], userId, channel)) return onCooldown = !1, 
-			toastError("You do not have permission to attach files in this channel.");
+			const channelId = modules.selectedChannelStore.getChannelId();
 			toast("Sending…", {
 				nolog: !0
 			}), settings.closeWindowOnSend && toggleStickerWindow(!1);
@@ -1437,14 +1441,13 @@ function instance$1($$self, $$props, $$invalidate) {
 			settings.markAsSpoiler && (filename = "SPOILER_" + filename);
 			const file = new File([ blob ], filename);
 			log(`Sending sticker as ${filename}…`);
-			let messageContent = "";
-			const textAreaInstance = (() => {
+			let textAreaInstance, messageContent = "";
+			if (!settings.disableSendingWithChatInput) if (textAreaInstance = (() => {
 				let cursor = textArea[Object.keys(textArea).find(key => key.startsWith("__reactInternalInstance") || key.startsWith("__reactFiber"))];
 				if (!cursor) return null;
-				for (;!cursor.stateNode || !cursor.stateNode.constructor || "ChannelTextAreaForm" !== cursor.stateNode.constructor.displayName; ) cursor = cursor.return;
+				for (;cursor && (!cursor.stateNode || !cursor.stateNode.constructor || "ChannelTextAreaForm" !== cursor.stateNode.constructor.displayName); ) cursor = cursor.return;
 				return cursor;
-			})();
-			if (textAreaInstance) messageContent = textAreaInstance.stateNode.state.textValue; else if (textArea) {
+			})(), textAreaInstance) messageContent = textAreaInstance.stateNode.state.textValue; else if (textArea) {
 				log("Unable to fetch text area of chat input, attempting workaround…", "warn");
 				let element = textArea.querySelector("span");
 				element || (element = textArea), messageContent = element.innerText;
@@ -1455,7 +1458,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				message: {
 					content: messageContent
 				}
-			}), textAreaInstance && textAreaInstance.stateNode.setState({
+			}), !settings.disableSendingWithChatInput && textAreaInstance && textAreaInstance.stateNode.setState({
 				textValue: "",
 				richValue: modules.richUtils.toRichValue("")
 			});
@@ -1614,11 +1617,8 @@ function instance$1($$self, $$props, $$invalidate) {
 	};
 	onMount(async () => {
 		try {
-			toast("Loading Magane…"), modules.channelStore = BdApi.findModuleByProps("getChannel", "getDMFromUserId"), 
-			modules.selectedChannelStore = BdApi.findModuleByProps("getLastSelectedChannelId"), 
-			modules.userStore = BdApi.findModuleByProps("getCurrentUser", "getUser"), modules.discordConstants = BdApi.findModuleByProps("Permissions", "ActivityTypes", "StatusTypes"), 
-			modules.discordPermissions = modules.discordConstants.Permissions, modules.permissionRoleUtils = BdApi.findModuleByProps("can", "ALLOW", "DENY"), 
-			modules.computePermissions = BdApi.findModuleByProps("computePermissions"), modules.messageUpload = BdApi.findModuleByProps("upload", "instantBatchUpload"), 
+			toast("Loading Magane…"), modules.selectedChannelStore = BdApi.findModuleByProps("getLastSelectedChannelId"), 
+			modules.messageUpload = BdApi.findModuleByProps("upload", "instantBatchUpload"), 
 			modules.richUtils = BdApi.findModuleByProps("toRichValue", "createEmptyState"), 
 			(() => {
 				const iframe = document.createElement("iframe");
@@ -1656,16 +1656,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		});
 		const active = void 'undefined' === forceState ? !stickerWindowActive : forceState;
 		if (active) {
-			if ((() => {
-				const buttonsContainer = textArea.querySelector('[class^="buttons"]');
-				if (!buttonsContainer) return;
-				const props = buttonsContainer.getBoundingClientRect();
-				if (log("Updating window's position…"), $$invalidate(0, coords.wbottom = base.clientHeight - props.top + 8, coords), 
-				$$invalidate(0, coords.wright = base.clientWidth - props.right - 6, coords), !isMaganeBD) {
-					const baseProps = base.getBoundingClientRect();
-					$$invalidate(0, coords.wbottom += baseProps.top, coords), $$invalidate(0, coords.wright += baseProps.left, coords);
-				}
-			})(), document.addEventListener("click", maganeBlurHandler), !settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
+			if (updateStickerWindowPosition(), document.addEventListener("click", maganeBlurHandler), 
+			!settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
 				Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0) <= 700 && (toastWarn("Viewport height is less than 700px, Magane window may not display properly.", {
 					timeout: 6000
 				}), isWarnedAboutViewportHeight = !0);
@@ -2034,7 +2026,9 @@ function instance$1($$self, $$props, $$invalidate) {
 		settings.markAsSpoiler = this.checked, $$invalidate(18, settings);
 	}, function input11_change_handler() {
 		settings.ignoreViewportSize = this.checked, $$invalidate(18, settings);
-	}, function input12_input_handler() {
+	}, function input12_change_handler() {
+		settings.disableSendingWithChatInput = this.checked, $$invalidate(18, settings);
+	}, function input13_input_handler() {
 		hotkeyInput = this.value, $$invalidate(16, hotkeyInput);
 	}, () => parseThenInitHotkey(!0), () => replaceDatabase(), () => exportDatabase(), function main_1_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
