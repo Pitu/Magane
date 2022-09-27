@@ -191,6 +191,11 @@
 			});
 			// Re-attach observer to new valid textArea
 			resizeObserver.observe(textArea);
+			// Re-position magane's sticker window, if required
+			// Useful when switching back & forth from regular to voice text chat channels
+			if (stickerWindowActive) {
+				updateStickerWindowPosition();
+			}
 		}
 
 		// Re-mount button if necesary
@@ -1001,6 +1006,7 @@
 		}
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
+			// Re-position magane's sticker window
 			updateStickerWindowPosition();
 			document.addEventListener('click', maganeBlurHandler);
 			// One-time warning for viewport height <= 700px when opening Magane window
