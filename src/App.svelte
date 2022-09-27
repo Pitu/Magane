@@ -212,17 +212,21 @@
 
 	const initModules = () => {
 		// Channel store & actions
-		modules.channelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
+		// modules.channelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
 		modules.selectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
 
 		// User store
-		modules.userStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
+		// modules.userStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
 
 		// Discord objects & utils
-		modules.discordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
-		modules.discordPermissions = modules.discordConstants.Permissions;
-		modules.permissionRoleUtils = BdApi.findModuleByProps('can', 'ALLOW', 'DENY');
-		modules.computePermissions = BdApi.findModuleByProps('computePermissions');
+		/*
+		try {
+			modules.discordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
+			modules.discordPermissions = modules.discordConstants.Permissions;
+			modules.permissionRoleUtils = BdApi.findModuleByProps('can', 'ALLOW', 'DENY');
+			modules.computePermissions = BdApi.findModuleByProps('computePermissions');
+		} catch (_) {} // Do nothing
+		*/
 
 		// Misc
 		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
@@ -464,6 +468,7 @@
 			key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))];
 		if (!cursor) return null;
 		while (
+			cursor &&
 			!(
 				cursor.stateNode &&
 				cursor.stateNode.constructor &&
@@ -476,20 +481,27 @@
 		return cursor;
 	};
 
+	/*
+	// NOTE: Magane will already automatically hide its button on channels with insufficient channels
+	// through CSS magic, so it's fine not to check against their actual permissions altogether.
 	const hasPermissions = (permissions, user, context) => {
+		// Always true if could not fetch Discord's Permissions module
+		if (!modules.discordPermissions) return true;
 		if (!user) return false;
 		// Always true in non-guild channels (e.g. DMs)
 		if (!permissions || !context.guild_id) return true;
 		permissions = Array.isArray(permissions) ? permissions : [permissions];
 		for (const permission of permissions) {
 			// Fallback of the old method as it appeared to be a rolling update
-			if (!modules.permissionRoleUtils.can({ permission, user, context }) &&
-				!modules.computePermissions.can(permission, user, context)) {
+			const perm = modules.discordPermissions[permission];
+			if (!modules.permissionRoleUtils.can({ permission: perm, user, context }) &&
+				!modules.computePermissions.can(perm, user, context)) {
 				return false;
 			}
 		}
 		return true;
 	};
+	*/
 
 	const sendSticker = async (pack, id) => {
 		if (onCooldown) {
@@ -499,16 +511,15 @@
 		onCooldown = true;
 
 		try {
-			const userId = modules.userStore.getCurrentUser().id;
+			// const userId = modules.userStore.getCurrentUser().id;
 			const channelId = modules.selectedChannelStore.getChannelId();
-			const channel = modules.channelStore.getChannel(channelId);
-			if (!hasPermissions([
-				modules.discordPermissions.ATTACH_FILES,
-				modules.discordPermissions.SEND_MESSAGES
-			], userId, channel)) {
+			// const channel = modules.channelStore.getChannel(channelId);
+			/*
+			if (!hasPermissions(['ATTACH_FILES', 'SEND_MESSAGES'], userId, channel)) {
 				onCooldown = false;
 				return toastError('You do not have permission to attach files in this channel.');
 			}
+			*/
 
 			toast('Sending\u2026', { nolog: true });
 			if (settings.closeWindowOnSend) {
