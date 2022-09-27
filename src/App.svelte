@@ -53,6 +53,7 @@
 		disableImportedObfuscation: false,
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
+		disableSendingWithChatInput: false,
 		hotkey: null
 	};
 	const defaultSettings = Object.freeze(Object.assign({}, settings));
@@ -554,16 +555,19 @@
 			log(`Sending sticker as ${filename}\u2026`);
 
 			let messageContent = '';
-			const textAreaInstance = getTextAreaInstance();
-			if (textAreaInstance) {
-				messageContent = textAreaInstance.stateNode.state.textValue;
-			} else if (textArea) {
-				log('Unable to fetch text area of chat input, attempting workaround\u2026', 'warn');
-				let element = textArea.querySelector('span');
-				if (!element) element = textArea;
-				messageContent = element.innerText;
-			} else {
-				log('Unable to fetch text area of chat input, workaround unavailable\u2026', 'warn');
+			let textAreaInstance;
+			if (!settings.disableSendingWithChatInput) {
+				textAreaInstance = getTextAreaInstance();
+				if (textAreaInstance) {
+					messageContent = textAreaInstance.stateNode.state.textValue;
+				} else if (textArea) {
+					log('Unable to fetch text area of chat input, attempting workaround\u2026', 'warn');
+					let element = textArea.querySelector('span');
+					if (!element) element = textArea;
+					messageContent = element.innerText;
+				} else {
+					log('Unable to fetch text area of chat input, workaround unavailable\u2026', 'warn');
+				}
 			}
 
 			modules.messageUpload.upload({
@@ -574,8 +578,8 @@
 				}
 			});
 
-			// Clear chat input (if it was filled, the content would have been sent alongside the sticker)
-			if (textAreaInstance) {
+			// Clear chat input if required
+			if (!settings.disableSendingWithChatInput && textAreaInstance) {
 				textAreaInstance.stateNode.setState({
 					textValue: '',
 					richValue: modules.richUtils.toRichValue('')
@@ -1946,6 +1950,15 @@
 											type="checkbox"
 											bind:checked={ settings.ignoreViewportSize } />
 										Do not warn if viewport height is insufficient
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="disableSendingWithChatInput"
+											type="checkbox"
+											bind:checked={ settings.disableSendingWithChatInput } />
+										Do not send text chat input alongside sticker
 									</label>
 								</p>
 							</div>
