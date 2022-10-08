@@ -142,7 +142,7 @@
 		// eslint-disable-next-line no-use-before-define
 		buttonComponent.$on('click', () => toggleStickerWindow());
 		// eslint-disable-next-line no-use-before-define
-		buttonComponent.$on('grabPacks', () => grabPacks());
+		buttonComponent.$on('grabPacks', () => grabPacks(true));
 	};
 
 	const updateStickerWindowPosition = () => {
@@ -267,23 +267,36 @@
 		}
 	};
 
-	const loadSettings = () => {
+	const applySettings = data => {
+		// Only use keys that were explicitly defined in defaultSettings
+		for (const key of Object.keys(defaultSettings)) {
+			if (typeof data[key] === 'undefined') {
+				settings[key] = defaultSettings[key];
+			} else {
+				settings[key] = data[key];
+			}
+		}
+
+		frequentlyUsedInput = settings.frequentlyUsed;
+		hotkeyInput = settings.hotkey;
+
+		// eslint-disable-next-line no-use-before-define
+		parseThenInitHotkey();
+	};
+
+	const loadSettings = (reset = false) => {
+		// Reset parsed settings, if required (e.g. on settings reload)
+		if (reset) {
+			applySettings(defaultSettings);
+		}
+
 		const storedSettings = getFromLocalStorage('magane.settings');
 		if (storedSettings) {
-			// Only use keys that were explicitly defined in settings var
-			for (const key of Object.keys(settings)) {
-				if (typeof storedSettings[key] !== 'undefined' && storedSettings[key] !== null) {
-					settings[key] = storedSettings[key];
-				}
-			}
-
-			hotkeyInput = settings.hotkey;
-			// eslint-disable-next-line no-use-before-define
-			parseThenInitHotkey();
+			applySettings(storedSettings);
 		}
 	};
 
-	const grabPacks = async () => {
+	const grabPacks = async (reset = false) => {
 		let packs;
 		try {
 			const response = await fetch('https://magane.moe/api/packs');
@@ -293,6 +306,18 @@
 			// Toast and log to console, but allow to continue as-is
 			toastError('Unable to fetch Magane\'s API. Magane will load as-is, but built-in remote packs will temporarily be unavailable.', { timeout: 10000 });
 			console.error(error);
+		}
+
+		// Reset local arrays/objects, if required (e.g. on settings reload)
+		if (reset) {
+			availablePacks = [];
+			filteredPacks = [];
+			subscribedPacks = [];
+			subscribedPacksSimple = [];
+			favoriteStickers = [];
+			favoriteStickersData = {};
+			stickersStats = [];
+			frequentlyUsedSorted = [];
 		}
 
 		// Load local packs first to have them always before built-in packs
@@ -770,7 +795,7 @@
 			toastInfo('Found packs/stickers to migrate, migrating now...');
 			saveToLocalStorage('magane.favorites', favorites);
 			saveToLocalStorage('magane.subscribed', subscribed);
-			await grabPacks();
+			await grabPacks(true);
 			toastSuccess('Migration successful.');
 		}
 	};
@@ -1460,7 +1485,7 @@
 
 	const parseThenInitHotkey = save => {
 		// Clean input
-		const keys = hotkeyInput
+		const keys = (hotkeyInput || '')
 			.split('+')
 			.map(key => key.trim());
 		hotkeyInput = keys.join('+');
@@ -1599,8 +1624,8 @@
 						toast('Reloading Magane database\u2026');
 
 						Object.assign(settings, defaultSettings);
-						loadSettings();
-						await grabPacks();
+						loadSettings(true);
+						await grabPacks(true);
 						await migrateStringPackIds();
 
 						toastSuccess('Magane is now ready!');
