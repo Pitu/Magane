@@ -58,7 +58,6 @@
 	};
 	const defaultSettings = Object.freeze(Object.assign({}, settings));
 
-	// NOTE: For the time being only used to limit keys in replace/export database functions
 	const allowedStorageKeys = [
 		'magane.available',
 		'magane.subscribed',
@@ -248,29 +247,34 @@
 	};
 
 	const saveToLocalStorage = (key, payload) => {
-		storage.setItem(key, JSON.stringify(payload));
+		if (!allowedStorageKeys.includes(key)) return;
+		return storage.setItem(key, JSON.stringify(payload));
+	};
+
+	const getFromLocalStorage = key => {
+		if (!allowedStorageKeys.includes(key)) return;
+		try {
+			const stored = storage.getItem(key);
+			const parsed = JSON.parse(stored);
+			return parsed;
+		} catch (ex) {
+			console.error(ex);
+		}
 	};
 
 	const loadSettings = () => {
-		const storedSettings = storage.getItem('magane.settings');
+		const storedSettings = getFromLocalStorage('magane.settings');
 		if (storedSettings) {
-			try {
-				const parsed = JSON.parse(storedSettings);
-
-				// Only use keys that were explicitly defined in settings var
-				for (const key of Object.keys(settings)) {
-					if (typeof parsed[key] !== 'undefined' && parsed[key] !== null) {
-						settings[key] = parsed[key];
-					}
+			// Only use keys that were explicitly defined in settings var
+			for (const key of Object.keys(settings)) {
+				if (typeof storedSettings[key] !== 'undefined' && storedSettings[key] !== null) {
+					settings[key] = storedSettings[key];
 				}
-
-				hotkeyInput = settings.hotkey;
-				// eslint-disable-next-line no-use-before-define
-				parseThenInitHotkey();
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
 			}
+
+			hotkeyInput = settings.hotkey;
+			// eslint-disable-next-line no-use-before-define
+			parseThenInitHotkey();
 		}
 	};
 
@@ -287,80 +291,63 @@
 		}
 
 		// Load local packs first to have them always before built-in packs
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try {
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-
-				// This logic is necessary since the old data, prior to the new master rebase,
-				// would also store remote built-in packs in local storage (no idea why).
-				const filteredLocalPacks = availLocalPacks.filter(pack =>
-					typeof pack === 'object' &&
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			// This logic is necessary since the old data, prior to the new master rebase,
+			// would also store remote built-in packs in local storage (no idea why).
+			const filteredLocalPacks = availLocalPacks.filter(pack =>
+				typeof pack === 'object' &&
 					typeof pack.id !== 'undefined' &&
 					localPackIdRegex.test(pack.id));
-				if (availLocalPacks.length !== filteredLocalPacks.length) {
-					saveToLocalStorage('magane.available', filteredLocalPacks);
-				}
-
-				// Store local packs data in an ID-indexed Object for faster get's in formatURL()
-				filteredLocalPacks.forEach(pack => {
-					localPacks[pack.id] = pack;
-				});
-				availablePacks.push(...filteredLocalPacks);
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
+			if (availLocalPacks.length !== filteredLocalPacks.length) {
+				saveToLocalStorage('magane.available', filteredLocalPacks);
 			}
+
+			// Store local packs data in an ID-indexed Object for faster get's in formatURL()
+			filteredLocalPacks.forEach(pack => {
+				localPacks[pack.id] = pack;
+			});
+			availablePacks.push(...filteredLocalPacks);
 		}
 
 		// Then append remote packs after local packs
 		if (packs) {
 			availablePacks.push(...packs.packs);
 		}
+
 		// Refresh UI
 		availablePacks = availablePacks;
 		filteredPacks = availablePacks;
 
-		const subbedPacks = storage.getItem('magane.subscribed');
-		if (subbedPacks) {
-			try {
-				subscribedPacks = JSON.parse(subbedPacks);
-				for (const subbedPacks of subscribedPacks) {
-					subscribedPacksSimple.push(subbedPacks.id);
-				}
-				// Prioritize data of subscribed packs
-				subscribedPacks.forEach(pack => {
-					if (localPackIdRegex.test(pack.id)) {
-						localPacks[pack.id] = pack;
-					}
-				});
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
+		const subscribed = getFromLocalStorage('magane.subscribed');
+		if (Array.isArray(subscribed) && subscribed.length) {
+			subscribedPacks = subscribed;
+			for (const subbedPacks of subscribedPacks) {
+				subscribedPacksSimple.push(subbedPacks.id);
 			}
+			// Prioritize data of subscribed packs
+			subscribedPacks.forEach(pack => {
+				if (localPackIdRegex.test(pack.id)) {
+					localPacks[pack.id] = pack;
+				}
+			});
 		}
 
-		const favStickers = storage.getItem('magane.favorites');
-		if (favStickers) {
-			try {
-				favoriteStickers = JSON.parse(favStickers)
-					.filter(sticker => {
-						if (favoriteStickersData[sticker.pack])	{
-							return true;
-						}
-						const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
-						if (index !== -1) {
-							// Simple caching of pack names, for tooltips
-							favoriteStickersData[sticker.pack] = {
-								name: availablePacks[index].name
-							};
-							return true;
-						}
-					});
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
-			}
+		const favorites = getFromLocalStorage('magane.favorites');
+		if (Array.isArray(favorites) && favorites.length) {
+			favoriteStickers = favorites.filter(sticker => {
+				if (favoriteStickersData[sticker.pack])	{
+					return true;
+				}
+				const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
+				if (index !== -1) {
+					// Simple caching of pack names, for tooltips
+					favoriteStickersData[sticker.pack] = {
+						name: availablePacks[index].name
+					};
+					return true;
+				}
+			});
 		}
 	};
 
@@ -648,23 +635,20 @@
 	};
 
 	const _appendPack = (id, e, opts = {}) => {
-		let availLocalPacks = [];
 		let foundIndex;
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			availLocalPacks = JSON.parse(storedLocalPacks);
-			if (availLocalPacks) {
-				foundIndex = availLocalPacks.findIndex(p => p.id === id);
-				if (foundIndex >= 0) {
-					if (opts.overwrite && opts.partial) {
-						// Allow partial properties overwrites
-						e = Object.assign(availLocalPacks[foundIndex], e);
-					} else if (!opts.overwrite) {
-						throw new Error(`Pack with ID ${id} already exist.`);
-					}
-				} else if (opts.overwrite) {
-					throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
+
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			foundIndex = availLocalPacks.findIndex(p => p.id === id);
+			if (foundIndex >= 0) {
+				if (opts.overwrite && opts.partial) {
+					// Allow partial properties overwrites
+					e = Object.assign(availLocalPacks[foundIndex], e);
+				} else if (!opts.overwrite) {
+					throw new Error(`Pack with ID ${id} already exist.`);
 				}
+			} else if (opts.overwrite) {
+				throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
 			}
 		}
 
@@ -718,11 +702,11 @@
 
 	const sendSubscribedPacksOnce = async () => {
 		/*
-		if (storage.getItem('magane.alreadySentAnalyticsPacksOnce')) return;
+		if (getFromLocalStorage('magane.alreadySentAnalyticsPacksOnce')) return;
 		let data = subscribedPacks.map(pack => pack.id);
 		try {
 			await analyticsSubscribePack(data);
-			storage.setItem('magane.alreadySentAnalyticsPacksOnce', true);
+			saveToLocalStorage('magane.alreadySentAnalyticsPacksOnce', true);
 		} catch (err) {
 			toastError('Unexpected error. Check your console for details.');
 		}
@@ -731,10 +715,9 @@
 
 	const migrateStringPackIds = async () => {
 		let dirty = false;
-		const favorites = JSON.parse(storage.getItem('magane.favorites'));
-		const subscribed = JSON.parse(storage.getItem('magane.subscribed'));
 
-		if (favorites) {
+		const favorites = getFromLocalStorage('magane.favorites');
+		if (Array.isArray(favorites) && favorites.length) {
 			favorites.forEach(item => {
 				if (typeof item.pack === 'number') return;
 				const result = parseInt(item.pack, 10);
@@ -744,7 +727,8 @@
 			});
 		}
 
-		if (subscribed) {
+		const subscribed = getFromLocalStorage('magane.subscribed');
+		if (Array.isArray(subscribed) && subscribed.length) {
 			subscribed.forEach(item => {
 				if (typeof item.id === 'number') return;
 				const result = parseInt(item.id, 10);
@@ -756,8 +740,8 @@
 
 		if (dirty) {
 			toastInfo('Found packs/stickers to migrate, migrating now...');
-			storage.setItem('magane.favorites', JSON.stringify(favorites));
-			storage.setItem('magane.subscribed', JSON.stringify(subscribed));
+			saveToLocalStorage('magane.favorites', favorites);
+			saveToLocalStorage('magane.subscribed', subscribed);
 			await grabPacks();
 			toastSuccess('Migration successful.');
 		}
@@ -873,42 +857,37 @@
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try { // eslint-disable-line no-useless-catch
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-				const index = availLocalPacks.findIndex(p => p.id === id);
-				if (index === -1) {
-					throw new Error(`Unable to find pack with ID ${id}`);
-				}
-
-				// Force unfavorite stickers
-				favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
-				delete favoriteStickersData[id];
-				saveToLocalStorage('magane.favorites', favoriteStickers);
-
-				// Force unsubscribe
-				const subbedPack = subscribedPacks.find(p => p.id === id);
-				if (subbedPack)	{
-					unsubscribeToPack(subbedPack);
-				}
-
-				availLocalPacks.splice(index, 1);
-				saveToLocalStorage('magane.available', availLocalPacks);
-
-				const sharedIndex = availablePacks.findIndex(p => p.id === id);
-				if (sharedIndex !== -1) {
-					availablePacks.splice(sharedIndex, 1);
-					availablePacks = availablePacks;
-					filterPacks();
-				}
-
-				delete localPacks[id];
-				log(`Removed pack with ID ${id} (old index: ${index})`);
-				return true;
-			} catch (ex) {
-				throw ex;
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			const index = availLocalPacks.findIndex(p => p.id === id);
+			if (index === -1) {
+				throw new Error(`Unable to find pack with ID ${id}`);
 			}
+
+			// Force unfavorite stickers
+			favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
+			delete favoriteStickersData[id];
+			saveToLocalStorage('magane.favorites', favoriteStickers);
+
+			// Force unsubscribe
+			const subbedPack = subscribedPacks.find(p => p.id === id);
+			if (subbedPack)	{
+				unsubscribeToPack(subbedPack);
+			}
+
+			availLocalPacks.splice(index, 1);
+			saveToLocalStorage('magane.available', availLocalPacks);
+
+			const sharedIndex = availablePacks.findIndex(p => p.id === id);
+			if (sharedIndex !== -1) {
+				availablePacks.splice(sharedIndex, 1);
+				availablePacks = availablePacks;
+				filterPacks();
+			}
+
+			delete localPacks[id];
+			log(`Removed pack with ID ${id} (old index: ${index})`);
+			return true;
 		}
 	};
 
@@ -918,15 +897,11 @@
 		}
 
 		keyword = keyword.toLowerCase();
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try { // eslint-disable-line no-useless-catch
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-				return availLocalPacks.filter(p =>
-					p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
-			} catch (ex) {
-				throw ex;
-			}
+
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			return availLocalPacks.filter(p =>
+				p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
 		}
 	};
 
@@ -1596,9 +1571,9 @@
 			toast('Exporting database\u2026');
 			const database = {};
 			for (const key of allowedStorageKeys) {
-				const data = storage.getItem(key);
-				if (data !== null) {
-					database[key] = JSON.parse(data);
+				const data = getFromLocalStorage(key);
+				if (data !== undefined) {
+					database[key] = data;
 				}
 			}
 			const dbString = JSON.stringify(database);
@@ -1623,10 +1598,10 @@
 
 		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
-				{ #if !favoriteStickers && !subscribedPacks }
+				{ #if !favoriteStickers.length && !subscribedPacks.length }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				{ /if }
-				{ #if favoriteStickers && favoriteStickers.length }
+				{ #if favoriteStickers.length }
 				<div class="pack">
 					<span id="pfavorites">Favorites{ @html formatStickersCount(favoriteStickers.length) }</span>
 					{ #each favoriteStickers as sticker, i }
