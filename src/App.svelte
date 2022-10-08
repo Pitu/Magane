@@ -2069,7 +2069,10 @@
 							<div class="section frequently-used">
 								<p class="section-title">Frequently Used</p>
 								<p>
-									Set to <code>0</code> to disable Frequently Used and stickers usage counter.
+									Maximum amount of the most frequently used stickers to list on Frequently Used section.
+								</p>
+								<p>
+									Set to <code>0</code> to completely disable the section and stickers usage counter.
 								</p>
 								<p class="input-grouped">
 									<input
