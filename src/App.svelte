@@ -26,15 +26,18 @@
 	const stickerAddModalTabsInit = {};
 	let activeTab = null;
 	let favoriteStickers = [];
-	const favoriteStickersData = {};
+	let favoriteStickersData = {};
 	let availablePacks = [];
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
+	let stickersStats = [];
+	let frequentlyUsedSorted = [];
 	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
+	let frequentlyUsedInput = 10; // default
 	let hotkeyInput = null;
 	let hotkey = {};
 	let onCooldown = false;
@@ -54,6 +57,7 @@
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
 		disableSendingWithChatInput: false,
+		frequentlyUsed: frequentlyUsedInput,
 		hotkey: null
 	};
 	const defaultSettings = Object.freeze(Object.assign({}, settings));
@@ -62,7 +66,8 @@
 		'magane.available',
 		'magane.subscribed',
 		'magane.favorites',
-		'magane.settings'
+		'magane.settings',
+		'magane.stats'
 	];
 
 	const log = (message, type = 'log') => {
@@ -349,6 +354,13 @@
 				}
 			});
 		}
+
+		const stats = getFromLocalStorage('magane.stats');
+		if (Array.isArray(stats) && stats.length) {
+			stickersStats = stats;
+			// eslint-disable-next-line no-use-before-define
+			updateFrequentlyUsed();
+		}
 	};
 
 	const subscribeToPack = pack => {
@@ -569,6 +581,22 @@
 					content: messageContent
 				}
 			});
+
+			// Update sticker's usage stats if using Frequently Used
+			if (settings.frequentlyUsed !== 0) {
+				const last = stickersStats.findIndex(sticker => sticker.pack === pack && sticker.id === id);
+				if (last === -1) {
+					stickersStats.push({ pack, id, used: 1, lastUsed: Date.now() });
+				} else {
+					stickersStats[last].used++;
+					stickersStats[last].lastUsed = Date.now();
+				}
+				saveToLocalStorage('magane.stats', stickersStats);
+
+				// Refresh UI
+				// eslint-disable-next-line no-use-before-define
+				updateFrequentlyUsed();
+			}
 
 			// Clear chat input if required
 			if (!settings.disableSendingWithChatInput && textAreaInstance) {
@@ -1386,6 +1414,34 @@
 		toastSuccess('Settings saved!', { nolog: true });
 	};
 
+	const updateFrequentlyUsed = () => {
+		frequentlyUsedSorted = stickersStats
+			.sort((a, b) => b.used - a.used || b.lastUsed - a.lastUsed)
+			.slice(0, settings.frequentlyUsed);
+	};
+
+	const parseFrequentlyUsedInput = () => {
+		const count = parseInt(frequentlyUsedInput, 10);
+		if (isNaN(count) || count < 0) {
+			return toastError('Invalid number.');
+		}
+
+		settings.frequentlyUsed = count;
+		log(`settings['frequentlyUsed'] = ${settings.frequentlyUsed}`);
+		saveToLocalStorage('magane.settings', settings);
+
+		if (count === 0) {
+			stickersStats = [];
+			saveToLocalStorage('magane.stats', stickersStats);
+			toastSuccess('Settings saved, and stickers usage cleared!', { nolog: true });
+		} else {
+			toastSuccess('Settings saved!', { nolog: true });
+		}
+
+		// Refresh UI
+		updateFrequentlyUsed();
+	};
+
 	const onKeydownEvent = event => {
 		for (const prop in hotkey) {
 			if (prop === 'key' || prop === 'code') {
@@ -1628,6 +1684,40 @@
 				</div>
 				{ /if }
 
+				{ #if frequentlyUsedSorted.length }
+				<div class="pack">
+					<span id="pfrequentlyused">Frequently Used{ @html formatStickersCount(frequentlyUsedSorted.length) }</span>
+					{ #each frequentlyUsedSorted as sticker, i }
+					<div class="sticker">
+						<img
+							class="image"
+							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
+							alt="{ sticker.pack } - { sticker.id }"
+							title="{ sticker.id } – Used: { sticker.used }"
+							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+						>
+						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
+						<div class="addFavorite"
+							title="Favorite"
+							on:click="{ () => favoriteSticker(sticker.pack, sticker.id) }">
+							<svg width="20" height="20" viewBox="0 0 24 24">
+								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
+							</svg>
+						</div>
+						{ :else }
+						<div class="deleteFavorite"
+							title="Unfavorite"
+							on:click="{ () => unfavoriteSticker(sticker.pack, sticker.id) }">
+							<svg width="20" height="20" viewBox="0 0 24 24">
+								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
+							</svg>
+						</div>
+						{ /if }
+					</div>
+					{ /each }
+				</div>
+				{ /if }
+
 				{ #each subscribedPacks as pack, i }
 				<div class="pack">
 					<span id="p{pack.id}">{ pack.name }{ @html formatStickersCount(pack.files.length) }</span>
@@ -1672,11 +1762,18 @@
 							title="Manage subscribed packs" >
 							<div class="icon-plus" />
 						</div>
-						{ #if favoriteSticker && favoriteSticker.length }
+						{ #if favoriteSticker.length }
 						<div class="pack"
 							on:click={ () => scrollToStickers('#pfavorites') }
 							title="Favorites" >
 							<div class="icon-favorite" />
+						</div>
+						{ /if }
+						{ #if frequentlyUsedSorted.length }
+						<div class="pack"
+							on:click={ () => scrollToStickers('#pfrequentlyused') }
+							title="Frequently Used" >
+							<div class="icon-frequently-used" />
 						</div>
 						{ /if }
 					</div>
@@ -1943,16 +2040,30 @@
 									</label>
 								</p>
 							</div>
+							<div class="section frequently-used">
+								<p class="section-title">Frequently Used</p>
+								<p>
+									Set to <code>0</code> to disable Frequently Used and stickers usage counter.
+								</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ frequentlyUsedInput }
+										class="inputQuery supress-magane-hotkey"
+										type="text" />
+									<button class="button is-primary"
+										on:click="{ () => parseFrequentlyUsedInput() }">Set</button>
+								</p>
+							</div>
 							<div class="section hotkey">
 								<p class="section-title">Hotkey</p>
 								<p>
 									<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>
 								</p>
 								<p>
-									Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (Ctrl, Alt, etc.) + other keys.
+									Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (<code>Ctrl</code>, <code>Alt</code>, etc.) + other keys.
 								</p>
 								<p>
-									e.g. M, Ctrl+Q, Alt+Shift+Y
+									e.g. <code>M</code>, <code>Ctrl+Q</code>, <code>Alt+Shift+Y</code>
 								</p>
 								<p class="input-grouped">
 									<input
