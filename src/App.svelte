@@ -327,8 +327,8 @@
 			// would also store remote built-in packs in local storage (no idea why).
 			const filteredLocalPacks = availLocalPacks.filter(pack =>
 				typeof pack === 'object' &&
-					typeof pack.id !== 'undefined' &&
-					localPackIdRegex.test(pack.id));
+				typeof pack.id !== 'undefined' &&
+				localPackIdRegex.test(pack.id));
 			if (availLocalPacks.length !== filteredLocalPacks.length) {
 				saveToLocalStorage('magane.available', filteredLocalPacks);
 			}
@@ -1543,8 +1543,9 @@
 		if (save) {
 			settings.hotkey = hotkeyInput;
 			log(`settings['hotkey'] = ${settings.hotkey}`);
+
 			saveToLocalStorage('magane.settings', settings);
-			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.');
+			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.', { nolog: true });
 		}
 	};
 
@@ -1653,7 +1654,7 @@
 			const database = {};
 			for (const key of allowedStorageKeys) {
 				const data = getFromLocalStorage(key);
-				if (data !== undefined) {
+				if (typeof data !== 'undefined') {
 					database[key] = data;
 				}
 			}
