@@ -26,15 +26,18 @@
 	const stickerAddModalTabsInit = {};
 	let activeTab = null;
 	let favoriteStickers = [];
-	const favoriteStickersData = {};
+	let favoriteStickersData = {};
 	let availablePacks = [];
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
+	let stickersStats = [];
+	let frequentlyUsedSorted = [];
 	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
+	let frequentlyUsedInput = 10; // default
 	let hotkeyInput = null;
 	let hotkey = {};
 	let onCooldown = false;
@@ -54,16 +57,17 @@
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
 		disableSendingWithChatInput: false,
+		frequentlyUsed: frequentlyUsedInput,
 		hotkey: null
 	};
 	const defaultSettings = Object.freeze(Object.assign({}, settings));
 
-	// NOTE: For the time being only used to limit keys in replace/export database functions
 	const allowedStorageKeys = [
 		'magane.available',
 		'magane.subscribed',
 		'magane.favorites',
-		'magane.settings'
+		'magane.settings',
+		'magane.stats'
 	];
 
 	const log = (message, type = 'log') => {
@@ -138,7 +142,7 @@
 		// eslint-disable-next-line no-use-before-define
 		buttonComponent.$on('click', () => toggleStickerWindow());
 		// eslint-disable-next-line no-use-before-define
-		buttonComponent.$on('grabPacks', () => grabPacks());
+		buttonComponent.$on('grabPacks', () => grabPacks(true));
 	};
 
 	const updateStickerWindowPosition = () => {
@@ -248,33 +252,51 @@
 	};
 
 	const saveToLocalStorage = (key, payload) => {
-		storage.setItem(key, JSON.stringify(payload));
+		if (!allowedStorageKeys.includes(key)) return;
+		return storage.setItem(key, JSON.stringify(payload));
 	};
 
-	const loadSettings = () => {
-		const storedSettings = storage.getItem('magane.settings');
-		if (storedSettings) {
-			try {
-				const parsed = JSON.parse(storedSettings);
-
-				// Only use keys that were explicitly defined in settings var
-				for (const key of Object.keys(settings)) {
-					if (typeof parsed[key] !== 'undefined' && parsed[key] !== null) {
-						settings[key] = parsed[key];
-					}
-				}
-
-				hotkeyInput = settings.hotkey;
-				// eslint-disable-next-line no-use-before-define
-				parseThenInitHotkey();
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
-			}
+	const getFromLocalStorage = key => {
+		if (!allowedStorageKeys.includes(key)) return;
+		try {
+			const stored = storage.getItem(key);
+			const parsed = JSON.parse(stored);
+			return parsed;
+		} catch (ex) {
+			console.error(ex);
 		}
 	};
 
-	const grabPacks = async () => {
+	const applySettings = data => {
+		// Only use keys that were explicitly defined in defaultSettings
+		for (const key of Object.keys(defaultSettings)) {
+			if (typeof data[key] === 'undefined') {
+				settings[key] = defaultSettings[key];
+			} else {
+				settings[key] = data[key];
+			}
+		}
+
+		frequentlyUsedInput = settings.frequentlyUsed;
+		hotkeyInput = settings.hotkey;
+
+		// eslint-disable-next-line no-use-before-define
+		parseThenInitHotkey();
+	};
+
+	const loadSettings = (reset = false) => {
+		// Reset parsed settings, if required (e.g. on settings reload)
+		if (reset) {
+			applySettings(defaultSettings);
+		}
+
+		const storedSettings = getFromLocalStorage('magane.settings');
+		if (storedSettings) {
+			applySettings(storedSettings);
+		}
+	};
+
+	const grabPacks = async (reset = false) => {
 		let packs;
 		try {
 			const response = await fetch('https://magane.moe/api/packs');
@@ -286,81 +308,83 @@
 			console.error(error);
 		}
 
+		// Reset local arrays/objects, if required (e.g. on settings reload)
+		if (reset) {
+			availablePacks = [];
+			filteredPacks = [];
+			subscribedPacks = [];
+			subscribedPacksSimple = [];
+			favoriteStickers = [];
+			favoriteStickersData = {};
+			stickersStats = [];
+			frequentlyUsedSorted = [];
+		}
+
 		// Load local packs first to have them always before built-in packs
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try {
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-
-				// This logic is necessary since the old data, prior to the new master rebase,
-				// would also store remote built-in packs in local storage (no idea why).
-				const filteredLocalPacks = availLocalPacks.filter(pack =>
-					typeof pack === 'object' &&
-					typeof pack.id !== 'undefined' &&
-					localPackIdRegex.test(pack.id));
-				if (availLocalPacks.length !== filteredLocalPacks.length) {
-					saveToLocalStorage('magane.available', filteredLocalPacks);
-				}
-
-				// Store local packs data in an ID-indexed Object for faster get's in formatURL()
-				filteredLocalPacks.forEach(pack => {
-					localPacks[pack.id] = pack;
-				});
-				availablePacks.push(...filteredLocalPacks);
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			// This logic is necessary since the old data, prior to the new master rebase,
+			// would also store remote built-in packs in local storage (no idea why).
+			const filteredLocalPacks = availLocalPacks.filter(pack =>
+				typeof pack === 'object' &&
+				typeof pack.id !== 'undefined' &&
+				localPackIdRegex.test(pack.id));
+			if (availLocalPacks.length !== filteredLocalPacks.length) {
+				saveToLocalStorage('magane.available', filteredLocalPacks);
 			}
+
+			// Store local packs data in an ID-indexed Object for faster get's in formatURL()
+			filteredLocalPacks.forEach(pack => {
+				localPacks[pack.id] = pack;
+			});
+			availablePacks.push(...filteredLocalPacks);
 		}
 
 		// Then append remote packs after local packs
 		if (packs) {
 			availablePacks.push(...packs.packs);
 		}
+
 		// Refresh UI
 		availablePacks = availablePacks;
 		filteredPacks = availablePacks;
 
-		const subbedPacks = storage.getItem('magane.subscribed');
-		if (subbedPacks) {
-			try {
-				subscribedPacks = JSON.parse(subbedPacks);
-				for (const subbedPacks of subscribedPacks) {
-					subscribedPacksSimple.push(subbedPacks.id);
-				}
-				// Prioritize data of subscribed packs
-				subscribedPacks.forEach(pack => {
-					if (localPackIdRegex.test(pack.id)) {
-						localPacks[pack.id] = pack;
-					}
-				});
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
+		const subscribed = getFromLocalStorage('magane.subscribed');
+		if (Array.isArray(subscribed) && subscribed.length) {
+			subscribedPacks = subscribed;
+			for (const subbedPacks of subscribedPacks) {
+				subscribedPacksSimple.push(subbedPacks.id);
 			}
+			// Prioritize data of subscribed packs
+			subscribedPacks.forEach(pack => {
+				if (localPackIdRegex.test(pack.id)) {
+					localPacks[pack.id] = pack;
+				}
+			});
 		}
 
-		const favStickers = storage.getItem('magane.favorites');
-		if (favStickers) {
-			try {
-				favoriteStickers = JSON.parse(favStickers)
-					.filter(sticker => {
-						if (favoriteStickersData[sticker.pack])	{
-							return true;
-						}
-						const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
-						if (index !== -1) {
-							// Simple caching of pack names, for tooltips
-							favoriteStickersData[sticker.pack] = {
-								name: availablePacks[index].name
-							};
-							return true;
-						}
-					});
-			} catch (ex) {
-				console.error(ex);
-				// Do nothing
-			}
+		const favorites = getFromLocalStorage('magane.favorites');
+		if (Array.isArray(favorites) && favorites.length) {
+			favoriteStickers = favorites.filter(sticker => {
+				if (favoriteStickersData[sticker.pack])	{
+					return true;
+				}
+				const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
+				if (index !== -1) {
+					// Simple caching of pack names, for tooltips
+					favoriteStickersData[sticker.pack] = {
+						name: availablePacks[index].name
+					};
+					return true;
+				}
+			});
+		}
+
+		const stats = getFromLocalStorage('magane.stats');
+		if (Array.isArray(stats) && stats.length) {
+			stickersStats = stats;
+			// eslint-disable-next-line no-use-before-define
+			updateFrequentlyUsed();
 		}
 	};
 
@@ -583,6 +607,22 @@
 				}
 			});
 
+			// Update sticker's usage stats if using Frequently Used
+			if (settings.frequentlyUsed !== 0) {
+				const last = stickersStats.findIndex(sticker => sticker.pack === pack && sticker.id === id);
+				if (last === -1) {
+					stickersStats.push({ pack, id, used: 1, lastUsed: Date.now() });
+				} else {
+					stickersStats[last].used++;
+					stickersStats[last].lastUsed = Date.now();
+				}
+				saveToLocalStorage('magane.stats', stickersStats);
+
+				// Refresh UI
+				// eslint-disable-next-line no-use-before-define
+				updateFrequentlyUsed();
+			}
+
 			// Clear chat input if required
 			if (!settings.disableSendingWithChatInput && textAreaInstance) {
 				textAreaInstance.stateNode.setState({
@@ -648,23 +688,20 @@
 	};
 
 	const _appendPack = (id, e, opts = {}) => {
-		let availLocalPacks = [];
 		let foundIndex;
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			availLocalPacks = JSON.parse(storedLocalPacks);
-			if (availLocalPacks) {
-				foundIndex = availLocalPacks.findIndex(p => p.id === id);
-				if (foundIndex >= 0) {
-					if (opts.overwrite && opts.partial) {
-						// Allow partial properties overwrites
-						e = Object.assign(availLocalPacks[foundIndex], e);
-					} else if (!opts.overwrite) {
-						throw new Error(`Pack with ID ${id} already exist.`);
-					}
-				} else if (opts.overwrite) {
-					throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
+
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			foundIndex = availLocalPacks.findIndex(p => p.id === id);
+			if (foundIndex >= 0) {
+				if (opts.overwrite && opts.partial) {
+					// Allow partial properties overwrites
+					e = Object.assign(availLocalPacks[foundIndex], e);
+				} else if (!opts.overwrite) {
+					throw new Error(`Pack with ID ${id} already exist.`);
 				}
+			} else if (opts.overwrite) {
+				throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
 			}
 		}
 
@@ -718,11 +755,11 @@
 
 	const sendSubscribedPacksOnce = async () => {
 		/*
-		if (storage.getItem('magane.alreadySentAnalyticsPacksOnce')) return;
+		if (getFromLocalStorage('magane.alreadySentAnalyticsPacksOnce')) return;
 		let data = subscribedPacks.map(pack => pack.id);
 		try {
 			await analyticsSubscribePack(data);
-			storage.setItem('magane.alreadySentAnalyticsPacksOnce', true);
+			saveToLocalStorage('magane.alreadySentAnalyticsPacksOnce', true);
 		} catch (err) {
 			toastError('Unexpected error. Check your console for details.');
 		}
@@ -731,10 +768,9 @@
 
 	const migrateStringPackIds = async () => {
 		let dirty = false;
-		const favorites = JSON.parse(storage.getItem('magane.favorites'));
-		const subscribed = JSON.parse(storage.getItem('magane.subscribed'));
 
-		if (favorites) {
+		const favorites = getFromLocalStorage('magane.favorites');
+		if (Array.isArray(favorites) && favorites.length) {
 			favorites.forEach(item => {
 				if (typeof item.pack === 'number') return;
 				const result = parseInt(item.pack, 10);
@@ -744,7 +780,8 @@
 			});
 		}
 
-		if (subscribed) {
+		const subscribed = getFromLocalStorage('magane.subscribed');
+		if (Array.isArray(subscribed) && subscribed.length) {
 			subscribed.forEach(item => {
 				if (typeof item.id === 'number') return;
 				const result = parseInt(item.id, 10);
@@ -756,9 +793,9 @@
 
 		if (dirty) {
 			toastInfo('Found packs/stickers to migrate, migrating now...');
-			storage.setItem('magane.favorites', JSON.stringify(favorites));
-			storage.setItem('magane.subscribed', JSON.stringify(subscribed));
-			await grabPacks();
+			saveToLocalStorage('magane.favorites', favorites);
+			saveToLocalStorage('magane.subscribed', subscribed);
+			await grabPacks(true);
 			toastSuccess('Migration successful.');
 		}
 	};
@@ -873,42 +910,37 @@
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try { // eslint-disable-line no-useless-catch
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-				const index = availLocalPacks.findIndex(p => p.id === id);
-				if (index === -1) {
-					throw new Error(`Unable to find pack with ID ${id}`);
-				}
-
-				// Force unfavorite stickers
-				favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
-				delete favoriteStickersData[id];
-				saveToLocalStorage('magane.favorites', favoriteStickers);
-
-				// Force unsubscribe
-				const subbedPack = subscribedPacks.find(p => p.id === id);
-				if (subbedPack)	{
-					unsubscribeToPack(subbedPack);
-				}
-
-				availLocalPacks.splice(index, 1);
-				saveToLocalStorage('magane.available', availLocalPacks);
-
-				const sharedIndex = availablePacks.findIndex(p => p.id === id);
-				if (sharedIndex !== -1) {
-					availablePacks.splice(sharedIndex, 1);
-					availablePacks = availablePacks;
-					filterPacks();
-				}
-
-				delete localPacks[id];
-				log(`Removed pack with ID ${id} (old index: ${index})`);
-				return true;
-			} catch (ex) {
-				throw ex;
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			const index = availLocalPacks.findIndex(p => p.id === id);
+			if (index === -1) {
+				throw new Error(`Unable to find pack with ID ${id}`);
 			}
+
+			// Force unfavorite stickers
+			favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
+			delete favoriteStickersData[id];
+			saveToLocalStorage('magane.favorites', favoriteStickers);
+
+			// Force unsubscribe
+			const subbedPack = subscribedPacks.find(p => p.id === id);
+			if (subbedPack)	{
+				unsubscribeToPack(subbedPack);
+			}
+
+			availLocalPacks.splice(index, 1);
+			saveToLocalStorage('magane.available', availLocalPacks);
+
+			const sharedIndex = availablePacks.findIndex(p => p.id === id);
+			if (sharedIndex !== -1) {
+				availablePacks.splice(sharedIndex, 1);
+				availablePacks = availablePacks;
+				filterPacks();
+			}
+
+			delete localPacks[id];
+			log(`Removed pack with ID ${id} (old index: ${index})`);
+			return true;
 		}
 	};
 
@@ -918,15 +950,11 @@
 		}
 
 		keyword = keyword.toLowerCase();
-		const storedLocalPacks = storage.getItem('magane.available');
-		if (storedLocalPacks) {
-			try { // eslint-disable-line no-useless-catch
-				const availLocalPacks = JSON.parse(storedLocalPacks);
-				return availLocalPacks.filter(p =>
-					p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
-			} catch (ex) {
-				throw ex;
-			}
+
+		const availLocalPacks = getFromLocalStorage('magane.available');
+		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
+			return availLocalPacks.filter(p =>
+				p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
 		}
 	};
 
@@ -1411,6 +1439,34 @@
 		toastSuccess('Settings saved!', { nolog: true });
 	};
 
+	const updateFrequentlyUsed = () => {
+		frequentlyUsedSorted = stickersStats
+			.sort((a, b) => b.used - a.used || b.lastUsed - a.lastUsed)
+			.slice(0, settings.frequentlyUsed);
+	};
+
+	const parseFrequentlyUsedInput = () => {
+		const count = parseInt(frequentlyUsedInput, 10);
+		if (isNaN(count) || count < 0) {
+			return toastError('Invalid number.');
+		}
+
+		settings.frequentlyUsed = count;
+		log(`settings['frequentlyUsed'] = ${settings.frequentlyUsed}`);
+		saveToLocalStorage('magane.settings', settings);
+
+		if (count === 0) {
+			stickersStats = [];
+			saveToLocalStorage('magane.stats', stickersStats);
+			toastSuccess('Settings saved, and stickers usage cleared!', { nolog: true });
+		} else {
+			toastSuccess('Settings saved!', { nolog: true });
+		}
+
+		// Refresh UI
+		updateFrequentlyUsed();
+	};
+
 	const onKeydownEvent = event => {
 		for (const prop in hotkey) {
 			if (prop === 'key' || prop === 'code') {
@@ -1429,7 +1485,7 @@
 
 	const parseThenInitHotkey = save => {
 		// Clean input
-		const keys = hotkeyInput
+		const keys = (hotkeyInput || '')
 			.split('+')
 			.map(key => key.trim());
 		hotkeyInput = keys.join('+');
@@ -1487,8 +1543,9 @@
 		if (save) {
 			settings.hotkey = hotkeyInput;
 			log(`settings['hotkey'] = ${settings.hotkey}`);
+
 			saveToLocalStorage('magane.settings', settings);
-			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.');
+			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.', { nolog: true });
 		}
 	};
 
@@ -1568,8 +1625,8 @@
 						toast('Reloading Magane database\u2026');
 
 						Object.assign(settings, defaultSettings);
-						loadSettings();
-						await grabPacks();
+						loadSettings(true);
+						await grabPacks(true);
 						await migrateStringPackIds();
 
 						toastSuccess('Magane is now ready!');
@@ -1596,9 +1653,9 @@
 			toast('Exporting database\u2026');
 			const database = {};
 			for (const key of allowedStorageKeys) {
-				const data = storage.getItem(key);
-				if (data !== null) {
-					database[key] = JSON.parse(data);
+				const data = getFromLocalStorage(key);
+				if (typeof data !== 'undefined') {
+					database[key] = data;
 				}
 			}
 			const dbString = JSON.stringify(database);
@@ -1623,10 +1680,10 @@
 
 		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
-				{ #if !favoriteStickers && !subscribedPacks }
+				{ #if !favoriteStickers.length && !subscribedPacks.length }
 				<h3 class="getStarted">It seems you aren't subscribed to any pack yet. Click the plus symbol on the bottom-left to get started! 🎉</h3>
 				{ /if }
-				{ #if favoriteStickers && favoriteStickers.length }
+				{ #if favoriteStickers.length }
 				<div class="pack">
 					<span id="pfavorites">Favorites{ @html formatStickersCount(favoriteStickers.length) }</span>
 					{ #each favoriteStickers as sticker, i }
@@ -1648,6 +1705,40 @@
 								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
 							</svg>
 						</div>
+					</div>
+					{ /each }
+				</div>
+				{ /if }
+
+				{ #if frequentlyUsedSorted.length }
+				<div class="pack">
+					<span id="pfrequentlyused">Frequently Used{ @html formatStickersCount(frequentlyUsedSorted.length) }</span>
+					{ #each frequentlyUsedSorted as sticker, i }
+					<div class="sticker">
+						<img
+							class="image"
+							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
+							alt="{ sticker.pack } - { sticker.id }"
+							title="{ sticker.id } – Used: { sticker.used }"
+							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+						>
+						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
+						<div class="addFavorite"
+							title="Favorite"
+							on:click="{ () => favoriteSticker(sticker.pack, sticker.id) }">
+							<svg width="20" height="20" viewBox="0 0 24 24">
+								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
+							</svg>
+						</div>
+						{ :else }
+						<div class="deleteFavorite"
+							title="Unfavorite"
+							on:click="{ () => unfavoriteSticker(sticker.pack, sticker.id) }">
+							<svg width="20" height="20" viewBox="0 0 24 24">
+								<path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
+							</svg>
+						</div>
+						{ /if }
 					</div>
 					{ /each }
 				</div>
@@ -1697,11 +1788,18 @@
 							title="Manage subscribed packs" >
 							<div class="icon-plus" />
 						</div>
-						{ #if favoriteSticker && favoriteSticker.length }
+						{ #if favoriteSticker.length }
 						<div class="pack"
 							on:click={ () => scrollToStickers('#pfavorites') }
 							title="Favorites" >
 							<div class="icon-favorite" />
+						</div>
+						{ /if }
+						{ #if frequentlyUsedSorted.length }
+						<div class="pack"
+							on:click={ () => scrollToStickers('#pfrequentlyused') }
+							title="Frequently Used" >
+							<div class="icon-frequently-used" />
 						</div>
 						{ /if }
 					</div>
@@ -1968,16 +2066,33 @@
 									</label>
 								</p>
 							</div>
+							<div class="section frequently-used">
+								<p class="section-title">Frequently Used</p>
+								<p>
+									Maximum amount of the most frequently used stickers to list on Frequently Used section.
+								</p>
+								<p>
+									Set to <code>0</code> to completely disable the section and stickers usage counter.
+								</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ frequentlyUsedInput }
+										class="inputQuery supress-magane-hotkey"
+										type="text" />
+									<button class="button is-primary"
+										on:click="{ () => parseFrequentlyUsedInput() }">Set</button>
+								</p>
+							</div>
 							<div class="section hotkey">
 								<p class="section-title">Hotkey</p>
 								<p>
 									<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>
 								</p>
 								<p>
-									Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (Ctrl, Alt, etc.) + other keys.
+									Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (<code>Ctrl</code>, <code>Alt</code>, etc.) + other keys.
 								</p>
 								<p>
-									e.g. M, Ctrl+Q, Alt+Shift+Y
+									e.g. <code>M</code>, <code>Ctrl+Q</code>, <code>Alt+Shift+Y</code>
 								</p>
 								<p class="input-grouped">
 									<input

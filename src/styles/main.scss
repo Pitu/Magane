@@ -199,23 +199,28 @@ div#magane {
 				}
 
 				> div {
-					background-image: url('/assets/f24711dae4f6d6b28335e866a93e9d9b.png');
-					width: 22px;
-					height: 22px;
-					background-size: 924px 704px;
+					background-image: url('/assets/62ed7720accb1adfe95565b114e843c6.png');
+					width: 32px;
+					height: 32px;
+					background-size: 1344px 1216px;
 					background-repeat: no-repeat;
-					margin-top: 8px;
-					margin-left: 9px;
+					margin-top: 4px;
+					margin-left: 4px;
 				}
 
 				div.icon-favorite {
-					background-position: -462px -132px;
+					background-position: -1056px -288px;
 				}
 
 				div.icon-plus {
-					background-position: -374px -484px;
+					background-position: -384px -896px;
 					/* make it greenish */
-					filter: hue-rotate(260deg) brightness(3) contrast(4.5);
+					/* thanks to the magic of https://codepen.io/sosuke/pen/Pjoqqp */
+					filter: invert(63%) sepia(25%) saturate(813%) hue-rotate(55deg) brightness(98%) contrast(82%);
+				}
+
+				div.icon-frequently-used {
+					background-position: -160px -960px;
 				}
 			}
 		}
@@ -625,6 +630,15 @@ div#magane {
 				background: rgba($scrollbarColor, 1);
 			}
 		}
+	}
+
+	code {
+		box-sizing: border-box;
+		padding: 2px 6px;
+		border-radius: 3px;
+		border: 1px solid $backgroundPrimary;
+		background: $backgroundPrimary;
+		color: $textColor;
 	}
 }
 
