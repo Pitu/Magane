@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.6
+ * @version 3.2.7
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -1602,10 +1602,12 @@ function instance$1($$self, $$props, $$invalidate) {
 			log(`Sending sticker as ${filename}…`);
 			let textAreaInstance, messageContent = "";
 			if (!settings.disableSendingWithChatInput) if (textAreaInstance = (() => {
-				let cursor = textArea[Object.keys(textArea).find(key => key.startsWith("__reactInternalInstance") || key.startsWith("__reactFiber"))];
-				if (!cursor) return null;
-				for (;cursor && (!cursor.stateNode || !cursor.stateNode.constructor || "ChannelTextAreaForm" !== cursor.stateNode.constructor.displayName); ) cursor = cursor.return;
-				return cursor;
+				const reactInstanceKey = Object.keys(textArea).find(key => key.startsWith("__reactFiber") || key.startsWith("__reactInternalInstance"));
+				let cursor = textArea[reactInstanceKey];
+				for (let i = 0; i < 10 && cursor; i++) {
+					if (cursor.stateNode && cursor.stateNode.handleTextareaChange) return cursor;
+					cursor = cursor.return;
+				}
 			})(), textAreaInstance) messageContent = textAreaInstance.stateNode.state.textValue; else if (textArea) {
 				log("Unable to fetch text area of chat input, attempting workaround…", "warn");
 				let element = textArea.querySelector("span");
@@ -1615,7 +1617,8 @@ function instance$1($$self, $$props, $$invalidate) {
 				channelId,
 				file,
 				message: {
-					content: messageContent
+					content: messageContent,
+					tts: !1
 				}
 			}), 0 !== settings.frequentlyUsed) {
 				const last = stickersStats.findIndex(sticker => sticker.pack === pack && sticker.id === id);
@@ -1629,7 +1632,12 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 			!settings.disableSendingWithChatInput && textAreaInstance && textAreaInstance.stateNode.setState({
 				textValue: "",
-				richValue: modules.richUtils.toRichValue("")
+				richValue: [ {
+					type: "line",
+					children: [ {
+						text: ""
+					} ]
+				} ]
 			});
 		} catch (error) {
 			console.error(error), toastError(error.toString(), {
@@ -1783,7 +1791,6 @@ function instance$1($$self, $$props, $$invalidate) {
 		try {
 			toast("Loading Magane…"), modules.selectedChannelStore = BdApi.findModuleByProps("getLastSelectedChannelId"), 
 			modules.messageUpload = BdApi.findModuleByProps("upload", "instantBatchUpload"), 
-			modules.richUtils = BdApi.findModuleByProps("toRichValue", "createEmptyState"), 
 			(() => {
 				const iframe = document.createElement("iframe");
 				document.head.append(iframe), storage = Object.getOwnPropertyDescriptor(iframe.contentWindow.frames, "localStorage").get.call(window), 
