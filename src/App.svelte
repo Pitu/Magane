@@ -240,7 +240,7 @@
 
 		// Misc
 		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
-		modules.richUtils = BdApi.findModuleByProps('toRichValue', 'createEmptyState');
+		// modules.richUtils = BdApi.findModuleByProps('toRichValue', 'createEmptyState');
 	};
 
 	const getLocalStorage = () => {
@@ -494,21 +494,19 @@
 	};
 
 	const getTextAreaInstance = () => {
-		let cursor = textArea[Object.keys(textArea).find(key =>
-			key.startsWith('__reactInternalInstance') || key.startsWith('__reactFiber'))];
-		if (!cursor) return null;
-		while (
-			cursor &&
-			!(
-				cursor.stateNode &&
-				cursor.stateNode.constructor &&
-				cursor.stateNode.constructor.displayName ===
-					'ChannelTextAreaForm'
-			)
-		) {
+		// NOTE: If any deeper than the 10th step, then Discord must be changing something again,
+		// thus better to inspect further instead of blindly increasing the limit.
+		const MAX_LOOKUP_DEPTH = 10;
+		const reactInstanceKey = Object.keys(textArea).find(key =>
+			key.startsWith('__reactFiber') || key.startsWith('__reactInternalInstance'));
+		let cursor = textArea[reactInstanceKey];
+		for (let i = 0; i < MAX_LOOKUP_DEPTH; i++) {
+			if (!cursor) break;
+			if (cursor.stateNode && cursor.stateNode.handleTextareaChange) {
+				return cursor;
+			}
 			cursor = cursor.return;
 		}
-		return cursor;
 	};
 
 	/*
@@ -603,7 +601,8 @@
 				channelId,
 				file,
 				message: {
-					content: messageContent
+					content: messageContent,
+					tts: false
 				}
 			});
 
@@ -627,7 +626,8 @@
 			if (!settings.disableSendingWithChatInput && textAreaInstance) {
 				textAreaInstance.stateNode.setState({
 					textValue: '',
-					richValue: modules.richUtils.toRichValue('')
+					// richValue: modules.richUtils.toRichValue('')
+					richValue: [{ type: 'line', children: [{ text: '' }] }]
 				});
 			}
 		} catch (error) {
