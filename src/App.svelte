@@ -7,7 +7,6 @@
 	import './styles/main.scss';
 
 	// APIs
-	window.magane = {};
 	const modules = {};
 
 	const coords = { top: 0, left: 0 };
@@ -48,6 +47,7 @@
 	const waitForTimeouts = {};
 
 	const settings = {
+		enableWindowMagane: false,
 		disableToasts: false,
 		closeWindowOnSend: false,
 		useLeftToolbar: false,
@@ -276,6 +276,9 @@
 				settings[key] = data[key];
 			}
 		}
+
+		// eslint-disable-next-line no-use-before-define
+		setWindowMaganeAPIs(settings.enableWindowMagane);
 
 		frequentlyUsedInput = settings.frequentlyUsed;
 		hotkeyInput = settings.hotkey;
@@ -801,7 +804,7 @@
 	};
 
 	const parseFunctionArgs = (args, argNames, minArgs) => {
-		// Allow calling window.magane.X functions with
+		// Allow calling window.magane.<function> with
 		// func(val1, val2, ..., valN) for backwards-compatibility, and
 		// func({arg1: val, arg2: val, ..., argN: val}) for a clean expandable future.
 		const isFirstArgAnObj = typeof args[0] === 'object';
@@ -815,7 +818,7 @@
 		return parsed;
 	};
 
-	window.magane.appendPack = (...args) => {
+	const appendPack = (...args) => {
 		let { name, firstid, count, animated } = parseFunctionArgs(args,
 			['name', 'firstid', 'count', 'animated'], 3);
 
@@ -840,7 +843,7 @@
 		});
 	};
 
-	window.magane.appendEmojisPack = (...args) => {
+	const appendEmojisPack = (...args) => {
 		let { name, id, count, animated } = parseFunctionArgs(args,
 			['name', 'id', 'count', 'animated'], 3);
 
@@ -860,7 +863,7 @@
 		});
 	};
 
-	window.magane.appendCustomPack = (...args) => {
+	const appendCustomPack = (...args) => {
 		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
 			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
 
@@ -891,7 +894,7 @@
 		});
 	};
 
-	window.magane.editPack = (...args) => {
+	const editPack = (...args) => {
 		const { id, props } = parseFunctionArgs(args,
 			['id', 'props'], 2);
 
@@ -905,7 +908,7 @@
 		});
 	};
 
-	window.magane.deletePack = id => {
+	const deletePack = id => {
 		if (!id && !localPackIdRegex.test(id)) {
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
@@ -946,7 +949,7 @@
 		return true;
 	};
 
-	window.magane.searchPacks = keyword => {
+	const searchPacks = keyword => {
 		if (!keyword) {
 			throw new Error('Keyword required');
 		}
@@ -960,6 +963,16 @@
 
 		return availLocalPacks.filter(p =>
 			p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
+	};
+
+	const setWindowMaganeAPIs = state => {
+		if (state) {
+			window.magane = { appendPack, appendEmojisPack, appendCustomPack, editPack, deletePack, searchPacks };
+		} else if (!(window.magane instanceof Node)) {
+			// For unknown reasons, if "window.magane" is not overriden,
+			// it ends up being a reference to #magane element (Svelte's quirk?)
+			delete window.magane;
+		}
 	};
 
 	const formatStickersCount = count =>
@@ -1010,7 +1023,7 @@
 		if (resizeObserver) {
 			resizeObserver.disconnect();
 		}
-		delete window.magane;
+		setWindowMaganeAPIs(false);
 		log('Internal components cleaned up.');
 	});
 
@@ -1119,7 +1132,7 @@
 	const deleteLocalPack = id => {
 		try {
 			const _name = localPacks[id].name;
-			const deleted = window.magane.deletePack(id);
+			const deleted = deletePack(id);
 			if (deleted) {
 				toastSuccess(`Removed pack ${_name}.`, { nolog: true, timeout: 6000 });
 			}
@@ -1298,7 +1311,7 @@
 				const id = match[4];
 				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
 				const props = await response.json();
-				stored = window.magane.appendEmojisPack({
+				stored = appendEmojisPack({
 					name: props.title,
 					id: props.id,
 					count: props.len,
@@ -1310,7 +1323,7 @@
 				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
 				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
 				const props = await response.json();
-				stored = window.magane.appendPack({
+				stored = appendPack({
 					name: props.title,
 					firstid: props.first,
 					count: props.len,
@@ -1438,6 +1451,9 @@
 
 		// Value already changed via Svelte's bind:value
 		log(`settings['${name}'] = ${settings[name]}`);
+
+		// Settings that require their own on-change tasks
+		setWindowMaganeAPIs(settings.enableWindowMagane);
 
 		saveToLocalStorage('magane.settings', settings);
 		toastSuccess('Settings saved!', { nolog: true });
@@ -1988,6 +2004,15 @@
 						<div class="tab-content has-scroll-y misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
+								<p>
+									<label>
+										<input
+											name="enableWindowMagane"
+											type="checkbox"
+											bind:checked={ settings.enableWindowMagane } />
+										Enable <code>window.magane</code> development utility
+									</label>
+								</p>
 								<p>
 									<label>
 										<input
