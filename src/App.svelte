@@ -413,7 +413,7 @@
 		subscribedPacksSimple = [...subscribedPacksSimple, pack.id];
 
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		log(`Subscribed to pack > ${pack.name}`);
+		log(`Subscribed > ${pack.name}`);
 		// analyticsSubscribePack([pack.id]);
 	};
 
@@ -427,7 +427,7 @@
 				subscribedPacks = subscribedPacks;
 				subscribedPacksSimple = subscribedPacksSimple;
 
-				log(`Unsubscribed from pack > ${pack.name}`);
+				log(`Unsubscribed > ${pack.name}`);
 				saveToLocalStorage('magane.subscribed', subscribedPacks);
 				return;
 			}
@@ -447,17 +447,18 @@
 				// Let sendSticker() handle displaying error
 				throw new Error('Magane\'s API was unavailable. Please reload Magane if the API is already back online.');
 			} else {
-				// Placeholder thumb (red cross emoji) if baseURL is missing (i.e. failed to fetch it from Magane's API)
+				// Placeholder thumb (❌) if baseURL is missing (i.e. failed to fetch it from Magane's API)
 				url = '/assets/8becd37ab9d13cdfe37c08c496a9def3.svg';
 			}
 		} else if (pack.startsWith('startswith-')) {
-			// LINE Store packs
-			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
-			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
-			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
-			// WARNING: Early packs (can confirm with packs that have their sticker IDs at 4 digits),
-			// do not have iPhone variants, so we will stick with Android variant, which is always available.
-			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
+			/*
+				LINE Store packs
+				292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
+				219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
+				146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
+				WARNING: Early packs (can confirm with packs that have their sticker IDs at 4 digits),
+				do not have iPhone variants, so we will stick with Android variants, which are always available.
+			*/
 			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
 			url = template.replace(/%id%/g, id.split('.')[0]);
 			let append = sending ? '&h=180p' : '&h=100p';
@@ -467,16 +468,19 @@
 				append += '&output=gif';
 			}
 			if (!settings.disableDownscale) {
+				// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('emojis-')) {
-			// LINE Store emojis
-			// 220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
-			// 154p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png
-			// WARNING: Stickers may actually have missing iPhone variants, so to be safe we will just use
-			// Android variant for emojis too. Plus, it probably makes more sense to have emojis smaller
-			// anyway (Android variant of emojis only go up to 154p).
-			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
+			/*
+				LINE Store emojis
+				220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
+				154p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png
+				WARNING: Stickers may actually have missing iPhone variants,
+				so to be safe we will just use Android variant for emojis too.
+				Plus, it probably makes more sense to have emojis smaller anyway
+				(Android variant of emojis only go up to 154p).
+			*/
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
 			let append = sending ? '' : '&h=100p';
@@ -486,6 +490,7 @@
 				append += '&output=gif';
 			}
 			if (!settings.disableDownscale) {
+				// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('custom-')) {
@@ -499,7 +504,7 @@
 					url = thumbIndex >= 0 ? localPacks[pack].thumbs[thumbIndex] : null;
 				}
 				if (!url) {
-					// Immediately return with placeholder thumb (paper emoji)
+					// Immediately return with placeholder thumb (📄)
 					return '/assets/eedd4bd948a0da6d75bf5304bff4e17f.svg';
 				}
 			} else {
@@ -673,7 +678,7 @@
 		const favorite = { pack, id };
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
-		log(`Favorited sticker > ${id} of pack ${pack}`);
+		log(`Favorited > ${id} of pack ${pack}`);
 		toastSuccess('Favorited!', { nolog: true });
 	};
 
@@ -689,7 +694,7 @@
 		}
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
-		log(`Unfavorited sticker > ${id} of pack ${pack}`);
+		log(`Unfavorited > ${id} of pack ${pack}`);
 		toastInfo('Unfavorited!', { nolog: true });
 	};
 
@@ -819,12 +824,12 @@
 		}
 	};
 
-	const parseFunctionArgs = (args, argNames, minArgs) => {
+	const parseFunctionArgs = (args, argNames = [], minArgs = 0) => {
 		// Allow calling window.magane.<function> with
 		// func(val1, val2, ..., valN) for backwards-compatibility, and
 		// func({arg1: val, arg2: val, ..., argN: val}) for a clean expandable future.
 		const isFirstArgAnObj = typeof args[0] === 'object';
-		if (!isFirstArgAnObj && typeof minArgs === 'number' && args.length < minArgs) {
+		if (!isFirstArgAnObj && args.length < minArgs) {
 			throw new Error(`This function expects at least ${minArgs} parameter(s).`);
 		}
 		const parsed = {};
@@ -1009,6 +1014,7 @@
 	};
 
 	onMount(async () => {
+		const startTime = Date.now();
 		try {
 			toast('Loading Magane\u2026');
 			// Background tasks
@@ -1024,6 +1030,7 @@
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
+		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`);
 	});
 
 	onDestroy(() => {
@@ -1346,7 +1353,7 @@
 					animated: props.hasAnimation
 				});
 			}
-			toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+			toastSuccess(`Added a new pack ${stored.pack.name}. You can now subscribe to it from Packs tab.`, { nolog: true, timeout: 6000 });
 			linePackSearch = null;
 		} catch (error) {
 			console.error(error);
