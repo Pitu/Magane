@@ -32,7 +32,6 @@
 	let filteredPacks = [];
 	let stickersStats = [];
 	let frequentlyUsedSorted = [];
-	const localPackIdRegex = /^(startswith|emojis|custom)-/;
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
@@ -299,6 +298,14 @@
 		}
 	};
 
+	const isLocalPackID = id => {
+		if (typeof id !== 'string') return false;
+		// Faster than regex tests, especially if biased to only having imported LINE remote packs
+		return id.startsWith('startswith-') ||
+			id.startsWith('emojis-') ||
+			id.startsWith('custom-');
+	};
+
 	const grabPacks = async (reset = false) => {
 		let packs;
 		try {
@@ -331,8 +338,11 @@
 			const filteredLocalPacks = availLocalPacks.filter(pack =>
 				typeof pack === 'object' &&
 				typeof pack.id !== 'undefined' &&
-				localPackIdRegex.test(pack.id));
+				isLocalPackID(pack.id));
+
+			// Update database if required
 			if (availLocalPacks.length !== filteredLocalPacks.length) {
+				log(`magane.available mismatch: ${availLocalPacks.length} !== ${filteredLocalPacks.length}`);
 				saveToLocalStorage('magane.available', filteredLocalPacks);
 			}
 
@@ -354,16 +364,22 @@
 
 		const subscribed = getFromLocalStorage('magane.subscribed');
 		if (Array.isArray(subscribed) && subscribed.length) {
-			subscribedPacks = subscribed;
-			for (const subbedPacks of subscribedPacks) {
-				subscribedPacksSimple.push(subbedPacks.id);
-			}
-			// Prioritize data of subscribed packs
-			subscribedPacks.forEach(pack => {
-				if (localPackIdRegex.test(pack.id)) {
-					localPacks[pack.id] = pack;
+			// Init simple caching of pack IDs, and filter-out invalid data
+			// (e.g. failed to unsubscribe upon deleting local packs)
+			subscribedPacks = subscribed.filter(pack => {
+				if (isLocalPackID(pack.id) && !localPacks[pack.id]) {
+					return false;
 				}
+				// Simple caching of pack IDs
+				subscribedPacksSimple.push(pack.id);
+				return true;
 			});
+
+			// Update database if required
+			if (subscribed.length !== subscribedPacks.length) {
+				log(`magane.subscribed mismatch: ${subscribed.length} !== ${subscribedPacks.length}`);
+				saveToLocalStorage('magane.subscribed', subscribedPacks);
+			}
 		}
 
 		const favorites = getFromLocalStorage('magane.favorites');
@@ -713,7 +729,7 @@
 		}
 
 		const result = { pack: e };
-		if (localPackIdRegex.test(id)) {
+		if (isLocalPackID(id)) {
 			localPacks[id] = e;
 		}
 
@@ -775,7 +791,7 @@
 		const favorites = getFromLocalStorage('magane.favorites');
 		if (Array.isArray(favorites) && favorites.length) {
 			favorites.forEach(item => {
-				if (typeof item.pack === 'number') return;
+				if (typeof item.pack === 'number' || isLocalPackID(item.pack)) return;
 				const result = parseInt(item.pack, 10);
 				if (isNaN(item.pack)) return;
 				item.pack = result;
@@ -786,7 +802,7 @@
 		const subscribed = getFromLocalStorage('magane.subscribed');
 		if (Array.isArray(subscribed) && subscribed.length) {
 			subscribed.forEach(item => {
-				if (typeof item.id === 'number') return;
+				if (typeof item.id === 'number' || isLocalPackID(item.id)) return;
 				const result = parseInt(item.id, 10);
 				if (isNaN(item.id)) return;
 				item.id = result;
@@ -909,7 +925,7 @@
 	};
 
 	const deletePack = id => {
-		if (!id && !localPackIdRegex.test(id)) {
+		if (!isLocalPackID(id)) {
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
@@ -1105,7 +1121,7 @@
 
 		let packId = event.target.dataset.pack;
 		if (typeof packId === 'undefined') return;
-		if (!localPackIdRegex.test(packId)) packId = Number(packId);
+		if (!isLocalPackID(packId)) packId = Number(packId);
 
 		const oldIndex = subscribedPacks.findIndex(pack => pack.id === packId);
 		if (oldIndex === newIndex) return;
