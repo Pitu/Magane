@@ -688,21 +688,21 @@
 	};
 
 	const _appendPack = (id, e, opts = {}) => {
-		let foundIndex;
+		let availLocalPacks = getFromLocalStorage('magane.available');
+		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) {
+			availLocalPacks = [];
+		}
 
-		const availLocalPacks = getFromLocalStorage('magane.available');
-		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
-			foundIndex = availLocalPacks.findIndex(p => p.id === id);
-			if (foundIndex >= 0) {
-				if (opts.overwrite && opts.partial) {
-					// Allow partial properties overwrites
-					e = Object.assign(availLocalPacks[foundIndex], e);
-				} else if (!opts.overwrite) {
-					throw new Error(`Pack with ID ${id} already exist.`);
-				}
-			} else if (opts.overwrite) {
-				throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
+		const foundIndex = availLocalPacks.findIndex(p => p.id === id);
+		if (foundIndex >= 0) {
+			if (opts.overwrite && opts.partial) {
+				// Allow partial properties overwrites
+				e = Object.assign(availLocalPacks[foundIndex], e);
+			} else if (!opts.overwrite) {
+				throw new Error(`Pack with ID ${id} already exist.`);
 			}
+		} else if (opts.overwrite) {
+			throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
 		}
 
 		if (!e.count || !e.files.length) {
@@ -911,37 +911,39 @@
 		}
 
 		const availLocalPacks = getFromLocalStorage('magane.available');
-		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
-			const index = availLocalPacks.findIndex(p => p.id === id);
-			if (index === -1) {
-				throw new Error(`Unable to find pack with ID ${id}`);
-			}
-
-			// Force unfavorite stickers
-			favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
-			delete favoriteStickersData[id];
-			saveToLocalStorage('magane.favorites', favoriteStickers);
-
-			// Force unsubscribe
-			const subbedPack = subscribedPacks.find(p => p.id === id);
-			if (subbedPack)	{
-				unsubscribeToPack(subbedPack);
-			}
-
-			availLocalPacks.splice(index, 1);
-			saveToLocalStorage('magane.available', availLocalPacks);
-
-			const sharedIndex = availablePacks.findIndex(p => p.id === id);
-			if (sharedIndex !== -1) {
-				availablePacks.splice(sharedIndex, 1);
-				availablePacks = availablePacks;
-				filterPacks();
-			}
-
-			delete localPacks[id];
-			log(`Removed pack with ID ${id} (old index: ${index})`);
-			return true;
+		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) {
+			throw new Error('You have not imported any remote or custom packs');
 		}
+
+		const index = availLocalPacks.findIndex(p => p.id === id);
+		if (index === -1) {
+			throw new Error(`Unable to find pack with ID ${id}`);
+		}
+
+		// Force unfavorite stickers
+		favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
+		delete favoriteStickersData[id];
+		saveToLocalStorage('magane.favorites', favoriteStickers);
+
+		// Force unsubscribe
+		const subbedPack = subscribedPacks.find(p => p.id === id);
+		if (subbedPack)	{
+			unsubscribeToPack(subbedPack);
+		}
+
+		availLocalPacks.splice(index, 1);
+		saveToLocalStorage('magane.available', availLocalPacks);
+
+		const sharedIndex = availablePacks.findIndex(p => p.id === id);
+		if (sharedIndex !== -1) {
+			availablePacks.splice(sharedIndex, 1);
+			availablePacks = availablePacks;
+			filterPacks();
+		}
+
+		delete localPacks[id];
+		log(`Removed pack with ID ${id} (old index: ${index})`);
+		return true;
 	};
 
 	window.magane.searchPacks = keyword => {
@@ -952,10 +954,12 @@
 		keyword = keyword.toLowerCase();
 
 		const availLocalPacks = getFromLocalStorage('magane.available');
-		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
-			return availLocalPacks.filter(p =>
-				p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
+		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) {
+			throw new Error('You have not imported any remote or custom packs');
 		}
+
+		return availLocalPacks.filter(p =>
+			p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
 	};
 
 	const formatStickersCount = count =>
