@@ -1801,10 +1801,7 @@
 							class="image"
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
-							title="{
-								(favoriteStickersData[sticker.pack] ? favoriteStickersData[sticker.pack].name : 'N/A') +
-								(typeof sticker.pack === 'string' && sticker.pack.startsWith('custom-') ? ` – ${sticker.id}` : '')
-							}"
+							title="{ simplePacksData[sticker.pack] ? simplePacksData[sticker.pack].name : '' }"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
@@ -1828,7 +1825,7 @@
 							class="image"
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
-							title="{ sticker.id } – Used: { sticker.used }"
+							title="{ simplePacksData[sticker.pack] ? `${simplePacksData[sticker.pack].name} – ` : '' }Used: {sticker.used}"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
@@ -1863,7 +1860,6 @@
 							class="image"
 							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
-							title="{ typeof pack.id === 'string' && pack.id.startsWith('custom-') ? sticker : '' }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
