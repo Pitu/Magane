@@ -25,13 +25,13 @@
 	const stickerAddModalTabsInit = {};
 	let activeTab = null;
 	let favoriteStickers = [];
-	let favoriteStickersData = {};
 	let availablePacks = [];
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
 	let stickersStats = [];
 	let frequentlyUsedSorted = [];
+	let simplePacksData = {};
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
@@ -306,6 +306,32 @@
 			id.startsWith('custom-');
 	};
 
+	const initSimplePackDataEntry = (pack, source) => {
+		// Intended for favorites and/or frequently used (e.g. tooltips)
+		if (simplePacksData[pack]) return;
+
+		// Allow overriding source wherever applicable for faster look-ups
+		// e.g. favoriteSticker() should only look-up from subscribedPacks
+		const target = source || availablePacks;
+
+		const index = target.findIndex(p => p.id === pack);
+		if (index !== -1) {
+			simplePacksData[pack] = {
+				name: target[index].name
+			};
+		}
+	};
+
+	const cleanUpSimplePackDataEntry = pack => {
+		if (favoriteStickers.some(s => s.pack === pack) || frequentlyUsedSorted.some(s => s.pack === pack)) {
+			return;
+		}
+
+		// Only delete entry if no longer used by either favorited stickers,
+		// or stickers in frequently used section
+		delete simplePacksData[pack];
+	};
+
 	const grabPacks = async (reset = false) => {
 		let packs;
 		try {
@@ -325,9 +351,9 @@
 			subscribedPacks = [];
 			subscribedPacksSimple = [];
 			favoriteStickers = [];
-			favoriteStickersData = {};
 			stickersStats = [];
 			frequentlyUsedSorted = [];
+			simplePacksData = {};
 		}
 
 		// Load local packs first to have them always before built-in packs
@@ -384,24 +410,36 @@
 
 		const favorites = getFromLocalStorage('magane.favorites');
 		if (Array.isArray(favorites) && favorites.length) {
+			// Init simple pack data entry, and filter-out invalid data
+			// (e.g. stickers of local packs that have previously been deleted)
 			favoriteStickers = favorites.filter(sticker => {
-				if (favoriteStickersData[sticker.pack])	{
-					return true;
+				if (isLocalPackID(sticker.pack) && !localPacks[sticker.pack]) {
+					return false;
 				}
-				const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
-				if (index !== -1) {
-					// Simple caching of pack names, for tooltips
-					favoriteStickersData[sticker.pack] = {
-						name: availablePacks[index].name
-					};
-					return true;
-				}
+				initSimplePackDataEntry(sticker.pack);
+				return true;
 			});
+
+			// Update database if required
+			if (favorites.length !== favoriteStickers.length) {
+				log(`magane.favorites mismatch: ${favorites.length} !== ${favoriteStickers.length}`);
+				saveToLocalStorage('magane.favorites', favoriteStickers);
+			}
 		}
 
 		const stats = getFromLocalStorage('magane.stats');
 		if (Array.isArray(stats) && stats.length) {
-			stickersStats = stats;
+			// Filter-out invalid data
+			// (e.g. stickers of local packs that have previously been deleted)
+			stickersStats = stats.filter(sticker =>
+				!isLocalPackID(sticker.pack) || localPacks[sticker.pack]);
+
+			// Update database if required
+			if (stats.length !== stickersStats.length) {
+				log(`magane.stats mismatch: ${stats.length} !== ${stickersStats.length}`);
+				saveToLocalStorage('magane.stats', stickersStats);
+			}
+
 			// eslint-disable-next-line no-use-before-define
 			updateFrequentlyUsed();
 		}
@@ -666,14 +704,7 @@
 		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
 		if (index !== -1) return;
 
-		if (!favoriteStickersData[pack]) {
-			const data = subscribedPacks.find(p => p.id === pack);
-			if (data) {
-				favoriteStickersData[pack] = {
-					name: data.name
-				};
-			}
-		}
+		initSimplePackDataEntry(pack, subscribedPacks);
 
 		const favorite = { pack, id };
 		favoriteStickers = [...favoriteStickers, favorite];
@@ -689,9 +720,7 @@
 		favoriteStickers.splice(index, 1);
 		favoriteStickers = favoriteStickers;
 
-		if (!favoriteStickers.some(s => s.pack === pack)) {
-			delete favoriteStickersData[pack];
-		}
+		cleanUpSimplePackDataEntry(pack);
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
 		log(`Unfavorited > ${id} of pack ${pack}`);
@@ -946,8 +975,15 @@
 
 		// Force unfavorite stickers
 		favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
-		delete favoriteStickersData[id];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
+
+		// Force clear stickers stats
+		stickersStats = stickersStats.filter(s => s.pack !== id);
+		saveToLocalStorage('magane.stats', stickersStats);
+
+		// Update frequently used section (will also clean up simple pack data entry)
+		// eslint-disable-next-line no-use-before-define
+		updateFrequentlyUsed();
 
 		// Force unsubscribe
 		const subbedPack = subscribedPacks.find(p => p.id === id);
@@ -1294,15 +1330,24 @@
 
 			const stored = _appendPack(pack.id, pack, { overwrite: true });
 
-			// Update favorites data
+			// Clean up favorites
 			favoriteStickers = favoriteStickers.filter(s =>
 				s.pack !== id || stored.pack.files.findIndex(f => f === s.id) !== -1);
-			if (favoriteStickers.some(s => s.pack === id)) {
-				favoriteStickersData[id].name = stored.pack.name;
-			} else {
-				delete favoriteStickersData[id];
-			}
 			saveToLocalStorage('magane.favorites', favoriteStickers);
+
+			// Clean up stickers stats
+			stickersStats = stickersStats.filter(s =>
+				s.pack !== id || stored.pack.files.findIndex(f => f === s.id) !== -1);
+			saveToLocalStorage('magane.stats', stickersStats);
+
+			// Update simple pack data entry if required
+			if (simplePacksData[id]) {
+				simplePacksData[id].name = stored.pack.name;
+			}
+
+			// Update frequently used section (will also clean up simple pack data entry)
+			// eslint-disable-next-line no-use-before-define
+			updateFrequentlyUsed();
 
 			// Update subscribed pack data
 			const subIndex = subscribedPacks.findIndex(p => p.id === id);
@@ -1483,9 +1528,30 @@
 	};
 
 	const updateFrequentlyUsed = () => {
-		frequentlyUsedSorted = stickersStats
-			.sort((a, b) => b.used - a.used || b.lastUsed - a.lastUsed)
-			.slice(0, settings.frequentlyUsed);
+		// Get pack IDs of stickers previously included in frequently used section
+		const lastPackIDs = frequentlyUsedSorted
+			.map(v => v.pack)
+			.filter((v, i, a) => a.indexOf(v) === i);
+
+		if (settings.frequentlyUsed) {
+			// Only keep stats of ceil(settings.frequentlyUsed * 1.5) frequently used stickers
+			// to avoid infinite growth of extraneous useless data.
+			// NOTE: If full usage stats is ever required in the future, this check should be removed.
+			stickersStats = stickersStats
+				.sort((a, b) => b.used - a.used || b.lastUsed - a.lastUsed)
+				.slice(0, Math.ceil(settings.frequentlyUsed * 1.5));
+
+			const sliced = stickersStats.slice(0, settings.frequentlyUsed);
+			sliced.forEach(sticker => initSimplePackDataEntry(sticker.pack));
+
+			frequentlyUsedSorted = sliced;
+		} else if (frequentlyUsedSorted.length) {
+			// Refresh UI only if required
+			frequentlyUsedSorted = [];
+		}
+
+		// Try to clean up simple pack data entry if no longer used
+		lastPackIDs.forEach(cleanUpSimplePackDataEntry);
 	};
 
 	const parseFrequentlyUsedInput = () => {
