@@ -1,4 +1,4 @@
-<!-- Allow App.svelte to interface with exported "element" prop -->
+<!-- Allow App.svelte to interface with exported props -->
 <svelte:options accessors={ true }/>
 
 <script>

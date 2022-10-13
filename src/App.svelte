@@ -7,7 +7,6 @@
 	import './styles/main.scss';
 
 	// APIs
-	window.magane = {};
 	const modules = {};
 
 	const coords = { top: 0, left: 0 };
@@ -26,14 +25,13 @@
 	const stickerAddModalTabsInit = {};
 	let activeTab = null;
 	let favoriteStickers = [];
-	let favoriteStickersData = {};
 	let availablePacks = [];
 	let subscribedPacks = [];
 	let subscribedPacksSimple = [];
 	let filteredPacks = [];
 	let stickersStats = [];
 	let frequentlyUsedSorted = [];
-	const localPackIdRegex = /^(startswith|emojis|custom)-/;
+	let simplePacksData = {};
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
@@ -48,6 +46,7 @@
 	const waitForTimeouts = {};
 
 	const settings = {
+		enableWindowMagane: false,
 		disableToasts: false,
 		closeWindowOnSend: false,
 		useLeftToolbar: false,
@@ -277,6 +276,9 @@
 			}
 		}
 
+		// eslint-disable-next-line no-use-before-define
+		setWindowMaganeAPIs(settings.enableWindowMagane);
+
 		frequentlyUsedInput = settings.frequentlyUsed;
 		hotkeyInput = settings.hotkey;
 
@@ -294,6 +296,40 @@
 		if (storedSettings) {
 			applySettings(storedSettings);
 		}
+	};
+
+	const isLocalPackID = id => {
+		if (typeof id !== 'string') return false;
+		// Faster than regex tests, especially if biased to only having imported LINE remote packs
+		return id.startsWith('startswith-') ||
+			id.startsWith('emojis-') ||
+			id.startsWith('custom-');
+	};
+
+	const initSimplePackDataEntry = (pack, source) => {
+		// Intended for favorites and/or frequently used (e.g. tooltips)
+		if (simplePacksData[pack]) return;
+
+		// Allow overriding source wherever applicable for faster look-ups
+		// e.g. favoriteSticker() should only look-up from subscribedPacks
+		const target = source || availablePacks;
+
+		const index = target.findIndex(p => p.id === pack);
+		if (index !== -1) {
+			simplePacksData[pack] = {
+				name: target[index].name
+			};
+		}
+	};
+
+	const cleanUpSimplePackDataEntry = pack => {
+		if (favoriteStickers.some(s => s.pack === pack) || frequentlyUsedSorted.some(s => s.pack === pack)) {
+			return;
+		}
+
+		// Only delete entry if no longer used by either favorited stickers,
+		// or stickers in frequently used section
+		delete simplePacksData[pack];
 	};
 
 	const grabPacks = async (reset = false) => {
@@ -315,9 +351,9 @@
 			subscribedPacks = [];
 			subscribedPacksSimple = [];
 			favoriteStickers = [];
-			favoriteStickersData = {};
 			stickersStats = [];
 			frequentlyUsedSorted = [];
+			simplePacksData = {};
 		}
 
 		// Load local packs first to have them always before built-in packs
@@ -328,8 +364,11 @@
 			const filteredLocalPacks = availLocalPacks.filter(pack =>
 				typeof pack === 'object' &&
 				typeof pack.id !== 'undefined' &&
-				localPackIdRegex.test(pack.id));
+				isLocalPackID(pack.id));
+
+			// Update database if required
 			if (availLocalPacks.length !== filteredLocalPacks.length) {
+				log(`magane.available mismatch: ${availLocalPacks.length} !== ${filteredLocalPacks.length}`);
 				saveToLocalStorage('magane.available', filteredLocalPacks);
 			}
 
@@ -351,38 +390,56 @@
 
 		const subscribed = getFromLocalStorage('magane.subscribed');
 		if (Array.isArray(subscribed) && subscribed.length) {
-			subscribedPacks = subscribed;
-			for (const subbedPacks of subscribedPacks) {
-				subscribedPacksSimple.push(subbedPacks.id);
-			}
-			// Prioritize data of subscribed packs
-			subscribedPacks.forEach(pack => {
-				if (localPackIdRegex.test(pack.id)) {
-					localPacks[pack.id] = pack;
+			// Init simple caching of pack IDs, and filter-out invalid data
+			// (e.g. failed to unsubscribe upon deleting local packs)
+			subscribedPacks = subscribed.filter(pack => {
+				if (isLocalPackID(pack.id) && !localPacks[pack.id]) {
+					return false;
 				}
+				// Simple caching of pack IDs
+				subscribedPacksSimple.push(pack.id);
+				return true;
 			});
+
+			// Update database if required
+			if (subscribed.length !== subscribedPacks.length) {
+				log(`magane.subscribed mismatch: ${subscribed.length} !== ${subscribedPacks.length}`);
+				saveToLocalStorage('magane.subscribed', subscribedPacks);
+			}
 		}
 
 		const favorites = getFromLocalStorage('magane.favorites');
 		if (Array.isArray(favorites) && favorites.length) {
+			// Init simple pack data entry, and filter-out invalid data
+			// (e.g. stickers of local packs that have previously been deleted)
 			favoriteStickers = favorites.filter(sticker => {
-				if (favoriteStickersData[sticker.pack])	{
-					return true;
+				if (isLocalPackID(sticker.pack) && !localPacks[sticker.pack]) {
+					return false;
 				}
-				const index = availablePacks.findIndex(pack => pack.id === sticker.pack);
-				if (index !== -1) {
-					// Simple caching of pack names, for tooltips
-					favoriteStickersData[sticker.pack] = {
-						name: availablePacks[index].name
-					};
-					return true;
-				}
+				initSimplePackDataEntry(sticker.pack);
+				return true;
 			});
+
+			// Update database if required
+			if (favorites.length !== favoriteStickers.length) {
+				log(`magane.favorites mismatch: ${favorites.length} !== ${favoriteStickers.length}`);
+				saveToLocalStorage('magane.favorites', favoriteStickers);
+			}
 		}
 
 		const stats = getFromLocalStorage('magane.stats');
 		if (Array.isArray(stats) && stats.length) {
-			stickersStats = stats;
+			// Filter-out invalid data
+			// (e.g. stickers of local packs that have previously been deleted)
+			stickersStats = stats.filter(sticker =>
+				!isLocalPackID(sticker.pack) || localPacks[sticker.pack]);
+
+			// Update database if required
+			if (stats.length !== stickersStats.length) {
+				log(`magane.stats mismatch: ${stats.length} !== ${stickersStats.length}`);
+				saveToLocalStorage('magane.stats', stickersStats);
+			}
+
 			// eslint-disable-next-line no-use-before-define
 			updateFrequentlyUsed();
 		}
@@ -394,7 +451,7 @@
 		subscribedPacksSimple = [...subscribedPacksSimple, pack.id];
 
 		saveToLocalStorage('magane.subscribed', subscribedPacks);
-		log(`Subscribed to pack > ${pack.name}`);
+		log(`Subscribed > ${pack.name}`);
 		// analyticsSubscribePack([pack.id]);
 	};
 
@@ -408,7 +465,7 @@
 				subscribedPacks = subscribedPacks;
 				subscribedPacksSimple = subscribedPacksSimple;
 
-				log(`Unsubscribed from pack > ${pack.name}`);
+				log(`Unsubscribed > ${pack.name}`);
 				saveToLocalStorage('magane.subscribed', subscribedPacks);
 				return;
 			}
@@ -428,17 +485,18 @@
 				// Let sendSticker() handle displaying error
 				throw new Error('Magane\'s API was unavailable. Please reload Magane if the API is already back online.');
 			} else {
-				// Placeholder thumb (red cross emoji) if baseURL is missing (i.e. failed to fetch it from Magane's API)
+				// Placeholder thumb (❌) if baseURL is missing (i.e. failed to fetch it from Magane's API)
 				url = '/assets/8becd37ab9d13cdfe37c08c496a9def3.svg';
 			}
 		} else if (pack.startsWith('startswith-')) {
-			// LINE Store packs
-			// 292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
-			// 219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
-			// 146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
-			// WARNING: Early packs (can confirm with packs that have their sticker IDs at 4 digits),
-			// do not have iPhone variants, so we will stick with Android variant, which is always available.
-			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
+			/*
+				LINE Store packs
+				292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
+				219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
+				146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
+				WARNING: Early packs (can confirm with packs that have their sticker IDs at 4 digits),
+				do not have iPhone variants, so we will stick with Android variants, which are always available.
+			*/
 			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
 			url = template.replace(/%id%/g, id.split('.')[0]);
 			let append = sending ? '&h=180p' : '&h=100p';
@@ -448,16 +506,19 @@
 				append += '&output=gif';
 			}
 			if (!settings.disableDownscale) {
+				// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('emojis-')) {
-			// LINE Store emojis
-			// 220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
-			// 154p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png
-			// WARNING: Stickers may actually have missing iPhone variants, so to be safe we will just use
-			// Android variant for emojis too. Plus, it probably makes more sense to have emojis smaller
-			// anyway (Android variant of emojis only go up to 154p).
-			// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
+			/*
+				LINE Store emojis
+				220p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/iPhone/%id%.png
+				154p: https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png
+				WARNING: Stickers may actually have missing iPhone variants,
+				so to be safe we will just use Android variant for emojis too.
+				Plus, it probably makes more sense to have emojis smaller anyway
+				(Android variant of emojis only go up to 154p).
+			*/
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
 			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
 			let append = sending ? '' : '&h=100p';
@@ -467,6 +528,7 @@
 				append += '&output=gif';
 			}
 			if (!settings.disableDownscale) {
+				// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
 				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('custom-')) {
@@ -480,7 +542,7 @@
 					url = thumbIndex >= 0 ? localPacks[pack].thumbs[thumbIndex] : null;
 				}
 				if (!url) {
-					// Immediately return with placeholder thumb (paper emoji)
+					// Immediately return with placeholder thumb (📄)
 					return '/assets/eedd4bd948a0da6d75bf5304bff4e17f.svg';
 				}
 			} else {
@@ -642,19 +704,12 @@
 		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
 		if (index !== -1) return;
 
-		if (!favoriteStickersData[pack]) {
-			const data = subscribedPacks.find(p => p.id === pack);
-			if (data) {
-				favoriteStickersData[pack] = {
-					name: data.name
-				};
-			}
-		}
+		initSimplePackDataEntry(pack, subscribedPacks);
 
 		const favorite = { pack, id };
 		favoriteStickers = [...favoriteStickers, favorite];
 		saveToLocalStorage('magane.favorites', favoriteStickers);
-		log(`Favorited sticker > ${id} of pack ${pack}`);
+		log(`Favorited > ${id} of pack ${pack}`);
 		toastSuccess('Favorited!', { nolog: true });
 	};
 
@@ -665,12 +720,10 @@
 		favoriteStickers.splice(index, 1);
 		favoriteStickers = favoriteStickers;
 
-		if (!favoriteStickers.some(s => s.pack === pack)) {
-			delete favoriteStickersData[pack];
-		}
+		cleanUpSimplePackDataEntry(pack);
 
 		saveToLocalStorage('magane.favorites', favoriteStickers);
-		log(`Unfavorited sticker > ${id} of pack ${pack}`);
+		log(`Unfavorited > ${id} of pack ${pack}`);
 		toastInfo('Unfavorited!', { nolog: true });
 	};
 
@@ -688,21 +741,21 @@
 	};
 
 	const _appendPack = (id, e, opts = {}) => {
-		let foundIndex;
+		let availLocalPacks = getFromLocalStorage('magane.available');
+		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) {
+			availLocalPacks = [];
+		}
 
-		const availLocalPacks = getFromLocalStorage('magane.available');
-		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
-			foundIndex = availLocalPacks.findIndex(p => p.id === id);
-			if (foundIndex >= 0) {
-				if (opts.overwrite && opts.partial) {
-					// Allow partial properties overwrites
-					e = Object.assign(availLocalPacks[foundIndex], e);
-				} else if (!opts.overwrite) {
-					throw new Error(`Pack with ID ${id} already exist.`);
-				}
-			} else if (opts.overwrite) {
-				throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
+		const foundIndex = availLocalPacks.findIndex(p => p.id === id);
+		if (foundIndex >= 0) {
+			if (opts.overwrite && opts.partial) {
+				// Allow partial properties overwrites
+				e = Object.assign(availLocalPacks[foundIndex], e);
+			} else if (!opts.overwrite) {
+				throw new Error(`Pack with ID ${id} already exist.`);
 			}
+		} else if (opts.overwrite) {
+			throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
 		}
 
 		if (!e.count || !e.files.length) {
@@ -710,7 +763,7 @@
 		}
 
 		const result = { pack: e };
-		if (localPackIdRegex.test(id)) {
+		if (isLocalPackID(id)) {
 			localPacks[id] = e;
 		}
 
@@ -772,7 +825,7 @@
 		const favorites = getFromLocalStorage('magane.favorites');
 		if (Array.isArray(favorites) && favorites.length) {
 			favorites.forEach(item => {
-				if (typeof item.pack === 'number') return;
+				if (typeof item.pack === 'number' || isLocalPackID(item.pack)) return;
 				const result = parseInt(item.pack, 10);
 				if (isNaN(item.pack)) return;
 				item.pack = result;
@@ -783,7 +836,7 @@
 		const subscribed = getFromLocalStorage('magane.subscribed');
 		if (Array.isArray(subscribed) && subscribed.length) {
 			subscribed.forEach(item => {
-				if (typeof item.id === 'number') return;
+				if (typeof item.id === 'number' || isLocalPackID(item.id)) return;
 				const result = parseInt(item.id, 10);
 				if (isNaN(item.id)) return;
 				item.id = result;
@@ -800,12 +853,12 @@
 		}
 	};
 
-	const parseFunctionArgs = (args, argNames, minArgs) => {
-		// Allow calling window.magane.X functions with
+	const parseFunctionArgs = (args, argNames = [], minArgs = 0) => {
+		// Allow calling window.magane.<function> with
 		// func(val1, val2, ..., valN) for backwards-compatibility, and
 		// func({arg1: val, arg2: val, ..., argN: val}) for a clean expandable future.
 		const isFirstArgAnObj = typeof args[0] === 'object';
-		if (!isFirstArgAnObj && typeof minArgs === 'number' && args.length < minArgs) {
+		if (!isFirstArgAnObj && args.length < minArgs) {
 			throw new Error(`This function expects at least ${minArgs} parameter(s).`);
 		}
 		const parsed = {};
@@ -815,7 +868,7 @@
 		return parsed;
 	};
 
-	window.magane.appendPack = (...args) => {
+	const appendPack = (...args) => {
 		let { name, firstid, count, animated } = parseFunctionArgs(args,
 			['name', 'firstid', 'count', 'animated'], 3);
 
@@ -840,7 +893,7 @@
 		});
 	};
 
-	window.magane.appendEmojisPack = (...args) => {
+	const appendEmojisPack = (...args) => {
 		let { name, id, count, animated } = parseFunctionArgs(args,
 			['name', 'id', 'count', 'animated'], 3);
 
@@ -860,7 +913,7 @@
 		});
 	};
 
-	window.magane.appendCustomPack = (...args) => {
+	const appendCustomPack = (...args) => {
 		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
 			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
 
@@ -891,7 +944,7 @@
 		});
 	};
 
-	window.magane.editPack = (...args) => {
+	const editPack = (...args) => {
 		const { id, props } = parseFunctionArgs(args,
 			['id', 'props'], 2);
 
@@ -905,46 +958,55 @@
 		});
 	};
 
-	window.magane.deletePack = id => {
-		if (!id && !localPackIdRegex.test(id)) {
+	const deletePack = id => {
+		if (!isLocalPackID(id)) {
 			throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		}
 
 		const availLocalPacks = getFromLocalStorage('magane.available');
-		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
-			const index = availLocalPacks.findIndex(p => p.id === id);
-			if (index === -1) {
-				throw new Error(`Unable to find pack with ID ${id}`);
-			}
-
-			// Force unfavorite stickers
-			favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
-			delete favoriteStickersData[id];
-			saveToLocalStorage('magane.favorites', favoriteStickers);
-
-			// Force unsubscribe
-			const subbedPack = subscribedPacks.find(p => p.id === id);
-			if (subbedPack)	{
-				unsubscribeToPack(subbedPack);
-			}
-
-			availLocalPacks.splice(index, 1);
-			saveToLocalStorage('magane.available', availLocalPacks);
-
-			const sharedIndex = availablePacks.findIndex(p => p.id === id);
-			if (sharedIndex !== -1) {
-				availablePacks.splice(sharedIndex, 1);
-				availablePacks = availablePacks;
-				filterPacks();
-			}
-
-			delete localPacks[id];
-			log(`Removed pack with ID ${id} (old index: ${index})`);
-			return true;
+		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) {
+			throw new Error('You have not imported any remote or custom packs');
 		}
+
+		const index = availLocalPacks.findIndex(p => p.id === id);
+		if (index === -1) {
+			throw new Error(`Unable to find pack with ID ${id}`);
+		}
+
+		// Force unfavorite stickers
+		favoriteStickers = favoriteStickers.filter(s => s.pack !== id);
+		saveToLocalStorage('magane.favorites', favoriteStickers);
+
+		// Force clear stickers stats
+		stickersStats = stickersStats.filter(s => s.pack !== id);
+		saveToLocalStorage('magane.stats', stickersStats);
+
+		// Update frequently used section (will also clean up simple pack data entry)
+		// eslint-disable-next-line no-use-before-define
+		updateFrequentlyUsed();
+
+		// Force unsubscribe
+		const subbedPack = subscribedPacks.find(p => p.id === id);
+		if (subbedPack)	{
+			unsubscribeToPack(subbedPack);
+		}
+
+		availLocalPacks.splice(index, 1);
+		saveToLocalStorage('magane.available', availLocalPacks);
+
+		const sharedIndex = availablePacks.findIndex(p => p.id === id);
+		if (sharedIndex !== -1) {
+			availablePacks.splice(sharedIndex, 1);
+			availablePacks = availablePacks;
+			filterPacks();
+		}
+
+		delete localPacks[id];
+		log(`Removed pack with ID ${id} (old index: ${index})`);
+		return true;
 	};
 
-	window.magane.searchPacks = keyword => {
+	const searchPacks = keyword => {
 		if (!keyword) {
 			throw new Error('Keyword required');
 		}
@@ -952,9 +1014,21 @@
 		keyword = keyword.toLowerCase();
 
 		const availLocalPacks = getFromLocalStorage('magane.available');
-		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
-			return availLocalPacks.filter(p =>
-				p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
+		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) {
+			throw new Error('You have not imported any remote or custom packs');
+		}
+
+		return availLocalPacks.filter(p =>
+			p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
+	};
+
+	const setWindowMaganeAPIs = state => {
+		if (state) {
+			window.magane = { appendPack, appendEmojisPack, appendCustomPack, editPack, deletePack, searchPacks };
+		} else if (!(window.magane instanceof Node)) {
+			// For unknown reasons, if "window.magane" is not overriden,
+			// it ends up being a reference to #magane element (Svelte's quirk?)
+			delete window.magane;
 		}
 	};
 
@@ -976,6 +1050,7 @@
 	};
 
 	onMount(async () => {
+		const startTime = Date.now();
 		try {
 			toast('Loading Magane\u2026');
 			// Background tasks
@@ -991,6 +1066,7 @@
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
+		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`);
 	});
 
 	onDestroy(() => {
@@ -1006,7 +1082,7 @@
 		if (resizeObserver) {
 			resizeObserver.disconnect();
 		}
-		delete window.magane;
+		setWindowMaganeAPIs(false);
 		log('Internal components cleaned up.');
 	});
 
@@ -1088,7 +1164,7 @@
 
 		let packId = event.target.dataset.pack;
 		if (typeof packId === 'undefined') return;
-		if (!localPackIdRegex.test(packId)) packId = Number(packId);
+		if (!isLocalPackID(packId)) packId = Number(packId);
 
 		const oldIndex = subscribedPacks.findIndex(pack => pack.id === packId);
 		if (oldIndex === newIndex) return;
@@ -1115,7 +1191,7 @@
 	const deleteLocalPack = id => {
 		try {
 			const _name = localPacks[id].name;
-			const deleted = window.magane.deletePack(id);
+			const deleted = deletePack(id);
 			if (deleted) {
 				toastSuccess(`Removed pack ${_name}.`, { nolog: true, timeout: 6000 });
 			}
@@ -1254,15 +1330,24 @@
 
 			const stored = _appendPack(pack.id, pack, { overwrite: true });
 
-			// Update favorites data
+			// Clean up favorites
 			favoriteStickers = favoriteStickers.filter(s =>
 				s.pack !== id || stored.pack.files.findIndex(f => f === s.id) !== -1);
-			if (favoriteStickers.some(s => s.pack === id)) {
-				favoriteStickersData[id].name = stored.pack.name;
-			} else {
-				delete favoriteStickersData[id];
-			}
 			saveToLocalStorage('magane.favorites', favoriteStickers);
+
+			// Clean up stickers stats
+			stickersStats = stickersStats.filter(s =>
+				s.pack !== id || stored.pack.files.findIndex(f => f === s.id) !== -1);
+			saveToLocalStorage('magane.stats', stickersStats);
+
+			// Update simple pack data entry if required
+			if (simplePacksData[id]) {
+				simplePacksData[id].name = stored.pack.name;
+			}
+
+			// Update frequently used section (will also clean up simple pack data entry)
+			// eslint-disable-next-line no-use-before-define
+			updateFrequentlyUsed();
 
 			// Update subscribed pack data
 			const subIndex = subscribedPacks.findIndex(p => p.id === id);
@@ -1294,7 +1379,7 @@
 				const id = match[4];
 				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
 				const props = await response.json();
-				stored = window.magane.appendEmojisPack({
+				stored = appendEmojisPack({
 					name: props.title,
 					id: props.id,
 					count: props.len,
@@ -1306,14 +1391,14 @@
 				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
 				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
 				const props = await response.json();
-				stored = window.magane.appendPack({
+				stored = appendPack({
 					name: props.title,
 					firstid: props.first,
 					count: props.len,
 					animated: props.hasAnimation
 				});
 			}
-			toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+			toastSuccess(`Added a new pack ${stored.pack.name}. You can now subscribe to it from Packs tab.`, { nolog: true, timeout: 6000 });
 			linePackSearch = null;
 		} catch (error) {
 			console.error(error);
@@ -1435,14 +1520,38 @@
 		// Value already changed via Svelte's bind:value
 		log(`settings['${name}'] = ${settings[name]}`);
 
+		// Settings that require their own on-change tasks
+		setWindowMaganeAPIs(settings.enableWindowMagane);
+
 		saveToLocalStorage('magane.settings', settings);
 		toastSuccess('Settings saved!', { nolog: true });
 	};
 
 	const updateFrequentlyUsed = () => {
-		frequentlyUsedSorted = stickersStats
-			.sort((a, b) => b.used - a.used || b.lastUsed - a.lastUsed)
-			.slice(0, settings.frequentlyUsed);
+		// Get pack IDs of stickers previously included in frequently used section
+		const lastPackIDs = frequentlyUsedSorted
+			.map(v => v.pack)
+			.filter((v, i, a) => a.indexOf(v) === i);
+
+		if (settings.frequentlyUsed) {
+			// Only keep stats of ceil(settings.frequentlyUsed * 1.5) frequently used stickers
+			// to avoid infinite growth of extraneous useless data.
+			// NOTE: If full usage stats is ever required in the future, this check should be removed.
+			stickersStats = stickersStats
+				.sort((a, b) => b.used - a.used || b.lastUsed - a.lastUsed)
+				.slice(0, Math.ceil(settings.frequentlyUsed * 1.5));
+
+			const sliced = stickersStats.slice(0, settings.frequentlyUsed);
+			sliced.forEach(sticker => initSimplePackDataEntry(sticker.pack));
+
+			frequentlyUsedSorted = sliced;
+		} else if (frequentlyUsedSorted.length) {
+			// Refresh UI only if required
+			frequentlyUsedSorted = [];
+		}
+
+		// Try to clean up simple pack data entry if no longer used
+		lastPackIDs.forEach(cleanUpSimplePackDataEntry);
 	};
 
 	const parseFrequentlyUsedInput = () => {
@@ -1692,10 +1801,7 @@
 							class="image"
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
-							title="{
-								(favoriteStickersData[sticker.pack] ? favoriteStickersData[sticker.pack].name : 'N/A') +
-								(typeof sticker.pack === 'string' && sticker.pack.startsWith('custom-') ? ` – ${sticker.id}` : '')
-							}"
+							title="{ simplePacksData[sticker.pack] ? simplePacksData[sticker.pack].name : '' }"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						<div class="deleteFavorite"
@@ -1719,7 +1825,7 @@
 							class="image"
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
-							title="{ sticker.id } – Used: { sticker.used }"
+							title="{ simplePacksData[sticker.pack] ? `${simplePacksData[sticker.pack].name} – ` : '' }Used: {sticker.used}"
 							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
@@ -1754,7 +1860,6 @@
 							class="image"
 							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
-							title="{ typeof pack.id === 'string' && pack.id.startsWith('custom-') ? sticker : '' }"
 							on:click="{ () => sendSticker(pack.id, sticker) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
@@ -1984,6 +2089,15 @@
 						<div class="tab-content has-scroll-y misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
+								<p>
+									<label>
+										<input
+											name="enableWindowMagane"
+											type="checkbox"
+											bind:checked={ settings.enableWindowMagane } />
+										Enable <code>window.magane</code> development utility
+									</label>
+								</p>
 								<p>
 									<label>
 										<input
