@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.8
+ * @version 3.2.9
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -1605,28 +1605,8 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 			settings.markAsSpoiler && (filename = "SPOILER_" + filename);
 			const file = new File([ blob ], filename);
-			log(`Sending sticker as ${filename}…`);
-			let textAreaInstance, messageContent = "";
-			if (!settings.disableSendingWithChatInput) if (textAreaInstance = (() => {
-				const reactInstanceKey = Object.keys(textArea).find(key => key.startsWith("__reactFiber") || key.startsWith("__reactInternalInstance"));
-				let cursor = textArea[reactInstanceKey];
-				for (let i = 0; i < 10 && cursor; i++) {
-					if (cursor.stateNode && cursor.stateNode.handleTextareaChange) return cursor;
-					cursor = cursor.return;
-				}
-			})(), textAreaInstance) messageContent = textAreaInstance.stateNode.state.textValue; else if (textArea) {
-				log("Unable to fetch text area of chat input, attempting workaround…", "warn");
-				let element = textArea.querySelector("span");
-				element || (element = textArea), messageContent = element.innerText;
-			} else log("Unable to fetch text area of chat input, workaround unavailable…", "warn");
-			if (modules.messageUpload.upload({
-				channelId,
-				file,
-				message: {
-					content: messageContent,
-					tts: !1
-				}
-			}), 0 !== settings.frequentlyUsed) {
+			if (log(`Sending sticker as ${filename}…`), log("Temporarily sending sticker without message content due to a bug..."), 
+			modules.messageUpload.instantBatchUpload(channelId, [ file ]), 0 !== settings.frequentlyUsed) {
 				const last = stickersStats.findIndex(sticker => sticker.pack === pack && sticker.id === id);
 				-1 === last ? stickersStats.push({
 					pack,
@@ -1636,15 +1616,6 @@ function instance$1($$self, $$props, $$invalidate) {
 				}) : (stickersStats[last].used++, stickersStats[last].lastUsed = Date.now()), saveToLocalStorage("magane.stats", stickersStats), 
 				updateFrequentlyUsed();
 			}
-			!settings.disableSendingWithChatInput && textAreaInstance && textAreaInstance.stateNode.setState({
-				textValue: "",
-				richValue: [ {
-					type: "line",
-					children: [ {
-						text: ""
-					} ]
-				} ]
-			});
 		} catch (error) {
 			console.error(error), toastError(error.toString(), {
 				nolog: !0,
