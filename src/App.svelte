@@ -555,6 +555,7 @@
 		return url;
 	};
 
+	// eslint-disable-next-line no-unused-vars
 	const getTextAreaInstance = () => {
 		// NOTE: If any deeper than the 10th step, then Discord must be changing something again,
 		// thus better to inspect further instead of blindly increasing the limit.
@@ -643,7 +644,8 @@
 			const file = new File([blob], filename);
 			log(`Sending sticker as ${filename}\u2026`);
 
-			let messageContent = '';
+			/* SKIP -- CANNOT ATTACH TEXT MESSAGE TO UPLOADS
+			const messageContent = '';
 			let textAreaInstance;
 			if (!settings.disableSendingWithChatInput) {
 				textAreaInstance = getTextAreaInstance();
@@ -659,6 +661,7 @@
 				}
 			}
 
+			// BROKEN -- UNRESPONSIVE, WAITING FOR INVESTIGATION
 			modules.messageUpload.upload({
 				channelId,
 				file,
@@ -667,6 +670,11 @@
 					tts: false
 				}
 			});
+			*/
+
+			// TEMPORARY ALTERNATIVE (CANNOT ATTACH TEXT MESSAGE)
+			log('Temporarily sending sticker without message content due to a bug...');
+			modules.messageUpload.instantBatchUpload(channelId, [file]);
 
 			// Update sticker's usage stats if using Frequently Used
 			if (settings.frequentlyUsed !== 0) {
@@ -685,6 +693,7 @@
 			}
 
 			// Clear chat input if required
+			/*
 			if (!settings.disableSendingWithChatInput && textAreaInstance) {
 				textAreaInstance.stateNode.setState({
 					textValue: '',
@@ -692,6 +701,7 @@
 					richValue: [{ type: 'line', children: [{ text: '' }] }]
 				});
 			}
+			*/
 		} catch (error) {
 			console.error(error);
 			toastError(error.toString(), { nolog: true, timeout: 5000 });
