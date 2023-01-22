@@ -659,8 +659,13 @@
 					toastWarn('You do not have permission to attach files, sending sticker as link\u2026');
 				}
 
+				let append = url;
+				if (settings.markAsSpoiler) {
+					append = `||${append}||`;
+				}
+
 				Modules.SendMessage.sendMessage(channelId, {
-					content: `${messageContent} ${url}`.trim()
+					content: `${messageContent} ${append}`.trim()
 				});
 			} else {
 				toastError('You do not have permissions to attach files nor embed links.');
@@ -2181,7 +2186,7 @@
 											name="markAsSpoiler"
 											type="checkbox"
 											bind:checked={ settings.markAsSpoiler } />
-										Mark stickers as spoilers when sending (only for uploads)
+										Mark stickers as spoilers when sending
 									</label>
 								</p>
 								<p>
