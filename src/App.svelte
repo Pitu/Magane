@@ -54,6 +54,8 @@
 		hidePackAppendix: false,
 		disableDownscale: false,
 		disableImportedObfuscation: false,
+		alwaysSendAsLink: false,
+		ignoreEmbedLinksPermission: false,
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
 		disableSendingWithChatInput: false,
@@ -222,16 +224,23 @@
 
 	const initModules = () => {
 		// Channel store & actions
+		Modules.ChannelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
 		Modules.SelectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
-		Modules.ChannelFollowingDestinationStore = BdApi.findModuleByProps('getLastChannelFollowingDestination');
+
+		// Permissions
+		Modules.DiscordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
+		Modules.DiscordPermissions = BdApi.Webpack.getModule(m => m.ADD_REACTIONS, { searchExports: true });
+		Modules.Permissions = BdApi.findModuleByProps('computePermissions');
+		Modules.UserStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
 
 		// Misc
+		Modules.DraftStore = BdApi.findModuleByProps('getDraft', 'getState');
 		Modules.MessageUpload = BdApi.findModuleByProps('instantBatchUpload');
+		Modules.SendMessage = BdApi.findModuleByProps('sendMessage');
 		Modules.UploadObject = BdApi.Webpack.getModule(
 			m => m.prototype && m.prototype.upload && m.prototype.getSize,
 			{ searchExports: true }
 		);
-		Modules.DraftStore = BdApi.findModuleByProps('getDraft', 'getState');
 	};
 
 	const initComponentDispatch = () => {
@@ -557,27 +566,25 @@
 		return url;
 	};
 
-	/*
-	// NOTE: Magane will already automatically hide its button on channels with insufficient channels
-	// through CSS magic, so it's fine not to check against their actual permissions altogether.
-	const hasPermissions = (permissions, user, context) => {
-		// Always true if could not fetch Discord's Permissions module
-		if (!Modules.DiscordPermissions) return true;
-		if (!user) return false;
-		// Always true in non-guild channels (e.g. DMs)
-		if (!permissions || !context.guild_id) return true;
-		permissions = Array.isArray(permissions) ? permissions : [permissions];
-		for (const permission of permissions) {
-			// Fallback of the old method as it appeared to be a rolling update
-			const perm = Modules.DiscordPermissions[permission];
-			if (!Modules.PermissionRoleUtils.can({ permission: perm, user, context }) &&
-				!Modules.ComputePermissions.can(perm, user, context)) {
-				return false;
-			}
+	const hasPermission = (permission, channelId) => {
+		// Always true if could not fetch the necessary modules
+		if (!Modules.DiscordPermissions || !Modules.Permissions || !Modules.UserStore || !Modules.ChannelStore) {
+			return true;
 		}
-		return true;
+
+		const user = Modules.UserStore.getCurrentUser();
+		const context = Modules.ChannelStore.getChannel(channelId);
+		if (!user) return false;
+
+		// Always true in non-guild channels (e.g. DMs)
+		if (!permission || !context.guild_id) return true;
+
+		return Modules.Permissions.can({
+			permission: Modules.DiscordPermissions[permission],
+			user,
+			context
+		});
 	};
-	*/
 
 	const sendSticker = async (pack, id) => {
 		if (onCooldown) {
@@ -589,15 +596,12 @@
 		try {
 			initComponentDispatch();
 
-			// const userId = Modules.UserStore.getCurrentUser().id;
 			const channelId = Modules.SelectedChannelStore.getChannelId();
-			// const channel = Modules.ChannelStore.getChannel(channelId);
-			/*
-			if (!hasPermissions(['ATTACH_FILES', 'SEND_MESSAGES'], userId, channel)) {
+
+			if (!hasPermission('SEND_MESSAGES', channelId)) {
 				onCooldown = false;
-				return toastError('You do not have permission to attach files in this channel.');
+				return toastError('You do not have permission to send message in this channel.');
 			}
-			*/
 
 			toast('Sending\u2026', { nolog: true });
 			if (settings.closeWindowOnSend) {
@@ -606,48 +610,61 @@
 			}
 
 			const url = formatUrl(pack, id, true);
-			log(`Fetching sticker from remote: ${url}`);
-			const response = await fetch(url, { cache: 'force-cache' });
-			const blob = await response.blob();
-
-			let filename = id;
-			if (typeof pack === 'string') {
-				if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
-					filename = filename.replace(/\.png$/i, '.gif');
-					toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
-				} else if (pack.startsWith('custom-')) {
-					if (settings.disableImportedObfuscation) {
-						filename = id;
-					} else {
-						const ext = id.match(/(\.\w+)$/);
-						filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
-					}
-				}
-			}
-
-			if (settings.markAsSpoiler) {
-				filename = `SPOILER_${filename}`;
-			}
-			const file = new File([blob], filename);
-			log(`Sending sticker as ${filename}\u2026`);
 
 			let messageContent = '';
 			if (!settings.disableSendingWithChatInput) {
 				messageContent = Modules.DraftStore.getDraft(channelId, 0);
 			}
 
-			Modules.MessageUpload.uploadFiles({
-				channelId,
-				hasSpoiler: false,
-				draftType: 0,
-				parsedMessage: { content: messageContent },
-				uploads: [
-					new Modules.UploadObject({
-						file,
-						platform: 1
-					}, channelId, false, 0)
-				]
-			});
+			if (!settings.alwaysSendAsLink && hasPermission('ATTACH_FILES', channelId)) {
+				log(`Fetching sticker from remote: ${url}`);
+				const response = await fetch(url, { cache: 'force-cache' });
+				const blob = await response.blob();
+
+				let filename = id;
+				if (typeof pack === 'string') {
+					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
+						filename = filename.replace(/\.png$/i, '.gif');
+						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
+					} else if (pack.startsWith('custom-')) {
+						if (settings.disableImportedObfuscation) {
+							filename = id;
+						} else {
+							const ext = id.match(/(\.\w+)$/);
+							filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
+						}
+					}
+				}
+
+				if (settings.markAsSpoiler) {
+					filename = `SPOILER_${filename}`;
+				}
+				const file = new File([blob], filename);
+				log(`Sending sticker as ${filename}\u2026`);
+
+				Modules.MessageUpload.uploadFiles({
+					channelId,
+					hasSpoiler: false,
+					draftType: 0,
+					parsedMessage: { content: messageContent },
+					uploads: [
+						new Modules.UploadObject({
+							file,
+							platform: 1
+						}, channelId, false, 0)
+					]
+				});
+			} else if (settings.ignoreEmbedLinksPermission || hasPermission('EMBED_LINKS', channelId)) {
+				if (!settings.alwaysSendAsLink) {
+					toastWarn('You do not have permission to attach files, sending sticker as link\u2026');
+				}
+
+				Modules.SendMessage.sendMessage(channelId, {
+					content: `${messageContent} ${url}`.trim()
+				});
+			} else {
+				toastError('You do not have permissions to attach files nor embed links.');
+			}
 
 			// Update sticker's usage stats if using Frequently Used
 			if (settings.frequentlyUsed !== 0) {
@@ -1001,10 +1018,17 @@
 
 	const setWindowMaganeAPIs = state => {
 		if (state) {
-			window.magane = { appendPack, appendEmojisPack, appendCustomPack, editPack, deletePack, searchPacks };
-			// Expose fetched Discord's Modules & ComponentDispatch through window.magane APIs if enabled
-			window.magane.Modules = Modules;
-			window.magane.ComponentDispatch = ComponentDispatch;
+			window.magane = {
+				appendPack,
+				appendEmojisPack,
+				appendCustomPack,
+				editPack,
+				deletePack,
+				searchPacks,
+				Modules,
+				ComponentDispatch,
+				hasPermission
+			};
 		} else if (!(window.magane instanceof Node)) {
 			// For unknown reasons, if "window.magane" is not overriden,
 			// it ends up being a reference to #magane element (Svelte's quirk?)
@@ -2136,10 +2160,28 @@
 								<p>
 									<label>
 										<input
+											name="alwaysSendAsLink"
+											type="checkbox"
+											bind:checked={ settings.alwaysSendAsLink } />
+										Always send stickers as links instead of uploads
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="ignoreEmbedLinksPermission"
+											type="checkbox"
+											bind:checked={ settings.ignoreEmbedLinksPermission } />
+										Ignore missing embed links permission
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
 											name="markAsSpoiler"
 											type="checkbox"
 											bind:checked={ settings.markAsSpoiler } />
-										Mark stickers as spoilers when sending
+										Mark stickers as spoilers when sending (only for uploads)
 									</label>
 								</p>
 								<p>
