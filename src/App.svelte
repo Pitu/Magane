@@ -7,7 +7,8 @@
 	import './styles/main.scss';
 
 	// APIs
-	const modules = {};
+	const Modules = {};
+	let ComponentDispatch;
 
 	const coords = { top: 0, left: 0 };
 	const selectorVoiceChatWrapper = '[class^="channelChatWrapper-"]';
@@ -221,25 +222,26 @@
 
 	const initModules = () => {
 		// Channel store & actions
-		// modules.channelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
-		modules.selectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
-
-		// User store
-		// modules.userStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
-
-		// Discord objects & utils
-		/*
-		try {
-			modules.discordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
-			modules.discordPermissions = modules.discordConstants.Permissions;
-			modules.permissionRoleUtils = BdApi.findModuleByProps('can', 'ALLOW', 'DENY');
-			modules.computePermissions = BdApi.findModuleByProps('computePermissions');
-		} catch (_) {} // Do nothing
-		*/
+		Modules.SelectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
+		Modules.ChannelFollowingDestinationStore = BdApi.findModuleByProps('getLastChannelFollowingDestination');
 
 		// Misc
-		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
-		// modules.richUtils = BdApi.findModuleByProps('toRichValue', 'createEmptyState');
+		Modules.MessageUpload = BdApi.findModuleByProps('instantBatchUpload');
+		Modules.UploadObject = BdApi.Webpack.getModule(
+			m => m.prototype && m.prototype.upload && m.prototype.getSize,
+			{ searchExports: true }
+		);
+		Modules.DraftStore = BdApi.findModuleByProps('getDraft', 'getState');
+	};
+
+	const initComponentDispatch = () => {
+		// On a separate init function, to allow this to be called by sendSticker() on-demand,
+		// in case the module was not yet available during Discord's initial load
+		if (ComponentDispatch) return;
+		ComponentDispatch = BdApi.Webpack.getModule(
+			m => m.dispatchToLastSubscribed && m.emitter && m.emitter.listeners('CLEAR_TEXT').length && m.emitter.listeners('INSERT_TEXT').length,
+			{ searchExports: true }
+		);
 	};
 
 	const getLocalStorage = () => {
@@ -555,38 +557,21 @@
 		return url;
 	};
 
-	// eslint-disable-next-line no-unused-vars
-	const getTextAreaInstance = () => {
-		// NOTE: If any deeper than the 10th step, then Discord must be changing something again,
-		// thus better to inspect further instead of blindly increasing the limit.
-		const MAX_LOOKUP_DEPTH = 10;
-		const reactInstanceKey = Object.keys(textArea).find(key =>
-			key.startsWith('__reactFiber') || key.startsWith('__reactInternalInstance'));
-		let cursor = textArea[reactInstanceKey];
-		for (let i = 0; i < MAX_LOOKUP_DEPTH; i++) {
-			if (!cursor) break;
-			if (cursor.stateNode && cursor.stateNode.handleTextareaChange) {
-				return cursor;
-			}
-			cursor = cursor.return;
-		}
-	};
-
 	/*
 	// NOTE: Magane will already automatically hide its button on channels with insufficient channels
 	// through CSS magic, so it's fine not to check against their actual permissions altogether.
 	const hasPermissions = (permissions, user, context) => {
 		// Always true if could not fetch Discord's Permissions module
-		if (!modules.discordPermissions) return true;
+		if (!Modules.DiscordPermissions) return true;
 		if (!user) return false;
 		// Always true in non-guild channels (e.g. DMs)
 		if (!permissions || !context.guild_id) return true;
 		permissions = Array.isArray(permissions) ? permissions : [permissions];
 		for (const permission of permissions) {
 			// Fallback of the old method as it appeared to be a rolling update
-			const perm = modules.discordPermissions[permission];
-			if (!modules.permissionRoleUtils.can({ permission: perm, user, context }) &&
-				!modules.computePermissions.can(perm, user, context)) {
+			const perm = Modules.DiscordPermissions[permission];
+			if (!Modules.PermissionRoleUtils.can({ permission: perm, user, context }) &&
+				!Modules.ComputePermissions.can(perm, user, context)) {
 				return false;
 			}
 		}
@@ -596,15 +581,17 @@
 
 	const sendSticker = async (pack, id) => {
 		if (onCooldown) {
-			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
+			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1500 });
 		}
 
 		onCooldown = true;
 
 		try {
-			// const userId = modules.userStore.getCurrentUser().id;
-			const channelId = modules.selectedChannelStore.getChannelId();
-			// const channel = modules.channelStore.getChannel(channelId);
+			initComponentDispatch();
+
+			// const userId = Modules.UserStore.getCurrentUser().id;
+			const channelId = Modules.SelectedChannelStore.getChannelId();
+			// const channel = Modules.ChannelStore.getChannel(channelId);
 			/*
 			if (!hasPermissions(['ATTACH_FILES', 'SEND_MESSAGES'], userId, channel)) {
 				onCooldown = false;
@@ -644,37 +631,23 @@
 			const file = new File([blob], filename);
 			log(`Sending sticker as ${filename}\u2026`);
 
-			/* SKIP -- CANNOT ATTACH TEXT MESSAGE TO UPLOADS
-			const messageContent = '';
-			let textAreaInstance;
+			let messageContent = '';
 			if (!settings.disableSendingWithChatInput) {
-				textAreaInstance = getTextAreaInstance();
-				if (textAreaInstance) {
-					messageContent = textAreaInstance.stateNode.state.textValue;
-				} else if (textArea) {
-					log('Unable to fetch text area of chat input, attempting workaround\u2026', 'warn');
-					let element = textArea.querySelector('span');
-					if (!element) element = textArea;
-					messageContent = element.innerText;
-				} else {
-					log('Unable to fetch text area of chat input, workaround unavailable\u2026', 'warn');
-				}
+				messageContent = Modules.DraftStore.getDraft(channelId, 0);
 			}
 
-			// BROKEN -- UNRESPONSIVE, WAITING FOR INVESTIGATION
-			modules.messageUpload.upload({
+			Modules.MessageUpload.uploadFiles({
 				channelId,
-				file,
-				message: {
-					content: messageContent,
-					tts: false
-				}
+				hasSpoiler: false,
+				draftType: 0,
+				parsedMessage: { content: messageContent },
+				uploads: [
+					new Modules.UploadObject({
+						file,
+						platform: 1
+					}, channelId, false, 0)
+				]
 			});
-			*/
-
-			// TEMPORARY ALTERNATIVE (CANNOT ATTACH TEXT MESSAGE)
-			log('Temporarily sending sticker without message content due to a bug...');
-			modules.messageUpload.instantBatchUpload(channelId, [file]);
 
 			// Update sticker's usage stats if using Frequently Used
 			if (settings.frequentlyUsed !== 0) {
@@ -693,15 +666,9 @@
 			}
 
 			// Clear chat input if required
-			/*
-			if (!settings.disableSendingWithChatInput && textAreaInstance) {
-				textAreaInstance.stateNode.setState({
-					textValue: '',
-					// richValue: modules.richUtils.toRichValue('')
-					richValue: [{ type: 'line', children: [{ text: '' }] }]
-				});
+			if (!settings.disableSendingWithChatInput && ComponentDispatch) {
+				ComponentDispatch.dispatchToLastSubscribed('CLEAR_TEXT');
 			}
-			*/
 		} catch (error) {
 			console.error(error);
 			toastError(error.toString(), { nolog: true, timeout: 5000 });
@@ -1035,6 +1002,9 @@
 	const setWindowMaganeAPIs = state => {
 		if (state) {
 			window.magane = { appendPack, appendEmojisPack, appendCustomPack, editPack, deletePack, searchPacks };
+			// Expose fetched Discord's Modules & ComponentDispatch through window.magane APIs if enabled
+			window.magane.Modules = Modules;
+			window.magane.ComponentDispatch = ComponentDispatch;
 		} else if (!(window.magane instanceof Node)) {
 			// For unknown reasons, if "window.magane" is not overriden,
 			// it ends up being a reference to #magane element (Svelte's quirk?)
@@ -1065,6 +1035,7 @@
 			toast('Loading Magane\u2026');
 			// Background tasks
 			initModules();
+			initComponentDispatch();
 			getLocalStorage();
 			loadSettings();
 			await grabPacks();
