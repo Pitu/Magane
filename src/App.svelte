@@ -2159,7 +2159,7 @@
 											name="disableImportedObfuscation"
 											type="checkbox"
 											bind:checked={ settings.disableImportedObfuscation } />
-										Disable obfuscation of files names for imported custom packs
+										Disable obfuscation of files names for imported custom packs (obfuscation happens only for uploads)
 									</label>
 								</p>
 								<p>
