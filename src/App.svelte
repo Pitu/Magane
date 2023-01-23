@@ -15,9 +15,9 @@
 	let main = null;
 	let base = null;
 	let isMaganeBD = null;
+	let forceHideMagane = false;
 	let components = [];
 	let activeComponent = null;
-	let hideMagane = false;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
@@ -1874,7 +1874,7 @@
 							storage.removeItem(key);
 						}
 
-						hideMagane = true;
+						forceHideMagane = true;
 						toast('Reloading Magane database\u2026');
 
 						Object.assign(settings, defaultSettings);
@@ -1883,7 +1883,7 @@
 						await migrateStringPackIds();
 
 						toastSuccess('Magane is now ready!');
-						hideMagane = false;
+						forceHideMagane = false;
 					}
 				}
 			);
@@ -1929,7 +1929,7 @@
 
 <main bind:this={ main }>
 	<div id="magane"
-		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` } { hideMagane ? 'display: none;' : ''}">
+		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` } { forceHideMagane ? 'display: none;' : ''}">
 
 		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
