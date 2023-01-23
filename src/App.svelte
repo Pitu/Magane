@@ -597,7 +597,9 @@
 		try {
 			initComponentDispatch();
 
-			const channelId = Modules.SelectedChannelStore.getChannelId();
+			// const channelId = Modules.SelectedChannelStore.getChannelId();
+			// Good ol' reliable
+			const channelId = window.location.href.split('/').slice(-1)[0];
 
 			if (!hasPermission('SEND_MESSAGES', channelId)) {
 				onCooldown = false;
