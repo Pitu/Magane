@@ -7,6 +7,11 @@
 	export let element;
 	export let active = false;
 
+	// svelte-ignore unused-export-let
+	export let textArea = undefined;
+	// svelte-ignore unused-export-let
+	export let lastTextAreaSize = {};
+
 	const dispatch = createEventDispatcher();
 
 	const log = message =>
