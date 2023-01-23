@@ -236,7 +236,8 @@
 		// Misc
 		Modules.DraftStore = BdApi.findModuleByProps('getDraft', 'getState');
 		Modules.MessageUpload = BdApi.findModuleByProps('instantBatchUpload');
-		Modules.SendMessage = BdApi.findModuleByProps('sendMessage');
+		Modules.MessageUtils = BdApi.findModuleByProps('sendMessage');
+		Modules.PendingReplyStore = BdApi.findModuleByProps('getPendingReply');
 		Modules.UploadObject = BdApi.Webpack.getModule(
 			m => m.prototype && m.prototype.upload && m.prototype.getSize,
 			{ searchExports: true }
@@ -612,8 +613,16 @@
 			const url = formatUrl(pack, id, true);
 
 			let messageContent = '';
-			if (!settings.disableSendingWithChatInput) {
+			if (!settings.disableSendingWithChatInput && Modules.DraftStore) {
 				messageContent = Modules.DraftStore.getDraft(channelId, 0);
+			}
+
+			let messageOptions;
+			if (Modules.PendingReplyStore) {
+				const pendingReply = Modules.PendingReplyStore.getPendingReply(channelId);
+				if (pendingReply) {
+					messageOptions = Modules.MessageUtils.getSendMessageOptionsForReply(pendingReply);
+				}
 			}
 
 			if (!settings.alwaysSendAsLink && hasPermission('ATTACH_FILES', channelId)) {
@@ -644,9 +653,12 @@
 
 				Modules.MessageUpload.uploadFiles({
 					channelId,
-					hasSpoiler: false,
 					draftType: 0,
-					parsedMessage: { content: messageContent },
+					hasSpoiler: false,
+					options: messageOptions || {},
+					parsedMessage: {
+						content: messageContent
+					},
 					uploads: [
 						new Modules.UploadObject({
 							file,
@@ -664,9 +676,9 @@
 					append = `||${append}||`;
 				}
 
-				Modules.SendMessage.sendMessage(channelId, {
+				Modules.MessageUtils._sendMessage(channelId, {
 					content: `${messageContent} ${append}`.trim()
-				});
+				}, messageOptions || {});
 			} else {
 				toastError('You do not have permissions to attach files nor embed links.');
 			}
@@ -689,6 +701,7 @@
 
 			// Clear chat input if required
 			if (!settings.disableSendingWithChatInput && ComponentDispatch) {
+				log('Clearing chat input\u2026');
 				ComponentDispatch.dispatchToLastSubscribed('CLEAR_TEXT');
 			}
 		} catch (error) {
