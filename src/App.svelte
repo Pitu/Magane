@@ -188,9 +188,8 @@
 		if (entry && entry.contentRect.width !== 0 && entry.contentRect.height !== 0) {
 			for (const component of components) {
 				if (component.textArea === entry.target) {
-					// Skip worker only if entry's size still matches last size
-					if ((component.lastTextAreaSize.width === entry.contentRect.width) &&
-						(component.lastTextAreaSize.height === entry.contentRect.height)) {
+					// Skip worker only if entry's width still matches last width (ignore height)
+					if (component.lastTextAreaSize.width === entry.contentRect.width) {
 						return;
 					}
 					break;
