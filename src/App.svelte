@@ -299,7 +299,7 @@
 	const initModules = () => {
 		// Channel store & actions
 		Modules.ChannelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
-		// Modules.SelectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId'); // TODO
+		Modules.SelectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
 
 		// Permissions
 		Modules.DiscordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
@@ -681,7 +681,7 @@
 			// Good ol' reliable
 			// const channelId = window.location.href.split('/').slice(-1)[0];
 
-			// If multiple active channels, SelectedChannelStore will only return the main channel,
+			// If multiple active channels (i.e. split-view), SelectedChannelStore will only return the main channel,
 			// so determining through active component's textArea instance is more reliable, if available.
 			let channelId;
 
