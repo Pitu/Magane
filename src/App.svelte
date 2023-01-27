@@ -232,6 +232,7 @@
 		});
 	};
 
+	// Simple queue system for observer events
 	const resizeObserverQueuePush = entry => new Promise((resolve, reject) => {
 		resizeObserverQueue.push({ entry, resolve, reject });
 		// eslint-disable-next-line no-use-before-define
@@ -676,8 +677,6 @@
 		onCooldown = true;
 
 		try {
-			const textAreaInstance = getTextAreaInstance(activeComponent.textArea);
-
 			// const channelId = Modules.SelectedChannelStore.getChannelId();
 			// Good ol' reliable
 			// const channelId = window.location.href.split('/').slice(-1)[0];
@@ -685,6 +684,8 @@
 			// If multiple active channels, SelectedChannelStore will only return the main channel,
 			// so determining through active component's textArea instance is more reliable, if available.
 			let channelId;
+
+			const textAreaInstance = getTextAreaInstance(activeComponent.textArea);
 			if (textAreaInstance) {
 				channelId = textAreaInstance.stateNode.props.channel.id;
 			} else if (Modules.SelectedChannelStore) {
@@ -1510,6 +1511,30 @@
 		}
 	};
 
+	const showPackInfo = id => {
+		if (!localPacks[id]) return;
+
+		// Formatting is very particular, so we do this the old-fashioned way
+		/* eslint-disable prefer-template */
+		const content = `**ID:** \`${id}\`\n\n` +
+			'**Name:**\n\n' +
+			localPacks[id].name + '\n\n' +
+			'**Count:**\n\n' +
+			localPacks[id].count + '\n\n' +
+			'**Description:**\n\n' +
+			(localPacks[id].description || 'N/A') + '\n\n' +
+			'**Home URL:**\n\n' +
+			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
+			'**Update URL:**\n\n' +
+			(localPacks[id].updateUrl) || 'N/A';
+		/* eslint-enable prefer-template */
+
+		BdApi.showConfirmationModal(
+			localPacks[id].name,
+			content
+		);
+	};
+
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
 		try {
@@ -1567,7 +1592,7 @@
 
 	const parseRemotePackUrl = () => {
 		if (!remotePackUrl) return;
-		assertRemotePackConsent(`URL: ${remotePackUrl}`, async () => {
+		assertRemotePackConsent(`URL:\n\n${remotePackUrl}`, async () => {
 			try {
 				toast('Loading pack information\u2026', { nolog: true });
 				const pack = await fetchRemotePack(remotePackUrl);
@@ -1600,7 +1625,7 @@
 				toastError('The selected file is not a valid JSON file.');
 			}
 
-			assertRemotePackConsent(`File: ${file.name}`, async () => {
+			assertRemotePackConsent(`File:\n\n${file.name}`, async () => {
 				try {
 					const pack = await processRemotePack(result);
 					pack.id = `custom-${pack.id}`;
@@ -2116,14 +2141,21 @@
 									<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
 									<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
 								</div>
-								<div class="action{ localPacks[pack.id] && localPacks[pack.id].updateUrl ? ' is-tight' : '' }">
+								<div class="action{ localPacks[pack.id] && (pack.id.startsWith('custom-') || localPacks[pack.id].updateUrl) ? ' is-tight' : '' }">
 									<button class="button is-danger"
 										on:click="{ () => unsubscribeToPack(pack) }"
 										title="Unsubscribe">Del</button>
-									{ #if localPacks[pack.id] && localPacks[pack.id].updateUrl }
+									{ #if localPacks[pack.id] }
+									{ #if pack.id.startsWith('custom-') }
+									<button class="button pack-info"
+										on:click="{ () => showPackInfo(pack.id) }"
+										title="Info">i</button>
+									{ /if }
+									{ #if localPacks[pack.id].updateUrl }
 									<button class="button update-pack"
 										on:click="{ () => updateRemotePack(pack.id) }"
 										title="Update">Up</button>
+									{ /if }
 									{ /if }
 								</div>
 							</div>
@@ -2161,6 +2193,11 @@
 											title="Subscribe">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
+										{ #if pack.id.startsWith('custom-') }
+										<button class="button pack-info"
+											on:click="{ () => showPackInfo(pack.id) }"
+											title="Info">i</button>
+										{ /if }
 										{ #if localPacks[pack.id].updateUrl }
 										<button class="button update-pack"
 											on:click="{ () => updateRemotePack(pack.id) }"
