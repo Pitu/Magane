@@ -7,17 +7,17 @@
 	import './styles/main.scss';
 
 	// APIs
-	const modules = {};
+	const Modules = {};
 
 	const coords = { top: 0, left: 0 };
 	const selectorVoiceChatWrapper = '[class^="channelChatWrapper-"]';
 	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled-"])';
 	let main = null;
 	let base = null;
-	let textArea = null;
 	let isMaganeBD = null;
-	let buttonComponent = null;
-	let hideMagane = false;
+	let forceHideMagane = false;
+	let components = [];
+	let activeComponent = null;
 
 	let baseURL = '';
 	let stickerWindowActive = false;
@@ -42,6 +42,8 @@
 	let storage = null;
 	let packsSearch = null;
 	let resizeObserver = null;
+	const resizeObserverQueue = [];
+	let resizeObserverQueueWorking = false;
 	let isWarnedAboutViewportHeight = false;
 	const waitForTimeouts = {};
 
@@ -53,6 +55,8 @@
 		hidePackAppendix: false,
 		disableDownscale: false,
 		disableImportedObfuscation: false,
+		alwaysSendAsLink: false,
+		ignoreEmbedLinksPermission: false,
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
 		disableSendingWithChatInput: false,
@@ -103,48 +107,65 @@
 		return toast(message, options);
 	};
 
-	const waitFor = (selector, options) => {
+	const waitFor = (selector, options = {}) => {
 		if (options.logname) {
 			log(`Waiting for ${options.logname}\u2026`);
 		}
 		let poll;
 		return new Promise(resolve => {
 			(poll = () => {
-				const element = document.querySelector(selector);
-				if (element) {
+				const found = [];
+				const elements = document.querySelectorAll(selector);
+				for (let i = 0; i < elements.length; i++) {
 					// If an assert function is provided, ensure that it passes
-					if (typeof options.assert !== 'function' || options.assert(element)) {
-						delete waitForTimeouts[selector];
-						return resolve(element);
+					if (typeof options.assert !== 'function' || options.assert(elements[i])) {
+						found.push(elements[i]);
 					}
+					// Break for-loop early if not instructed to return multiple elements
+					if (found.length && !options.multiple) {
+						break;
+					}
+				}
+				if (found.length) {
+					delete waitForTimeouts[selector];
+					return resolve(found);
 				}
 				waitForTimeouts[selector] = setTimeout(poll, 500);
 			})();
 		});
 	};
 
-	const destroyButtonComponent = () => {
-		if (buttonComponent) {
-			buttonComponent.$destroy();
+	const destroyButtonComponents = () => {
+		activeComponent = null;
+		for (let i = 0; i < components.length; i++) {
+			components[i].$destroy();
 		}
+		components = [];
 	};
 
-	const mountButtonComponent = () => {
+	const mountButtonComponent = textArea => {
 		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
 		if (!buttonsContainer) return;
 
-		buttonComponent = new Button({
+		const component = new Button({
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
 		});
+		components.push(component);
 
 		// eslint-disable-next-line no-use-before-define
-		buttonComponent.$on('click', () => toggleStickerWindow());
+		component.$on('click', () => toggleStickerWindow(undefined, component));
 		// eslint-disable-next-line no-use-before-define
-		buttonComponent.$on('grabPacks', () => grabPacks(true));
+		component.$on('grabPacks', () => grabPacks(true));
+
+		component.textArea = textArea;
+		component.lastTextAreaSize = {
+			width: textArea.clientWidth,
+			height: textArea.clientHeight
+		};
 	};
 
-	const updateStickerWindowPosition = () => {
+	const updateStickerWindowPosition = textArea => {
 		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
 		if (!buttonsContainer) return;
 
@@ -162,49 +183,105 @@
 		}
 	};
 
-	const initResizeObserver = async () => {
-		if (!resizeObserver) {
-			// We are basically only using this as some sort of event dispatcher
-			// for when textArea disappears due to switching channels, etc.
-			resizeObserver = new ResizeObserver(entries => {
-				for (const entry of entries) {
-					if (!entry.contentRect) return;
-					if (entry.contentRect.width || entry.contentRect.height) return;
-					initResizeObserver();
+	const resizeObserverWorker = async entry => {
+		// Check against last size if entry's new size is still valid
+		if (entry && entry.contentRect.width !== 0 && entry.contentRect.height !== 0) {
+			for (const component of components) {
+				if (component.textArea === entry.target) {
+					// Skip worker only if entry's width still matches last width (ignore height)
+					if (component.lastTextAreaSize.width === entry.contentRect.width) {
+						return;
+					}
+					break;
 				}
-			});
-		}
-
-		// Re-fetch textArea only if already missing from body
-		if (!document.body.contains(textArea)) {
-			resizeObserver.disconnect();
-			destroyButtonComponent();
-			// Wait for new valid textArea
-			textArea = await waitFor(selectorTextArea, {
-				logname: 'textarea',
-				assert: element => {
-					// If voice channel's chat wrapper is currently active,
-					// assert that found element is a child of it,
-					// otherwise let waitFor() to continue to poll.
-					// This is necesary because Discord does not immediately destroy the old element
-					// as it is building a chat wrapper when in a voice channel.
-					const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
-					return !voiceChatWrapper || voiceChatWrapper.contains(element);
-				}
-			});
-			// Re-attach observer to new valid textArea
-			resizeObserver.observe(textArea);
-			// Re-position magane's sticker window, if required
-			// Useful when switching back & forth from regular to voice text chat channels
-			if (stickerWindowActive) {
-				updateStickerWindowPosition();
 			}
 		}
 
-		// Re-mount button if necesary
-		if (!buttonComponent || !document.body.contains(buttonComponent.element)) {
-			mountButtonComponent();
+		// Disconnect all textArea(s) from observer
+		resizeObserver.disconnect();
+
+		// Forcefully close sticker window.
+		// Re-positioning it will not be reliable, because if multiple textAreas spawn,
+		// we have no context as to which one was the last used textArea (the elements are re-created).
+		// eslint-disable-next-line no-use-before-define
+		components.forEach(component => toggleStickerWindow(false, component));
+
+		// Destroy any existing button components
+		destroyButtonComponents();
+
+		// Wait for new valid textArea(s)
+		const textAreas = await waitFor(selectorTextArea, {
+			logname: 'textarea',
+			assert: element => {
+				// If voice channel's chat wrapper is currently active,
+				// assert that found element is a child of it,
+				// otherwise let waitFor() to continue to poll.
+				// This is necesary because Discord does not immediately destroy the old element
+				// as it is building a chat wrapper when in a voice channel.
+				const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
+				return !voiceChatWrapper || voiceChatWrapper.contains(element);
+			},
+			multiple: true
+		});
+
+		// Re-attach observer to all new valid textArea(s)
+		textAreas.forEach(textArea => {
+			resizeObserver.observe(textArea);
+			// Mount button component attached to the textArea
+			mountButtonComponent(textArea);
+		});
+	};
+
+	// Simple queue system for observer events
+	const resizeObserverQueuePush = entry => new Promise((resolve, reject) => {
+		resizeObserverQueue.push({ entry, resolve, reject });
+		// eslint-disable-next-line no-use-before-define
+		resizeObserverQueueShift();
+	});
+
+	const resizeObserverQueueShift = () => {
+		if (resizeObserverQueueWorking) {
+			return false;
 		}
+		const item = resizeObserverQueue.shift();
+		if (!item) {
+			return false;
+		}
+		try {
+			resizeObserverQueueWorking = true;
+			resizeObserverWorker(item.entry)
+				.then(value => {
+					resizeObserverQueueWorking = false;
+					item.resolve(value);
+					resizeObserverQueueShift();
+				})
+				.catch(err => {
+					resizeObserverQueueWorking = false;
+					item.reject(err);
+					resizeObserverQueueShift();
+				});
+		} catch (err) {
+			resizeObserverQueueWorking = false;
+			item.reject(err);
+			resizeObserverQueueShift();
+		}
+		return true;
+	};
+
+	const initResizeObserver = () => {
+		// We are basically only using this as some sort of event dispatcher
+		// for when any textArea(s) disappears due to switching channels, etc.
+		resizeObserver = new ResizeObserver(entries => {
+			for (const entry of entries) {
+				if (!entry.contentRect) return;
+				// if (entry.contentRect.width && entry.contentRect.height) return;
+				// Push this textArea element to observer worker queue
+				resizeObserverQueuePush({ target: entry.target, contentRect: entry.contentRect });
+			}
+		});
+
+		// Kickstart worker on first launch
+		resizeObserverWorker();
 	};
 
 	const initButton = async () => {
@@ -221,25 +298,24 @@
 
 	const initModules = () => {
 		// Channel store & actions
-		// modules.channelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
-		modules.selectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
+		Modules.ChannelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
+		Modules.SelectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
 
-		// User store
-		// modules.userStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
-
-		// Discord objects & utils
-		/*
-		try {
-			modules.discordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
-			modules.discordPermissions = modules.discordConstants.Permissions;
-			modules.permissionRoleUtils = BdApi.findModuleByProps('can', 'ALLOW', 'DENY');
-			modules.computePermissions = BdApi.findModuleByProps('computePermissions');
-		} catch (_) {} // Do nothing
-		*/
+		// Permissions
+		Modules.DiscordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
+		Modules.DiscordPermissions = BdApi.Webpack.getModule(m => m.ADD_REACTIONS, { searchExports: true });
+		Modules.Permissions = BdApi.findModuleByProps('computePermissions');
+		Modules.UserStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
 
 		// Misc
-		modules.messageUpload = BdApi.findModuleByProps('upload', 'instantBatchUpload');
-		// modules.richUtils = BdApi.findModuleByProps('toRichValue', 'createEmptyState');
+		Modules.DraftStore = BdApi.findModuleByProps('getDraft', 'getState');
+		Modules.MessageUpload = BdApi.findModuleByProps('instantBatchUpload');
+		Modules.MessageUtils = BdApi.findModuleByProps('sendMessage');
+		Modules.PendingReplyStore = BdApi.findModuleByProps('getPendingReply');
+		Modules.UploadObject = BdApi.Webpack.getModule(
+			m => m.prototype && m.prototype.upload && m.prototype.getSize,
+			{ searchExports: true }
+		);
 	};
 
 	const getLocalStorage = () => {
@@ -555,8 +631,7 @@
 		return url;
 	};
 
-	// eslint-disable-next-line no-unused-vars
-	const getTextAreaInstance = () => {
+	const getTextAreaInstance = textArea => {
 		// NOTE: If any deeper than the 10th step, then Discord must be changing something again,
 		// thus better to inspect further instead of blindly increasing the limit.
 		const MAX_LOOKUP_DEPTH = 10;
@@ -572,109 +647,141 @@
 		}
 	};
 
-	/*
-	// NOTE: Magane will already automatically hide its button on channels with insufficient channels
-	// through CSS magic, so it's fine not to check against their actual permissions altogether.
-	const hasPermissions = (permissions, user, context) => {
-		// Always true if could not fetch Discord's Permissions module
-		if (!modules.discordPermissions) return true;
-		if (!user) return false;
-		// Always true in non-guild channels (e.g. DMs)
-		if (!permissions || !context.guild_id) return true;
-		permissions = Array.isArray(permissions) ? permissions : [permissions];
-		for (const permission of permissions) {
-			// Fallback of the old method as it appeared to be a rolling update
-			const perm = modules.discordPermissions[permission];
-			if (!modules.permissionRoleUtils.can({ permission: perm, user, context }) &&
-				!modules.computePermissions.can(perm, user, context)) {
-				return false;
-			}
+	const hasPermission = (permission, channelId) => {
+		// Always true if could not fetch the necessary modules
+		if (!Modules.DiscordPermissions || !Modules.Permissions || !Modules.UserStore || !Modules.ChannelStore) {
+			return true;
 		}
-		return true;
+
+		const user = Modules.UserStore.getCurrentUser();
+		const context = Modules.ChannelStore.getChannel(channelId);
+		if (!user) return false;
+
+		// Always true in non-guild channels (e.g. DMs)
+		if (!permission || !context.guild_id) return true;
+
+		return Modules.Permissions.can({
+			permission: Modules.DiscordPermissions[permission],
+			user,
+			context
+		});
 	};
-	*/
 
 	const sendSticker = async (pack, id) => {
 		if (onCooldown) {
-			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
+			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1500 });
+		} else if (!activeComponent) {
+			return toastWarn('Selected text area is not found, please re-open Magane window.');
 		}
 
 		onCooldown = true;
 
 		try {
-			// const userId = modules.userStore.getCurrentUser().id;
-			const channelId = modules.selectedChannelStore.getChannelId();
-			// const channel = modules.channelStore.getChannel(channelId);
-			/*
-			if (!hasPermissions(['ATTACH_FILES', 'SEND_MESSAGES'], userId, channel)) {
-				onCooldown = false;
-				return toastError('You do not have permission to attach files in this channel.');
+			// const channelId = Modules.SelectedChannelStore.getChannelId();
+			// Good ol' reliable
+			// const channelId = window.location.href.split('/').slice(-1)[0];
+
+			// If multiple active channels (i.e. split-view), SelectedChannelStore will only return the main channel,
+			// so determining through active component's textArea instance is more reliable, if available.
+			let channelId;
+
+			const textAreaInstance = getTextAreaInstance(activeComponent.textArea);
+			if (textAreaInstance) {
+				channelId = textAreaInstance.stateNode.props.channel.id;
+			} else if (Modules.SelectedChannelStore) {
+				channelId = Modules.SelectedChannelStore.getChannelId();
 			}
-			*/
+
+			// Magane will also appear in Create Thread screen,
+			// but at that point the thread has not yet been made, and thus will not have ID.
+			if (!channelId) {
+				onCooldown = false;
+				return toastError('Unable to determine channel ID. Is this a pending Thread creation?');
+			}
+
+			if (!hasPermission('SEND_MESSAGES', channelId)) {
+				onCooldown = false;
+				return toastError('You do not have permission to send message in this channel.');
+			}
 
 			toast('Sending\u2026', { nolog: true });
 			if (settings.closeWindowOnSend) {
 				// eslint-disable-next-line no-use-before-define
-				toggleStickerWindow(false);
+				toggleStickerWindow(false, activeComponent);
 			}
 
 			const url = formatUrl(pack, id, true);
-			log(`Fetching sticker from remote: ${url}`);
-			const response = await fetch(url, { cache: 'force-cache' });
-			const blob = await response.blob();
 
-			let filename = id;
-			if (typeof pack === 'string') {
-				if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
-					filename = filename.replace(/\.png$/i, '.gif');
-					toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
-				} else if (pack.startsWith('custom-')) {
-					if (settings.disableImportedObfuscation) {
-						filename = id;
-					} else {
-						const ext = id.match(/(\.\w+)$/);
-						filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
+			let messageContent = '';
+			if (!settings.disableSendingWithChatInput && Modules.DraftStore) {
+				messageContent = Modules.DraftStore.getDraft(channelId, 0);
+			}
+
+			let messageOptions;
+			if (Modules.PendingReplyStore) {
+				const pendingReply = Modules.PendingReplyStore.getPendingReply(channelId);
+				if (pendingReply) {
+					messageOptions = Modules.MessageUtils.getSendMessageOptionsForReply(pendingReply);
+				}
+			}
+
+			if (!settings.alwaysSendAsLink && hasPermission('ATTACH_FILES', channelId)) {
+				log(`Fetching sticker from remote: ${url}`);
+				const response = await fetch(url, { cache: 'force-cache' });
+				const blob = await response.blob();
+
+				let filename = id;
+				if (typeof pack === 'string') {
+					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
+						filename = filename.replace(/\.png$/i, '.gif');
+						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
+					} else if (pack.startsWith('custom-')) {
+						if (settings.disableImportedObfuscation) {
+							filename = id;
+						} else {
+							const ext = id.match(/(\.\w+)$/);
+							filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
+						}
 					}
 				}
-			}
 
-			if (settings.markAsSpoiler) {
-				filename = `SPOILER_${filename}`;
-			}
-			const file = new File([blob], filename);
-			log(`Sending sticker as ${filename}\u2026`);
-
-			/* SKIP -- CANNOT ATTACH TEXT MESSAGE TO UPLOADS
-			const messageContent = '';
-			let textAreaInstance;
-			if (!settings.disableSendingWithChatInput) {
-				textAreaInstance = getTextAreaInstance();
-				if (textAreaInstance) {
-					messageContent = textAreaInstance.stateNode.state.textValue;
-				} else if (textArea) {
-					log('Unable to fetch text area of chat input, attempting workaround\u2026', 'warn');
-					let element = textArea.querySelector('span');
-					if (!element) element = textArea;
-					messageContent = element.innerText;
-				} else {
-					log('Unable to fetch text area of chat input, workaround unavailable\u2026', 'warn');
+				if (settings.markAsSpoiler) {
+					filename = `SPOILER_${filename}`;
 				}
-			}
+				const file = new File([blob], filename);
+				log(`Sending sticker as ${filename}\u2026`);
 
-			// BROKEN -- UNRESPONSIVE, WAITING FOR INVESTIGATION
-			modules.messageUpload.upload({
-				channelId,
-				file,
-				message: {
-					content: messageContent,
-					tts: false
+				Modules.MessageUpload.uploadFiles({
+					channelId,
+					draftType: 0,
+					hasSpoiler: false,
+					options: messageOptions || {},
+					parsedMessage: {
+						content: messageContent
+					},
+					uploads: [
+						new Modules.UploadObject({
+							file,
+							platform: 1
+						}, channelId, false, 0)
+					]
+				});
+			} else if (settings.ignoreEmbedLinksPermission || hasPermission('EMBED_LINKS', channelId)) {
+				if (!settings.alwaysSendAsLink) {
+					toastWarn('You do not have permission to attach files, sending sticker as link\u2026');
 				}
-			});
-			*/
 
-			// TEMPORARY ALTERNATIVE (CANNOT ATTACH TEXT MESSAGE)
-			log('Temporarily sending sticker without message content due to a bug...');
-			modules.messageUpload.instantBatchUpload(channelId, [file]);
+				let append = url;
+				if (settings.markAsSpoiler) {
+					append = `||${append}||`;
+				}
+
+				Modules.MessageUtils._sendMessage(channelId, {
+					content: `${messageContent} ${append}`.trim()
+				}, messageOptions || {});
+			} else {
+				toastError('You do not have permissions to attach files nor embed links.');
+			}
 
 			// Update sticker's usage stats if using Frequently Used
 			if (settings.frequentlyUsed !== 0) {
@@ -693,15 +800,14 @@
 			}
 
 			// Clear chat input if required
-			/*
 			if (!settings.disableSendingWithChatInput && textAreaInstance) {
+				log('Clearing chat input\u2026');
 				textAreaInstance.stateNode.setState({
 					textValue: '',
 					// richValue: modules.richUtils.toRichValue('')
 					richValue: [{ type: 'line', children: [{ text: '' }] }]
 				});
 			}
-			*/
 		} catch (error) {
 			console.error(error);
 			toastError(error.toString(), { nolog: true, timeout: 5000 });
@@ -1034,7 +1140,16 @@
 
 	const setWindowMaganeAPIs = state => {
 		if (state) {
-			window.magane = { appendPack, appendEmojisPack, appendCustomPack, editPack, deletePack, searchPacks };
+			window.magane = {
+				appendPack,
+				appendEmojisPack,
+				appendCustomPack,
+				editPack,
+				deletePack,
+				searchPacks,
+				Modules,
+				hasPermission
+			};
 		} else if (!(window.magane instanceof Node)) {
 			// For unknown reasons, if "window.magane" is not overriden,
 			// it ends up being a reference to #magane element (Svelte's quirk?)
@@ -1084,14 +1199,20 @@
 		document.removeEventListener('click', maganeBlurHandler);
 		// eslint-disable-next-line no-use-before-define
 		document.removeEventListener('keyup', onKeydownEvent);
-		destroyButtonComponent();
+
+		// Destroy any existing button components
+		destroyButtonComponents();
+
 		// Clear all pending timeouts
 		for (const timeout of Object.values(waitForTimeouts)) {
 			clearTimeout(timeout);
 		}
+
+		// Disconnect all textArea(s) from observer
 		if (resizeObserver) {
 			resizeObserver.disconnect();
 		}
+
 		setWindowMaganeAPIs(false);
 		log('Internal components cleaned up.');
 	});
@@ -1101,7 +1222,7 @@
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
 			if (e.target) {
-				if (buttonComponent && buttonComponent.element.contains(e.target)) return;
+				if (activeComponent && activeComponent.element.contains(e.target)) return;
 				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
 			}
@@ -1109,20 +1230,28 @@
 				(e.clientY <= y + height && e.clientY >= y))
 			) {
 				// eslint-disable-next-line no-use-before-define
-				toggleStickerWindow();
+				toggleStickerWindow(false);
 			}
 		}
 	};
 
-	const toggleStickerWindow = forceState => {
+	const toggleStickerWindow = (forceState, component) => {
 		if (!document.body.contains(main)) {
 			return toastError('Oh no! Magane was unexpectedly destroyed.. Please consider updating to MaganeBD instead.', { timeout: 6000 });
 		}
+
+		// If no previously active component, simply assign the first valid one
+		// (e.g. on first launch, or after switching channels).
+		if (!component && !activeComponent) {
+			activeComponent = components.find(component => document.body.contains(component.element));
+		}
+		const toggledComponent = component || activeComponent;
+
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
 			// Re-position magane's sticker window
-			updateStickerWindowPosition();
-			document.addEventListener('click', maganeBlurHandler);
+			updateStickerWindowPosition(toggledComponent.textArea);
+
 			// One-time warning for viewport height <= 700px when opening Magane window
 			if (!settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
 				const viewportHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
@@ -1131,11 +1260,16 @@
 					isWarnedAboutViewportHeight = true;
 				}
 			}
+
+			// Set toggled component as currently active component
+			activeComponent = toggledComponent;
+			document.addEventListener('click', maganeBlurHandler);
 		} else {
 			document.removeEventListener('click', maganeBlurHandler);
 		}
+
 		stickerWindowActive = active;
-		buttonComponent.active = active;
+		toggledComponent.active = active;
 	};
 
 	const toggleStickerModal = () => {
@@ -1377,6 +1511,30 @@
 		}
 	};
 
+	const showPackInfo = id => {
+		if (!localPacks[id]) return;
+
+		// Formatting is very particular, so we do this the old-fashioned way
+		/* eslint-disable prefer-template */
+		const content = `**ID:** \`${id}\`\n\n` +
+			'**Name:**\n\n' +
+			localPacks[id].name + '\n\n' +
+			'**Count:**\n\n' +
+			localPacks[id].count + '\n\n' +
+			'**Description:**\n\n' +
+			(localPacks[id].description || 'N/A') + '\n\n' +
+			'**Home URL:**\n\n' +
+			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
+			'**Update URL:**\n\n' +
+			(localPacks[id].updateUrl) || 'N/A';
+		/* eslint-enable prefer-template */
+
+		BdApi.showConfirmationModal(
+			localPacks[id].name,
+			content
+		);
+	};
+
 	const parseLinePack = async () => {
 		if (!linePackSearch) return;
 		try {
@@ -1434,7 +1592,7 @@
 
 	const parseRemotePackUrl = () => {
 		if (!remotePackUrl) return;
-		assertRemotePackConsent(`URL: ${remotePackUrl}`, async () => {
+		assertRemotePackConsent(`URL:\n\n${remotePackUrl}`, async () => {
 			try {
 				toast('Loading pack information\u2026', { nolog: true });
 				const pack = await fetchRemotePack(remotePackUrl);
@@ -1467,7 +1625,7 @@
 				toastError('The selected file is not a valid JSON file.');
 			}
 
-			assertRemotePackConsent(`File: ${file.name}`, async () => {
+			assertRemotePackConsent(`File:\n\n${file.name}`, async () => {
 				try {
 					const pack = await processRemotePack(result);
 					pack.id = `custom-${pack.id}`;
@@ -1596,7 +1754,7 @@
 		}
 
 		if (event.target && event.target.classList.contains('supress-magane-hotkey')) return;
-		if (buttonComponent && document.body.contains(buttonComponent.element)) {
+		if (components.length) {
 			event.preventDefault();
 			toggleStickerWindow();
 		}
@@ -1740,7 +1898,7 @@
 							storage.removeItem(key);
 						}
 
-						hideMagane = true;
+						forceHideMagane = true;
 						toast('Reloading Magane database\u2026');
 
 						Object.assign(settings, defaultSettings);
@@ -1749,7 +1907,7 @@
 						await migrateStringPackIds();
 
 						toastSuccess('Magane is now ready!');
-						hideMagane = false;
+						forceHideMagane = false;
 					}
 				}
 			);
@@ -1795,7 +1953,7 @@
 
 <main bind:this={ main }>
 	<div id="magane"
-		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` } { hideMagane ? 'display: none;' : ''}">
+		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` } { forceHideMagane ? 'display: none;' : ''}">
 
 		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
@@ -1983,14 +2141,21 @@
 									<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
 									<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
 								</div>
-								<div class="action{ localPacks[pack.id] && localPacks[pack.id].updateUrl ? ' is-tight' : '' }">
+								<div class="action{ localPacks[pack.id] && (pack.id.startsWith('custom-') || localPacks[pack.id].updateUrl) ? ' is-tight' : '' }">
 									<button class="button is-danger"
 										on:click="{ () => unsubscribeToPack(pack) }"
 										title="Unsubscribe">Del</button>
-									{ #if localPacks[pack.id] && localPacks[pack.id].updateUrl }
+									{ #if localPacks[pack.id] }
+									{ #if pack.id.startsWith('custom-') }
+									<button class="button pack-info"
+										on:click="{ () => showPackInfo(pack.id) }"
+										title="Info">i</button>
+									{ /if }
+									{ #if localPacks[pack.id].updateUrl }
 									<button class="button update-pack"
 										on:click="{ () => updateRemotePack(pack.id) }"
 										title="Update">Up</button>
+									{ /if }
 									{ /if }
 								</div>
 							</div>
@@ -2028,6 +2193,11 @@
 											title="Subscribe">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
+										{ #if pack.id.startsWith('custom-') }
+										<button class="button pack-info"
+											on:click="{ () => showPackInfo(pack.id) }"
+											title="Info">i</button>
+										{ /if }
 										{ #if localPacks[pack.id].updateUrl }
 										<button class="button update-pack"
 											on:click="{ () => updateRemotePack(pack.id) }"
@@ -2159,7 +2329,25 @@
 											name="disableImportedObfuscation"
 											type="checkbox"
 											bind:checked={ settings.disableImportedObfuscation } />
-										Disable obfuscation of files names for imported custom packs
+										Disable obfuscation of files names for imported custom packs (obfuscation happens only for uploads)
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="alwaysSendAsLink"
+											type="checkbox"
+											bind:checked={ settings.alwaysSendAsLink } />
+										Always send stickers as links instead of uploads
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="ignoreEmbedLinksPermission"
+											type="checkbox"
+											bind:checked={ settings.ignoreEmbedLinksPermission } />
+										Ignore missing embed links permission
 									</label>
 								</p>
 								<p>
