@@ -1294,17 +1294,22 @@
 		}
 
 		// Force-close previous active component if it's a different component
-		if (activeComponent && component !== activeComponent) {
+		if (component && activeComponent && component !== activeComponent) {
 			toggleStickerWindow(false, activeComponent);
+			activeComponent = null;
+		}
+
+		// If no previously active component, simply assign the first valid one
+		// (e.g. on first launch, or after switching channels).
+		let toggledComponent = component || activeComponent;
+		if (!toggledComponent) {
+			toggledComponent = components.find(component => document.body.contains(component.element));
 		}
 
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
-			// Set component as currently active component
-			activeComponent = component;
-
 			// Re-position magane's sticker window
-			updateStickerWindowPosition(component.textArea);
+			updateStickerWindowPosition(toggledComponent.textArea);
 
 			// One-time warning for viewport height <= 700px when opening Magane window
 			if (!settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
@@ -1315,14 +1320,15 @@
 				}
 			}
 
+			// Set toggled component as currently active component
+			activeComponent = toggledComponent;
 			document.addEventListener('click', maganeBlurHandler);
 		} else {
-			activeComponent = null;
 			document.removeEventListener('click', maganeBlurHandler);
 		}
 
 		stickerWindowActive = active;
-		component.active = active;
+		toggledComponent.active = active;
 	};
 
 	const toggleStickerModal = () => {
