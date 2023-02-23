@@ -260,7 +260,10 @@
 		log(`Leftover old components: ${componentsOld.length}`);
 		for (const component of componentsOld) {
 			log(`Text area is no longer valid: ${component.textArea._maganeID}`);
+			// Force close sticker window if an active component is no longer valid
 			if (activeComponent === component) {
+				// eslint-disable-next-line no-use-before-define
+				toggleStickerWindow(false, activeComponent);
 				activeComponent = null;
 			}
 			resizeObserver.unobserve(component.textArea);
