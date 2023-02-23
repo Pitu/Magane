@@ -179,17 +179,12 @@
 	};
 
 	const resizeObserverWorker = async entry => {
-		log(`Working on observer event ID: ${entry ? entry._maganeID : '(missing, likely a kickstart)'}`);
-
 		// Check against recorded textArea's size if entry's new size is still valid
 		if (entry && entry.contentRect.width !== 0 && entry.contentRect.height !== 0) {
 			for (const component of components) {
 				if (component.textArea === entry.target) {
 					// Skip worker only if entry's new width still matches recorded width (ignore height)
-					if (component.lastTextAreaSize.width === entry.contentRect.width) {
-						log('Observer event ignored due to recorded text area\'s width still matching');
-						return;
-					}
+					if (component.lastTextAreaSize.width === entry.contentRect.width) return;
 					break;
 				}
 			}
@@ -209,8 +204,6 @@
 			},
 			multiple: true
 		});
-
-		log(`Current components count: ${components.length}`);
 
 		const componentsOld = components.slice();
 		const componentsNew = [];
@@ -237,21 +230,25 @@
 			}
 
 			if (valid) {
-				log(`Text area is still valid: ${textArea._maganeID}`);
+				log(`Textarea #${textArea._maganeID}: still attached`);
 				continue;
 			}
 
-			log(`New text area observed, ID: ${textArea._maganeID}`);
-			resizeObserver.observe(textArea);
 			// Mount button component attached to the textArea
-			componentsNew.push(mountButtonComponent(textArea));
+			const component = mountButtonComponent(textArea);
+			if (component) {
+				log(`Textarea #${textArea._maganeID}: attached`);
+				resizeObserver.observe(textArea);
+				componentsNew.push(component);
+			} else {
+				log(`Textarea #${textArea._maganeID}: failed to attach`);
+			}
 		}
 
-		// Loop through and destroy leftover old components
-		log(`Leftover old components: ${componentsOld.length}`);
+		// Loop through and destroy outdated components
 		for (const component of componentsOld) {
-			log(`Text area is no longer valid: ${component.textArea._maganeID}`);
-			// Force close sticker window if an active component is no longer valid
+			log(`Textarea #${component.textArea._maganeID}: outdated, destroying\u2026`);
+			// Force-close sticker window if an active component is outdated
 			if (activeComponent === component) {
 				// eslint-disable-next-line no-use-before-define
 				toggleStickerWindow(false, activeComponent);
@@ -263,7 +260,6 @@
 
 		// Assign new components as current valid components
 		components = componentsNew;
-		log(`Updated components count: ${components.length}`);
 
 		// Update active component's window position
 		if (activeComponent) {
@@ -314,8 +310,6 @@
 			for (const entry of entries) {
 				if (!entry.contentRect) return;
 				// Push this textArea element to observer worker queue
-				entry._maganeID = Date.now();
-				log(`Enqueuing observer event ID: ${entry._maganeID}`);
 				resizeObserverQueuePush(entry);
 			}
 		});
