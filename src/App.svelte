@@ -151,7 +151,6 @@
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
 		});
-		components.push(component);
 
 		// eslint-disable-next-line no-use-before-define
 		component.$on('click', () => toggleStickerWindow(undefined, component));
@@ -163,6 +162,8 @@
 			width: textArea.clientWidth,
 			height: textArea.clientHeight
 		};
+
+		return component;
 	};
 
 	const updateStickerWindowPosition = textArea => {
@@ -184,12 +185,15 @@
 	};
 
 	const resizeObserverWorker = async entry => {
+		log(`Working on observer event ID: ${entry ? entry._maganeID : '(no entry, likely a kickstart)'}`);
+
 		// Check against last size if entry's new size is still valid
 		if (entry && entry.contentRect.width !== 0 && entry.contentRect.height !== 0) {
 			for (const component of components) {
 				if (component.textArea === entry.target) {
 					// Skip worker only if entry's width still matches last width (ignore height)
 					if (component.lastTextAreaSize.width === entry.contentRect.width) {
+						log('Observer event ignored due to text area\'s width still matching');
 						return;
 					}
 					break;
@@ -197,19 +201,7 @@
 			}
 		}
 
-		// Disconnect all textArea(s) from observer
-		resizeObserver.disconnect();
-
-		// Forcefully close sticker window.
-		// Re-positioning it will not be reliable, because if multiple textAreas spawn,
-		// we have no context as to which one was the last used textArea (the elements are re-created).
-		// eslint-disable-next-line no-use-before-define
-		components.forEach(component => toggleStickerWindow(false, component));
-
-		// Destroy any existing button components
-		destroyButtonComponents();
-
-		// Wait for new valid textArea(s)
+		// Wait for new valid text area(s)
 		const textAreas = await waitFor(selectorTextArea, {
 			logname: 'textarea',
 			assert: element => {
@@ -224,12 +216,62 @@
 			multiple: true
 		});
 
-		// Re-attach observer to all new valid textArea(s)
-		textAreas.forEach(textArea => {
+		log(`Components count: ${components.length}`);
+
+		const componentsOld = components.slice();
+		const componentsNew = [];
+
+		for (const textArea of textAreas) {
+			// Assign ephemeral ID to the text area element
+			if (!textArea._maganeID) {
+				textArea._maganeID = String(Date.now()).slice(-7);
+			}
+
+			let valid = false;
+			for (let i = 0; i < componentsOld.length; i++) {
+				if (componentsOld[i].textArea === textArea) {
+					valid = true;
+					// Update text area's size
+					componentsOld[i].lastTextAreaSize = {
+						width: textArea.clientWidth,
+						height: textArea.clientHeight
+					};
+					componentsNew.push(componentsOld[i]);
+					componentsOld.splice(i, 1);
+					break;
+				}
+			}
+
+			if (valid) {
+				log(`Text area is still valid: ${textArea._maganeID}`);
+				continue;
+			}
+
+			log(`New text area observed, ID: ${textArea._maganeID}`);
 			resizeObserver.observe(textArea);
 			// Mount button component attached to the textArea
-			mountButtonComponent(textArea);
-		});
+			componentsNew.push(mountButtonComponent(textArea));
+		}
+
+		// Loop through and destroy leftover old components
+		log(`Leftover old components: ${componentsOld.length}`);
+		for (const component of componentsOld) {
+			log(`Text area is no longer valid: ${component.textArea._maganeID}`);
+			if (activeComponent === component) {
+				activeComponent = null;
+			}
+			resizeObserver.unobserve(component.textArea);
+			component.$destroy();
+		}
+
+		// Assign new components as current valid components
+		components = componentsNew;
+		log(`Current components count: ${components.length}`);
+
+		// Update active component's window position
+		if (activeComponent) {
+			updateStickerWindowPosition(activeComponent.textArea);
+		}
 	};
 
 	// Simple queue system for observer events
@@ -274,9 +316,14 @@
 		resizeObserver = new ResizeObserver(entries => {
 			for (const entry of entries) {
 				if (!entry.contentRect) return;
-				// if (entry.contentRect.width && entry.contentRect.height) return;
 				// Push this textArea element to observer worker queue
-				resizeObserverQueuePush({ target: entry.target, contentRect: entry.contentRect });
+				entry._maganeID = String(Date.now()).slice(-7);
+				log(`Enqueuing observer event ID: ${entry._maganeID}`);
+				resizeObserverQueuePush({
+					target: entry.target,
+					contentRect: entry.contentRect,
+					_maganeID: entry._maganeID
+				});
 			}
 		});
 
