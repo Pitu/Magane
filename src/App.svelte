@@ -136,11 +136,14 @@
 	};
 
 	const destroyButtonComponents = () => {
+		let count = 0;
 		activeComponent = null;
 		for (let i = 0; i < components.length; i++) {
+			count++;
 			components[i].$destroy();
 		}
 		components = [];
+		return count;
 	};
 
 	const mountButtonComponent = textArea => {
@@ -216,7 +219,7 @@
 			multiple: true
 		});
 
-		log(`Components count: ${components.length}`);
+		log(`Current components count: ${components.length}`);
 
 		const componentsOld = components.slice();
 		const componentsNew = [];
@@ -266,7 +269,7 @@
 
 		// Assign new components as current valid components
 		components = componentsNew;
-		log(`Current components count: ${components.length}`);
+		log(`Updated components count: ${components.length}`);
 
 		// Update active component's window position
 		if (activeComponent) {
@@ -1248,7 +1251,7 @@
 		document.removeEventListener('keyup', onKeydownEvent);
 
 		// Destroy any existing button components
-		destroyButtonComponents();
+		const destroyedCount = destroyButtonComponents();
 
 		// Clear all pending timeouts
 		for (const timeout of Object.values(waitForTimeouts)) {
@@ -1261,7 +1264,7 @@
 		}
 
 		setWindowMaganeAPIs(false);
-		log('Internal components cleaned up.');
+		log(`${destroyedCount} internal component(s) cleaned up.`);
 	});
 
 	const maganeBlurHandler = e => {
