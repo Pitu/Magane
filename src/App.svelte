@@ -137,8 +137,6 @@
 
 	const mountButtonComponent = textArea => {
 		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
-		if (!buttonsContainer) return;
-
 		const component = new Button({
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
@@ -159,14 +157,10 @@
 	};
 
 	const updateStickerWindowPosition = component => {
-		if (!component || !component.textArea) return;
+		log('Updating window\'s position\u2026');
 
 		const buttonsContainer = component.textArea.querySelector('[class^="buttons"]');
-		if (!buttonsContainer) return;
-
 		const props = buttonsContainer.getBoundingClientRect();
-
-		log('Updating window\'s position\u2026');
 
 		coords.wbottom = (base.clientHeight - props.top) + 8;
 		coords.wright = (base.clientWidth - props.right) - 6;
@@ -194,13 +188,21 @@
 		const textAreas = await waitFor(selectorTextArea, {
 			logname: 'textarea',
 			assert: element => {
-				// If voice channel's chat wrapper is currently active,
-				// assert that found element is a child of it,
-				// otherwise let waitFor() to continue to poll.
-				// This is necesary because Discord does not immediately destroy the old element
-				// as it is building a chat wrapper when in a voice channel.
+				// Ensure that the textArea element has a buttons container
+				let valid = Boolean(element.querySelector('[class^="buttons"]'));
+
+				/*
+					If voice channel's chat wrapper is currently active,
+					assert that found element is a child of it, otherwise let waitFor() to continue to poll.
+					This is necesary because Discord does not immediately destroy the old element
+					as it is building a chat wrapper when in a voice channel.
+				*/
 				const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
-				return !voiceChatWrapper || voiceChatWrapper.contains(element);
+				if (voiceChatWrapper) {
+					valid = voiceChatWrapper.contains(element);
+				}
+
+				return valid;
 			},
 			multiple: true
 		});
@@ -260,10 +262,15 @@
 
 		// Assign new components as current valid components
 		components = componentsNew;
-
-		// Update active component's window position
-		if (activeComponent) {
-			updateStickerWindowPosition(activeComponent);
+		if (components.length) {
+			// Update active component's window position
+			if (activeComponent) {
+				updateStickerWindowPosition(activeComponent);
+			}
+		} else {
+			// If, by chance, this worker ends with zero valid components due to failed mounting,
+			// kickstart worker again to await future textArea(s)
+			resizeObserverWorker();
 		}
 	};
 
@@ -1284,12 +1291,17 @@
 			activeComponent = null;
 		}
 
+		if (!components.length) return;
+
 		// If no previously active component, simply assign the first valid one
 		// (e.g. on first launch, or after switching channels).
 		let toggledComponent = component || activeComponent;
-		if (!toggledComponent) {
+		if (!toggledComponent && components.length) {
 			toggledComponent = components.find(component => document.body.contains(component.element));
 		}
+
+		// If unable to choose a component, return early
+		if (!toggledComponent) return;
 
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
