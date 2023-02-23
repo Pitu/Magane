@@ -135,17 +135,6 @@
 		});
 	};
 
-	const destroyButtonComponents = () => {
-		let count = 0;
-		activeComponent = null;
-		for (let i = 0; i < components.length; i++) {
-			count++;
-			components[i].$destroy();
-		}
-		components = [];
-		return count;
-	};
-
 	const mountButtonComponent = textArea => {
 		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
 		if (!buttonsContainer) return;
@@ -169,8 +158,10 @@
 		return component;
 	};
 
-	const updateStickerWindowPosition = textArea => {
-		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
+	const updateStickerWindowPosition = component => {
+		if (!component || !component.textArea) return;
+
+		const buttonsContainer = component.textArea.querySelector('[class^="buttons"]');
 		if (!buttonsContainer) return;
 
 		const props = buttonsContainer.getBoundingClientRect();
@@ -188,15 +179,15 @@
 	};
 
 	const resizeObserverWorker = async entry => {
-		log(`Working on observer event ID: ${entry ? entry._maganeID : '(no entry, likely a kickstart)'}`);
+		log(`Working on observer event ID: ${entry ? entry._maganeID : '(missing, likely a kickstart)'}`);
 
-		// Check against last size if entry's new size is still valid
+		// Check against recorded textArea's size if entry's new size is still valid
 		if (entry && entry.contentRect.width !== 0 && entry.contentRect.height !== 0) {
 			for (const component of components) {
 				if (component.textArea === entry.target) {
-					// Skip worker only if entry's width still matches last width (ignore height)
+					// Skip worker only if entry's new width still matches recorded width (ignore height)
 					if (component.lastTextAreaSize.width === entry.contentRect.width) {
-						log('Observer event ignored due to text area\'s width still matching');
+						log('Observer event ignored due to recorded text area\'s width still matching');
 						return;
 					}
 					break;
@@ -204,7 +195,7 @@
 			}
 		}
 
-		// Wait for new valid text area(s)
+		// Wait for new valid textArea(s)
 		const textAreas = await waitFor(selectorTextArea, {
 			logname: 'textarea',
 			assert: element => {
@@ -225,16 +216,16 @@
 		const componentsNew = [];
 
 		for (const textArea of textAreas) {
-			// Assign ephemeral ID to the text area element
+			// Assign ephemeral ID to the textArea element
 			if (!textArea._maganeID) {
-				textArea._maganeID = String(Date.now()).slice(-7);
+				textArea._maganeID = Date.now();
 			}
 
 			let valid = false;
 			for (let i = 0; i < componentsOld.length; i++) {
 				if (componentsOld[i].textArea === textArea) {
 					valid = true;
-					// Update text area's size
+					// Update recorded textArea's size
 					componentsOld[i].lastTextAreaSize = {
 						width: textArea.clientWidth,
 						height: textArea.clientHeight
@@ -276,7 +267,7 @@
 
 		// Update active component's window position
 		if (activeComponent) {
-			updateStickerWindowPosition(activeComponent.textArea);
+			updateStickerWindowPosition(activeComponent);
 		}
 	};
 
@@ -323,13 +314,9 @@
 			for (const entry of entries) {
 				if (!entry.contentRect) return;
 				// Push this textArea element to observer worker queue
-				entry._maganeID = String(Date.now()).slice(-7);
+				entry._maganeID = Date.now();
 				log(`Enqueuing observer event ID: ${entry._maganeID}`);
-				resizeObserverQueuePush({
-					target: entry.target,
-					contentRect: entry.contentRect,
-					_maganeID: entry._maganeID
-				});
+				resizeObserverQueuePush(entry);
 			}
 		});
 
@@ -1254,7 +1241,11 @@
 		document.removeEventListener('keyup', onKeydownEvent);
 
 		// Destroy any existing button components
-		const destroyedCount = destroyButtonComponents();
+		let destroyedCount = 0;
+		for (let i = 0; i < components.length; i++) {
+			destroyedCount++;
+			components[i].$destroy();
+		}
 
 		// Clear all pending timeouts
 		for (const timeout of Object.values(waitForTimeouts)) {
@@ -1267,7 +1258,7 @@
 		}
 
 		setWindowMaganeAPIs(false);
-		log(`${destroyedCount} internal component(s) cleaned up.`);
+		log(`${destroyedCount}/${components.length} internal component(s) cleaned up.`);
 	});
 
 	const maganeBlurHandler = e => {
@@ -1309,7 +1300,7 @@
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
 			// Re-position magane's sticker window
-			updateStickerWindowPosition(toggledComponent.textArea);
+			updateStickerWindowPosition(toggledComponent);
 
 			// One-time warning for viewport height <= 700px when opening Magane window
 			if (!settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
