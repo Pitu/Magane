@@ -1246,8 +1246,10 @@
 		// Destroy any existing button components
 		let destroyedCount = 0;
 		for (let i = 0; i < components.length; i++) {
-			destroyedCount++;
-			components[i].$destroy();
+			try {
+				components[i].$destroy();
+				destroyedCount++;
+			} catch (_) {}
 		}
 
 		// Clear all pending timeouts
@@ -1293,8 +1295,6 @@
 			activeComponent = null;
 		}
 
-		if (!components.length) return;
-
 		// If no previously active component, simply assign the first valid one
 		// (e.g. on first launch, or after switching channels).
 		let toggledComponent = component || activeComponent;
@@ -1304,6 +1304,7 @@
 
 		// If unable to choose a component, return early
 		if (!toggledComponent) return;
+		if (!document.body.contains(toggledComponent.textArea)) return;
 
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
