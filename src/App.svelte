@@ -197,9 +197,11 @@
 					This is necesary because Discord does not immediately destroy the old element
 					as it is building a chat wrapper when in a voice channel.
 				*/
-				const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
-				if (voiceChatWrapper) {
-					valid = voiceChatWrapper.contains(element);
+				if (valid) {
+					const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
+					if (voiceChatWrapper) {
+						valid = voiceChatWrapper.contains(element);
+					}
 				}
 
 				return valid;
