@@ -135,23 +135,12 @@
 		});
 	};
 
-	const destroyButtonComponents = () => {
-		activeComponent = null;
-		for (let i = 0; i < components.length; i++) {
-			components[i].$destroy();
-		}
-		components = [];
-	};
-
 	const mountButtonComponent = textArea => {
 		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
-		if (!buttonsContainer) return;
-
 		const component = new Button({
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
 		});
-		components.push(component);
 
 		// eslint-disable-next-line no-use-before-define
 		component.$on('click', () => toggleStickerWindow(undefined, component));
@@ -163,15 +152,15 @@
 			width: textArea.clientWidth,
 			height: textArea.clientHeight
 		};
+
+		return component;
 	};
 
-	const updateStickerWindowPosition = textArea => {
-		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
-		if (!buttonsContainer) return;
-
-		const props = buttonsContainer.getBoundingClientRect();
-
+	const updateStickerWindowPosition = component => {
 		log('Updating window\'s position\u2026');
+
+		const buttonsContainer = component.textArea.querySelector('[class^="buttons"]');
+		const props = buttonsContainer.getBoundingClientRect();
 
 		coords.wbottom = (base.clientHeight - props.top) + 8;
 		coords.wright = (base.clientWidth - props.right) - 6;
@@ -184,52 +173,107 @@
 	};
 
 	const resizeObserverWorker = async entry => {
-		// Check against last size if entry's new size is still valid
+		// Check against recorded textArea's size if entry's new size is still valid
 		if (entry && entry.contentRect.width !== 0 && entry.contentRect.height !== 0) {
 			for (const component of components) {
 				if (component.textArea === entry.target) {
-					// Skip worker only if entry's width still matches last width (ignore height)
-					if (component.lastTextAreaSize.width === entry.contentRect.width) {
-						return;
-					}
+					// Skip worker only if entry's new width still matches recorded width (ignore height)
+					if (component.lastTextAreaSize.width === entry.contentRect.width) return;
 					break;
 				}
 			}
 		}
 
-		// Disconnect all textArea(s) from observer
-		resizeObserver.disconnect();
-
-		// Forcefully close sticker window.
-		// Re-positioning it will not be reliable, because if multiple textAreas spawn,
-		// we have no context as to which one was the last used textArea (the elements are re-created).
-		// eslint-disable-next-line no-use-before-define
-		components.forEach(component => toggleStickerWindow(false, component));
-
-		// Destroy any existing button components
-		destroyButtonComponents();
-
 		// Wait for new valid textArea(s)
 		const textAreas = await waitFor(selectorTextArea, {
 			logname: 'textarea',
 			assert: element => {
-				// If voice channel's chat wrapper is currently active,
-				// assert that found element is a child of it,
-				// otherwise let waitFor() to continue to poll.
-				// This is necesary because Discord does not immediately destroy the old element
-				// as it is building a chat wrapper when in a voice channel.
-				const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
-				return !voiceChatWrapper || voiceChatWrapper.contains(element);
+				// Ensure that the textArea element has a buttons container
+				let valid = Boolean(element.querySelector('[class^="buttons"]'));
+
+				/*
+					If voice channel's chat wrapper is currently active,
+					assert that found element is a child of it, otherwise let waitFor() to continue to poll.
+					This is necesary because Discord does not immediately destroy the old element
+					as it is building a chat wrapper when in a voice channel.
+				*/
+				if (valid) {
+					const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
+					if (voiceChatWrapper) {
+						valid = voiceChatWrapper.contains(element);
+					}
+				}
+
+				return valid;
 			},
 			multiple: true
 		});
 
-		// Re-attach observer to all new valid textArea(s)
-		textAreas.forEach(textArea => {
-			resizeObserver.observe(textArea);
+		const componentsOld = components.slice();
+		const componentsNew = [];
+
+		for (const textArea of textAreas) {
+			// Assign ephemeral ID to the textArea element
+			if (!textArea._maganeID) {
+				textArea._maganeID = Date.now();
+			}
+
+			let valid = false;
+			for (let i = 0; i < componentsOld.length; i++) {
+				if (componentsOld[i].textArea === textArea) {
+					valid = true;
+					// Update recorded textArea's size
+					componentsOld[i].lastTextAreaSize = {
+						width: textArea.clientWidth,
+						height: textArea.clientHeight
+					};
+					componentsNew.push(componentsOld[i]);
+					componentsOld.splice(i, 1);
+					break;
+				}
+			}
+
+			if (valid) {
+				log(`Textarea #${textArea._maganeID}: still attached`);
+				continue;
+			}
+
 			// Mount button component attached to the textArea
-			mountButtonComponent(textArea);
-		});
+			const component = mountButtonComponent(textArea);
+			if (component) {
+				log(`Textarea #${textArea._maganeID}: attached`);
+				resizeObserver.observe(textArea);
+				componentsNew.push(component);
+			} else {
+				log(`Textarea #${textArea._maganeID}: failed to attach`);
+			}
+		}
+
+		// Loop through and destroy outdated components
+		for (const component of componentsOld) {
+			log(`Textarea #${component.textArea._maganeID}: outdated, destroying\u2026`);
+			// Force-close sticker window if an active component is outdated
+			if (activeComponent === component) {
+				// eslint-disable-next-line no-use-before-define
+				toggleStickerWindow(false, activeComponent);
+				activeComponent = null;
+			}
+			resizeObserver.unobserve(component.textArea);
+			component.$destroy();
+		}
+
+		// Assign new components as current valid components
+		components = componentsNew;
+		if (components.length) {
+			// Update active component's window position
+			if (activeComponent) {
+				updateStickerWindowPosition(activeComponent);
+			}
+		} else {
+			// If, by chance, this worker ends with zero valid components due to failed mounting,
+			// kickstart worker again to await future textArea(s)
+			resizeObserverWorker();
+		}
 	};
 
 	// Simple queue system for observer events
@@ -274,9 +318,8 @@
 		resizeObserver = new ResizeObserver(entries => {
 			for (const entry of entries) {
 				if (!entry.contentRect) return;
-				// if (entry.contentRect.width && entry.contentRect.height) return;
 				// Push this textArea element to observer worker queue
-				resizeObserverQueuePush({ target: entry.target, contentRect: entry.contentRect });
+				resizeObserverQueuePush(entry);
 			}
 		});
 
@@ -1201,7 +1244,13 @@
 		document.removeEventListener('keyup', onKeydownEvent);
 
 		// Destroy any existing button components
-		destroyButtonComponents();
+		let destroyedCount = 0;
+		for (let i = 0; i < components.length; i++) {
+			try {
+				components[i].$destroy();
+				destroyedCount++;
+			} catch (_) {}
+		}
 
 		// Clear all pending timeouts
 		for (const timeout of Object.values(waitForTimeouts)) {
@@ -1214,7 +1263,7 @@
 		}
 
 		setWindowMaganeAPIs(false);
-		log('Internal components cleaned up.');
+		log(`${destroyedCount}/${components.length} internal component(s) cleaned up.`);
 	});
 
 	const maganeBlurHandler = e => {
@@ -1240,17 +1289,27 @@
 			return toastError('Oh no! Magane was unexpectedly destroyed.. Please consider updating to MaganeBD instead.', { timeout: 6000 });
 		}
 
+		// Force-close previous active component if it's a different component
+		if (component && activeComponent && component !== activeComponent) {
+			toggleStickerWindow(false, activeComponent);
+			activeComponent = null;
+		}
+
 		// If no previously active component, simply assign the first valid one
 		// (e.g. on first launch, or after switching channels).
-		if (!component && !activeComponent) {
-			activeComponent = components.find(component => document.body.contains(component.element));
+		let toggledComponent = component || activeComponent;
+		if (!toggledComponent && components.length) {
+			toggledComponent = components.find(component => document.body.contains(component.element));
 		}
-		const toggledComponent = component || activeComponent;
+
+		// If unable to choose a component, return early
+		if (!toggledComponent) return;
+		if (!document.body.contains(toggledComponent.textArea)) return;
 
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
 		if (active) {
 			// Re-position magane's sticker window
-			updateStickerWindowPosition(toggledComponent.textArea);
+			updateStickerWindowPosition(toggledComponent);
 
 			// One-time warning for viewport height <= 700px when opening Magane window
 			if (!settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
