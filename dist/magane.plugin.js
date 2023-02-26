@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.10
+ * @version 3.2.11
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -481,37 +481,37 @@ const defaultOptions = {
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[162] = list[i], child_ctx;
+	return child_ctx[161] = list[i], child_ctx;
 }
 
 function get_each_context_1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[162] = list[i], child_ctx[166] = i, child_ctx;
+	return child_ctx[161] = list[i], child_ctx[165] = i, child_ctx;
 }
 
 function get_each_context_2(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[162] = list[i], child_ctx[166] = i, child_ctx;
+	return child_ctx[161] = list[i], child_ctx[165] = i, child_ctx;
 }
 
 function get_each_context_3(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[162] = list[i], child_ctx[166] = i, child_ctx;
+	return child_ctx[161] = list[i], child_ctx[165] = i, child_ctx;
 }
 
 function get_each_context_4(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[169] = list[i], child_ctx[166] = i, child_ctx;
+	return child_ctx[168] = list[i], child_ctx[165] = i, child_ctx;
 }
 
 function get_each_context_5(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[169] = list[i], child_ctx[166] = i, child_ctx;
+	return child_ctx[168] = list[i], child_ctx[165] = i, child_ctx;
 }
 
 function get_each_context_6(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[169] = list[i], child_ctx[166] = i, child_ctx;
+	return child_ctx[168] = list[i], child_ctx[165] = i, child_ctx;
 }
 
 function create_if_block_16(ctx) {
@@ -567,17 +567,17 @@ function create_if_block_15(ctx) {
 function create_each_block_6(ctx) {
 	let div1, img, img_src_value, img_alt_value, img_title_value, t0, div0, t1, mounted, dispose;
 	function click_handler() {
-		return ctx[50](ctx[169]);
+		return ctx[50](ctx[168]);
 	}
 	function click_handler_1() {
-		return ctx[51](ctx[169]);
+		return ctx[51](ctx[168]);
 	}
 	return {
 		c() {
 			div1 = element("div"), img = element("img"), t0 = space(), div0 = element("div"), 
 			div0.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>', 
-			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[169].pack, ctx[169].id)) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[169].pack + " - " + ctx[169].id), attr(img, "title", img_title_value = ctx[13][ctx[169].pack] ? ctx[13][ctx[169].pack].name : ""), 
+			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[168].pack, ctx[168].id)) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[168].pack + " - " + ctx[168].id), attr(img, "title", img_title_value = ctx[13][ctx[168].pack] ? ctx[13][ctx[168].pack].name : ""), 
 			attr(div0, "class", "deleteFavorite"), attr(div0, "title", "Unfavorite"), attr(div1, "class", "sticker");
 		},
 		m(target, anchor) {
@@ -586,9 +586,9 @@ function create_each_block_6(ctx) {
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 256 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[169].pack, ctx[169].id)) && attr(img, "src", img_src_value), 
-			256 & dirty[0] && img_alt_value !== (img_alt_value = ctx[169].pack + " - " + ctx[169].id) && attr(img, "alt", img_alt_value), 
-			8448 & dirty[0] && img_title_value !== (img_title_value = ctx[13][ctx[169].pack] ? ctx[13][ctx[169].pack].name : "") && attr(img, "title", img_title_value);
+			ctx = new_ctx, 256 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[168].pack, ctx[168].id)) && attr(img, "src", img_src_value), 
+			256 & dirty[0] && img_alt_value !== (img_alt_value = ctx[168].pack + " - " + ctx[168].id) && attr(img, "alt", img_alt_value), 
+			8448 & dirty[0] && img_title_value !== (img_title_value = ctx[13][ctx[168].pack] ? ctx[13][ctx[168].pack].name : "") && attr(img, "title", img_title_value);
 		},
 		d(detaching) {
 			detaching && detach(div1), mounted = !1, run_all(dispose);
@@ -633,7 +633,7 @@ function create_if_block_13(ctx) {
 function create_else_block_2(ctx) {
 	let div, mounted, dispose;
 	function click_handler_4() {
-		return ctx[54](ctx[169]);
+		return ctx[54](ctx[168]);
 	}
 	return {
 		c() {
@@ -656,7 +656,7 @@ function create_else_block_2(ctx) {
 function create_if_block_14(ctx) {
 	let div, mounted, dispose;
 	function click_handler_3() {
-		return ctx[53](ctx[169]);
+		return ctx[53](ctx[168]);
 	}
 	return {
 		c() {
@@ -679,10 +679,10 @@ function create_if_block_14(ctx) {
 function create_each_block_5(ctx) {
 	let div, img, img_src_value, img_alt_value, img_title_value, t0, show_if, t1, mounted, dispose;
 	function func_1(...args) {
-		return ctx[49](ctx[169], ...args);
+		return ctx[49](ctx[168], ...args);
 	}
 	function click_handler_2() {
-		return ctx[52](ctx[169]);
+		return ctx[52](ctx[168]);
 	}
 	function select_block_type(ctx, dirty) {
 		return 4352 & dirty[0] && (show_if = null), null == show_if && (show_if = !(-1 !== ctx[8].findIndex(func_1))), 
@@ -692,8 +692,8 @@ function create_each_block_5(ctx) {
 	return {
 		c() {
 			div = element("div"), img = element("img"), t0 = space(), if_block.c(), t1 = space(), 
-			attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[169].pack, ctx[169].id)) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[169].pack + " - " + ctx[169].id), attr(img, "title", img_title_value = (ctx[13][ctx[169].pack] ? ctx[13][ctx[169].pack].name + " – " : "") + "Used: " + ctx[169].used), 
+			attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[168].pack, ctx[168].id)) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[168].pack + " - " + ctx[168].id), attr(img, "title", img_title_value = (ctx[13][ctx[168].pack] ? ctx[13][ctx[168].pack].name + " – " : "") + "Used: " + ctx[168].used), 
 			attr(div, "class", "sticker");
 		},
 		m(target, anchor) {
@@ -701,9 +701,9 @@ function create_each_block_5(ctx) {
 			append(div, t1), mounted || (dispose = listen(img, "click", click_handler_2), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 4096 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[169].pack, ctx[169].id)) && attr(img, "src", img_src_value), 
-			4096 & dirty[0] && img_alt_value !== (img_alt_value = ctx[169].pack + " - " + ctx[169].id) && attr(img, "alt", img_alt_value), 
-			12288 & dirty[0] && img_title_value !== (img_title_value = (ctx[13][ctx[169].pack] ? ctx[13][ctx[169].pack].name + " – " : "") + "Used: " + ctx[169].used) && attr(img, "title", img_title_value), 
+			ctx = new_ctx, 4096 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[168].pack, ctx[168].id)) && attr(img, "src", img_src_value), 
+			4096 & dirty[0] && img_alt_value !== (img_alt_value = ctx[168].pack + " - " + ctx[168].id) && attr(img, "alt", img_alt_value), 
+			12288 & dirty[0] && img_title_value !== (img_title_value = (ctx[13][ctx[168].pack] ? ctx[13][ctx[168].pack].name + " – " : "") + "Used: " + ctx[168].used) && attr(img, "title", img_title_value), 
 			current_block_type === (current_block_type = select_block_type(ctx, dirty)) && if_block ? if_block.p(ctx, dirty) : (if_block.d(1), 
 			if_block = current_block_type(ctx), if_block && (if_block.c(), if_block.m(div, t1)));
 		},
@@ -716,7 +716,7 @@ function create_each_block_5(ctx) {
 function create_else_block_1(ctx) {
 	let div, mounted, dispose;
 	function click_handler_7() {
-		return ctx[57](ctx[162], ctx[169]);
+		return ctx[57](ctx[161], ctx[168]);
 	}
 	return {
 		c() {
@@ -739,7 +739,7 @@ function create_else_block_1(ctx) {
 function create_if_block_12(ctx) {
 	let div, mounted, dispose;
 	function click_handler_6() {
-		return ctx[56](ctx[162], ctx[169]);
+		return ctx[56](ctx[161], ctx[168]);
 	}
 	return {
 		c() {
@@ -762,10 +762,10 @@ function create_if_block_12(ctx) {
 function create_each_block_4(ctx) {
 	let div, img, img_src_value, img_alt_value, t, show_if, mounted, dispose;
 	function func(...args) {
-		return ctx[48](ctx[162], ctx[169], ...args);
+		return ctx[48](ctx[161], ctx[168], ...args);
 	}
 	function click_handler_5() {
-		return ctx[55](ctx[162], ctx[169]);
+		return ctx[55](ctx[161], ctx[168]);
 	}
 	function select_block_type_1(ctx, dirty) {
 		return 768 & dirty[0] && (show_if = null), null == show_if && (show_if = !(-1 !== ctx[8].findIndex(func))), 
@@ -775,16 +775,16 @@ function create_each_block_4(ctx) {
 	return {
 		c() {
 			div = element("div"), img = element("img"), t = space(), if_block.c(), attr(img, "class", "image"), 
-			src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[162].id, ctx[169], !1, ctx[166])) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[162].id + " - " + ctx[169]), attr(div, "class", "sticker");
+			src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[161].id, ctx[168], !1, ctx[165])) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[161].id + " - " + ctx[168]), attr(div, "class", "sticker");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor), append(div, img), append(div, t), if_block.m(div, null), 
 			mounted || (dispose = listen(img, "click", click_handler_5), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 512 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[162].id, ctx[169], !1, ctx[166])) && attr(img, "src", img_src_value), 
-			512 & dirty[0] && img_alt_value !== (img_alt_value = ctx[162].id + " - " + ctx[169]) && attr(img, "alt", img_alt_value), 
+			ctx = new_ctx, 512 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[23](ctx[161].id, ctx[168], !1, ctx[165])) && attr(img, "src", img_src_value), 
+			512 & dirty[0] && img_alt_value !== (img_alt_value = ctx[161].id + " - " + ctx[168]) && attr(img, "alt", img_alt_value), 
 			current_block_type === (current_block_type = select_block_type_1(ctx, dirty)) && if_block ? if_block.p(ctx, dirty) : (if_block.d(1), 
 			if_block = current_block_type(ctx), if_block && (if_block.c(), if_block.m(div, null)));
 		},
@@ -795,14 +795,14 @@ function create_each_block_4(ctx) {
 }
 
 function create_each_block_3(ctx) {
-	let div, span, t0, html_tag, span_id_value, t1, t2, t0_value = ctx[162].name + "", raw_value = ctx[28](ctx[162].files.length) + "", each_value_4 = ctx[162].files, each_blocks = [];
+	let div, span, t0, html_tag, span_id_value, t1, t2, t0_value = ctx[161].name + "", raw_value = ctx[28](ctx[161].files.length) + "", each_value_4 = ctx[161].files, each_blocks = [];
 	for (let i = 0; i < each_value_4.length; i += 1) each_blocks[i] = create_each_block_4(get_each_context_4(ctx, each_value_4, i));
 	return {
 		c() {
 			div = element("div"), span = element("span"), t0 = text(t0_value), html_tag = new HtmlTag(!1), 
 			t1 = space();
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-			t2 = space(), html_tag.a = null, attr(span, "id", span_id_value = "p" + ctx[162].id), 
+			t2 = space(), html_tag.a = null, attr(span, "id", span_id_value = "p" + ctx[161].id), 
 			attr(div, "class", "pack");
 		},
 		m(target, anchor) {
@@ -812,12 +812,12 @@ function create_each_block_3(ctx) {
 			append(div, t2);
 		},
 		p(ctx, dirty) {
-			if (512 & dirty[0] && t0_value !== (t0_value = ctx[162].name + "") && set_data(t0, t0_value), 
-			512 & dirty[0] && raw_value !== (raw_value = ctx[28](ctx[162].files.length) + "") && html_tag.p(raw_value), 
-			512 & dirty[0] && span_id_value !== (span_id_value = "p" + ctx[162].id) && attr(span, "id", span_id_value), 
+			if (512 & dirty[0] && t0_value !== (t0_value = ctx[161].name + "") && set_data(t0, t0_value), 
+			512 & dirty[0] && raw_value !== (raw_value = ctx[28](ctx[161].files.length) + "") && html_tag.p(raw_value), 
+			512 & dirty[0] && span_id_value !== (span_id_value = "p" + ctx[161].id) && attr(span, "id", span_id_value), 
 			125829888 & dirty[0]) {
 				let i;
-				for (each_value_4 = ctx[162].files, i = 0; i < each_value_4.length; i += 1) {
+				for (each_value_4 = ctx[161].files, i = 0; i < each_value_4.length; i += 1) {
 					const child_ctx = get_each_context_4(ctx, each_value_4, i);
 					each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block_4(child_ctx), 
 					each_blocks[i].c(), each_blocks[i].m(div, t2));
@@ -853,20 +853,20 @@ function create_if_block_10(ctx) {
 function create_each_block_2(ctx) {
 	let div, div_title_value, mounted, dispose;
 	function click_handler_11() {
-		return ctx[61](ctx[162]);
+		return ctx[61](ctx[161]);
 	}
 	return {
 		c() {
-			div = element("div"), attr(div, "class", "pack"), attr(div, "title", div_title_value = ctx[162].name), 
-			set_style(div, "background-image", `url(${ctx[23](ctx[162].id, ctx[162].files[0], !1, 0)})`);
+			div = element("div"), attr(div, "class", "pack"), attr(div, "title", div_title_value = ctx[161].name), 
+			set_style(div, "background-image", `url(${ctx[23](ctx[161].id, ctx[161].files[0], !1, 0)})`);
 		},
 		m(target, anchor) {
 			insert(target, div, anchor), mounted || (dispose = listen(div, "click", click_handler_11), 
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 512 & dirty[0] && div_title_value !== (div_title_value = ctx[162].name) && attr(div, "title", div_title_value), 
-			512 & dirty[0] && set_style(div, "background-image", `url(${ctx[23](ctx[162].id, ctx[162].files[0], !1, 0)})`);
+			ctx = new_ctx, 512 & dirty[0] && div_title_value !== (div_title_value = ctx[161].name) && attr(div, "title", div_title_value), 
+			512 & dirty[0] && set_style(div, "background-image", `url(${ctx[23](ctx[161].id, ctx[161].files[0], !1, 0)})`);
 		},
 		d(detaching) {
 			detaching && detach(div), mounted = !1, dispose();
@@ -876,7 +876,7 @@ function create_each_block_2(ctx) {
 
 function create_if_block_5(ctx) {
 	let div, div_style_value, each_blocks = [], each_1_lookup = new Map, each_value_1 = ctx[9];
-	const get_key = ctx => ctx[162].id;
+	const get_key = ctx => ctx[161].id;
 	for (let i = 0; i < each_value_1.length; i += 1) {
 		let child_ctx = get_each_context_1(ctx, each_value_1, i), key = get_key(child_ctx);
 		each_1_lookup.set(key, each_blocks[i] = create_each_block_1(key, child_ctx));
@@ -935,16 +935,16 @@ function create_if_block_9(ctx) {
 	return {
 		c() {
 			div = element("div"), input = element("input"), attr(input, "class", "inputPackIndex"), 
-			attr(input, "type", "text"), attr(input, "data-pack", input_data_pack_value = ctx[162].id), 
-			input.value = input_value_value = ctx[166] + 1, attr(div, "class", "index");
+			attr(input, "type", "text"), attr(input, "data-pack", input_data_pack_value = ctx[161].id), 
+			input.value = input_value_value = ctx[165] + 1, attr(div, "class", "index");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor), append(div, input), mounted || (dispose = [ listen(input, "click", click_handler_17), listen(input, "keypress", ctx[33]) ], 
 			mounted = !0);
 		},
 		p(ctx, dirty) {
-			512 & dirty[0] && input_data_pack_value !== (input_data_pack_value = ctx[162].id) && attr(input, "data-pack", input_data_pack_value), 
-			512 & dirty[0] && input_value_value !== (input_value_value = ctx[166] + 1) && input.value !== input_value_value && (input.value = input_value_value);
+			512 & dirty[0] && input_data_pack_value !== (input_data_pack_value = ctx[161].id) && attr(input, "data-pack", input_data_pack_value), 
+			512 & dirty[0] && input_value_value !== (input_value_value = ctx[165] + 1) && input.value !== input_value_value && (input.value = input_value_value);
 		},
 		d(detaching) {
 			detaching && detach(div), mounted = !1, run_all(dispose);
@@ -953,7 +953,7 @@ function create_if_block_9(ctx) {
 }
 
 function create_if_block_6(ctx) {
-	let t, if_block1_anchor, show_if = ctx[162].id.startsWith("custom-"), if_block0 = show_if && create_if_block_8(ctx), if_block1 = ctx[14][ctx[162].id].updateUrl && create_if_block_7(ctx);
+	let t, if_block1_anchor, show_if = ctx[161].id.startsWith("custom-"), if_block0 = show_if && create_if_block_8(ctx), if_block1 = ctx[14][ctx[161].id].updateUrl && create_if_block_7(ctx);
 	return {
 		c() {
 			if_block0 && if_block0.c(), t = space(), if_block1 && if_block1.c(), if_block1_anchor = function empty() {
@@ -965,9 +965,9 @@ function create_if_block_6(ctx) {
 			insert(target, if_block1_anchor, anchor);
 		},
 		p(ctx, dirty) {
-			512 & dirty[0] && (show_if = ctx[162].id.startsWith("custom-")), show_if ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_8(ctx), 
+			512 & dirty[0] && (show_if = ctx[161].id.startsWith("custom-")), show_if ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_8(ctx), 
 			if_block0.c(), if_block0.m(t.parentNode, t)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-			ctx[14][ctx[162].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_7(ctx), 
+			ctx[14][ctx[161].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_7(ctx), 
 			if_block1.c(), if_block1.m(if_block1_anchor.parentNode, if_block1_anchor)) : if_block1 && (if_block1.d(1), 
 			if_block1 = null);
 		},
@@ -981,7 +981,7 @@ function create_if_block_6(ctx) {
 function create_if_block_8(ctx) {
 	let button, mounted, dispose;
 	function click_handler_19() {
-		return ctx[68](ctx[162]);
+		return ctx[68](ctx[161]);
 	}
 	return {
 		c() {
@@ -1004,7 +1004,7 @@ function create_if_block_8(ctx) {
 function create_if_block_7(ctx) {
 	let button, mounted, dispose;
 	function click_handler_20() {
-		return ctx[69](ctx[162]);
+		return ctx[69](ctx[161]);
 	}
 	return {
 		c() {
@@ -1025,11 +1025,11 @@ function create_if_block_7(ctx) {
 }
 
 function create_each_block_1(key_1, ctx) {
-	let div3, t0, div0, t1, div1, span0, t2, span0_title_value, t3, span1, t4, t5, html_tag, t6, div2, button, t8, div2_class_value, t9, mounted, dispose, t2_value = ctx[162].name + "", t4_value = ctx[162].count + "", raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[162].id)) + "", if_block0 = ctx[9].length > 1 && create_if_block_9(ctx);
+	let div3, t0, div0, t1, div1, span0, t2, span0_title_value, t3, span1, t4, t5, html_tag, t6, div2, button, t8, div2_class_value, t9, mounted, dispose, t2_value = ctx[161].name + "", t4_value = ctx[161].count + "", raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[161].id)) + "", if_block0 = ctx[9].length > 1 && create_if_block_9(ctx);
 	function click_handler_18() {
-		return ctx[67](ctx[162]);
+		return ctx[67](ctx[161]);
 	}
-	let if_block1 = ctx[14][ctx[162].id] && create_if_block_6(ctx);
+	let if_block1 = ctx[14][ctx[161].id] && create_if_block_6(ctx);
 	return {
 		key: key_1,
 		first: null,
@@ -1039,10 +1039,10 @@ function create_each_block_1(key_1, ctx) {
 			t3 = space(), span1 = element("span"), t4 = text(t4_value), t5 = text(" stickers"), 
 			html_tag = new HtmlTag(!1), t6 = space(), div2 = element("div"), button = element("button"), 
 			button.textContent = "Del", t8 = space(), if_block1 && if_block1.c(), t9 = space(), 
-			attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[23](ctx[162].id, ctx[162].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[162].id : ""), 
+			attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[23](ctx[161].id, ctx[161].files[0], !1, 0)})`), 
+			attr(span0, "title", span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[161].id : ""), 
 			html_tag.a = null, attr(div1, "class", "info"), attr(button, "class", "button is-danger"), 
-			attr(button, "title", "Unsubscribe"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[162].id] && (ctx[162].id.startsWith("custom-") || ctx[14][ctx[162].id].updateUrl) ? " is-tight" : "")), 
+			attr(button, "title", "Unsubscribe"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[161].id] && (ctx[161].id.startsWith("custom-") || ctx[14][ctx[161].id].updateUrl) ? " is-tight" : "")), 
 			attr(div3, "class", "pack"), this.first = div3;
 		},
 		m(target, anchor) {
@@ -1056,14 +1056,14 @@ function create_each_block_1(key_1, ctx) {
 		p(new_ctx, dirty) {
 			(ctx = new_ctx)[9].length > 1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_9(ctx), 
 			if_block0.c(), if_block0.m(div3, t0)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-			512 & dirty[0] && set_style(div0, "background-image", `url(${ctx[23](ctx[162].id, ctx[162].files[0], !1, 0)})`), 
-			512 & dirty[0] && t2_value !== (t2_value = ctx[162].name + "") && set_data(t2, t2_value), 
-			1049088 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[162].id : "") && attr(span0, "title", span0_title_value), 
-			512 & dirty[0] && t4_value !== (t4_value = ctx[162].count + "") && set_data(t4, t4_value), 
-			1049088 & dirty[0] && raw_value !== (raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[162].id)) + "") && html_tag.p(raw_value), 
-			ctx[14][ctx[162].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_6(ctx), 
+			512 & dirty[0] && set_style(div0, "background-image", `url(${ctx[23](ctx[161].id, ctx[161].files[0], !1, 0)})`), 
+			512 & dirty[0] && t2_value !== (t2_value = ctx[161].name + "") && set_data(t2, t2_value), 
+			1049088 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[161].id : "") && attr(span0, "title", span0_title_value), 
+			512 & dirty[0] && t4_value !== (t4_value = ctx[161].count + "") && set_data(t4, t4_value), 
+			1049088 & dirty[0] && raw_value !== (raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[161].id)) + "") && html_tag.p(raw_value), 
+			ctx[14][ctx[161].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_6(ctx), 
 			if_block1.c(), if_block1.m(div2, null)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-			16896 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[162].id] && (ctx[162].id.startsWith("custom-") || ctx[14][ctx[162].id].updateUrl) ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
+			16896 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[161].id] && (ctx[161].id.startsWith("custom-") || ctx[14][ctx[161].id].updateUrl) ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
 		},
 		d(detaching) {
 			detaching && detach(div3), if_block0 && if_block0.d(), if_block1 && if_block1.d(), 
@@ -1106,7 +1106,7 @@ function create_if_block(ctx) {
 function create_else_block(ctx) {
 	let button, mounted, dispose;
 	function click_handler_22() {
-		return ctx[72](ctx[162]);
+		return ctx[72](ctx[161]);
 	}
 	return {
 		c() {
@@ -1129,7 +1129,7 @@ function create_else_block(ctx) {
 function create_if_block_4(ctx) {
 	let button, mounted, dispose;
 	function click_handler_21() {
-		return ctx[71](ctx[162]);
+		return ctx[71](ctx[161]);
 	}
 	return {
 		c() {
@@ -1150,9 +1150,9 @@ function create_if_block_4(ctx) {
 }
 
 function create_if_block_1(ctx) {
-	let t0, t1, button, mounted, dispose, show_if = ctx[162].id.startsWith("custom-"), if_block0 = show_if && create_if_block_3(ctx), if_block1 = ctx[14][ctx[162].id].updateUrl && create_if_block_2(ctx);
+	let t0, t1, button, mounted, dispose, show_if = ctx[161].id.startsWith("custom-"), if_block0 = show_if && create_if_block_3(ctx), if_block1 = ctx[14][ctx[161].id].updateUrl && create_if_block_2(ctx);
 	function click_handler_25() {
-		return ctx[75](ctx[162]);
+		return ctx[75](ctx[161]);
 	}
 	return {
 		c() {
@@ -1165,10 +1165,10 @@ function create_if_block_1(ctx) {
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 2048 & dirty[0] && (show_if = ctx[162].id.startsWith("custom-")), 
+			ctx = new_ctx, 2048 & dirty[0] && (show_if = ctx[161].id.startsWith("custom-")), 
 			show_if ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_3(ctx), 
 			if_block0.c(), if_block0.m(t0.parentNode, t0)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-			ctx[14][ctx[162].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_2(ctx), 
+			ctx[14][ctx[161].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_2(ctx), 
 			if_block1.c(), if_block1.m(t1.parentNode, t1)) : if_block1 && (if_block1.d(1), if_block1 = null);
 		},
 		d(detaching) {
@@ -1181,7 +1181,7 @@ function create_if_block_1(ctx) {
 function create_if_block_3(ctx) {
 	let button, mounted, dispose;
 	function click_handler_23() {
-		return ctx[73](ctx[162]);
+		return ctx[73](ctx[161]);
 	}
 	return {
 		c() {
@@ -1204,7 +1204,7 @@ function create_if_block_3(ctx) {
 function create_if_block_2(ctx) {
 	let button, mounted, dispose;
 	function click_handler_24() {
-		return ctx[74](ctx[162]);
+		return ctx[74](ctx[161]);
 	}
 	return {
 		c() {
@@ -1225,21 +1225,21 @@ function create_if_block_2(ctx) {
 }
 
 function create_each_block(ctx) {
-	let div3, div0, t0, div1, span0, t1, span0_title_value, t2, span1, t3, t4, html_tag, t5, div2, show_if, t6, div2_class_value, t7, t1_value = ctx[162].name + "", t3_value = ctx[162].count + "", raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[162].id)) + "";
+	let div3, div0, t0, div1, span0, t1, span0_title_value, t2, span1, t3, t4, html_tag, t5, div2, show_if, t6, div2_class_value, t7, t1_value = ctx[161].name + "", t3_value = ctx[161].count + "", raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[161].id)) + "";
 	function select_block_type_2(ctx, dirty) {
-		return 3072 & dirty[0] && (show_if = null), null == show_if && (show_if = !!ctx[10].includes(ctx[162].id)), 
+		return 3072 & dirty[0] && (show_if = null), null == show_if && (show_if = !!ctx[10].includes(ctx[161].id)), 
 		show_if ? create_if_block_4 : create_else_block;
 	}
-	let current_block_type = select_block_type_2(ctx, [ -1, -1, -1, -1, -1, -1 ]), if_block0 = current_block_type(ctx), if_block1 = ctx[14][ctx[162].id] && create_if_block_1(ctx);
+	let current_block_type = select_block_type_2(ctx, [ -1, -1, -1, -1, -1, -1 ]), if_block0 = current_block_type(ctx), if_block1 = ctx[14][ctx[161].id] && create_if_block_1(ctx);
 	return {
 		c() {
 			div3 = element("div"), div0 = element("div"), t0 = space(), div1 = element("div"), 
 			span0 = element("span"), t1 = text(t1_value), t2 = space(), span1 = element("span"), 
 			t3 = text(t3_value), t4 = text(" stickers"), html_tag = new HtmlTag(!1), t5 = space(), 
 			div2 = element("div"), if_block0.c(), t6 = space(), if_block1 && if_block1.c(), 
-			t7 = space(), attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[23](ctx[162].id, ctx[162].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[162].id : ""), 
-			html_tag.a = null, attr(div1, "class", "info"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[162].id] ? " is-tight" : "")), 
+			t7 = space(), attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[23](ctx[161].id, ctx[161].files[0], !1, 0)})`), 
+			attr(span0, "title", span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[161].id : ""), 
+			html_tag.a = null, attr(div1, "class", "info"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[161].id] ? " is-tight" : "")), 
 			attr(div3, "class", "pack");
 		},
 		m(target, anchor) {
@@ -1250,16 +1250,16 @@ function create_each_block(ctx) {
 			append(div3, t7);
 		},
 		p(ctx, dirty) {
-			2048 & dirty[0] && set_style(div0, "background-image", `url(${ctx[23](ctx[162].id, ctx[162].files[0], !1, 0)})`), 
-			2048 & dirty[0] && t1_value !== (t1_value = ctx[162].name + "") && set_data(t1, t1_value), 
-			1050624 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[162].id : "") && attr(span0, "title", span0_title_value), 
-			2048 & dirty[0] && t3_value !== (t3_value = ctx[162].count + "") && set_data(t3, t3_value), 
-			1050624 & dirty[0] && raw_value !== (raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[162].id)) + "") && html_tag.p(raw_value), 
+			2048 & dirty[0] && set_style(div0, "background-image", `url(${ctx[23](ctx[161].id, ctx[161].files[0], !1, 0)})`), 
+			2048 & dirty[0] && t1_value !== (t1_value = ctx[161].name + "") && set_data(t1, t1_value), 
+			1050624 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[161].id : "") && attr(span0, "title", span0_title_value), 
+			2048 & dirty[0] && t3_value !== (t3_value = ctx[161].count + "") && set_data(t3, t3_value), 
+			1050624 & dirty[0] && raw_value !== (raw_value = (ctx[20].hidePackAppendix ? "" : ctx[29](ctx[161].id)) + "") && html_tag.p(raw_value), 
 			current_block_type === (current_block_type = select_block_type_2(ctx, dirty)) && if_block0 ? if_block0.p(ctx, dirty) : (if_block0.d(1), 
 			if_block0 = current_block_type(ctx), if_block0 && (if_block0.c(), if_block0.m(div2, t6))), 
-			ctx[14][ctx[162].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
+			ctx[14][ctx[161].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
 			if_block1.c(), if_block1.m(div2, null)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-			18432 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[162].id] ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
+			18432 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[161].id] ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
 		},
 		d(detaching) {
 			detaching && detach(div3), if_block0.d(), if_block1 && if_block1.d();
@@ -1521,7 +1521,7 @@ function create_fragment$1(ctx) {
 	};
 }
 
-"object" != typeof global.MAGANE_STYLES && (global.MAGANE_STYLES = {}), global.MAGANE_STYLES.main_scss = '/** Magane: main.scss **/\ndiv#magane {\n  display: flex;\n  flex-direction: row;\n  height: 44px;\n  position: absolute;\n  z-index: 99;\n}\ndiv#magane button, div#magane input, div#magane select, div#magane label, div#magane span, div#magane p, div#magane a, div#magane li, div#magane ul, div#magane div {\n  font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;\n  color: var(--header-secondary);\n  font-weight: 400;\n  line-height: 1.5;\n  font-size: 16px;\n  text-rendering: optimizeLegibility;\n  -webkit-text-size-adjust: 100%;\n\t -moz-text-size-adjust: 100%;\n\t\t  text-size-adjust: 100%;\n}\ndiv#magane div.stickerWindow {\n  z-index: 2000;\n  width: 600px;\n  min-height: 200px;\n  position: fixed;\n  background: var(--background-secondary);\n  max-height: 600px;\n  transition: all 0.2s ease;\n  border-radius: 4px;\n  box-shadow: var(--elevation-stroke), var(--elevation-high);\n}\ndiv#magane div.stickerWindow div.stickers {\n  height: 550px !important;\n  margin-bottom: 100px;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers.has-left-toolbar {\n  height: 600px !important;\n  margin-left: 50px;\n}\ndiv#magane div.stickerWindow div.stickers h3.getStarted {\n  text-align: center;\n  padding-top: 40%;\n  pointer-events: none;\n}\ndiv#magane div.stickerWindow div.stickers div.pack {\n  float: left;\n  display: flex;\n  flex-flow: wrap;\n  justify-content: center;\n  padding: 25px;\n  width: 100%;\n  box-sizing: border-box;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span {\n  color: var(--header-secondary);\n  width: 100%;\n  cursor: auto;\n  padding-left: 10px;\n  margin: 10px 0px;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts {\n  padding-left: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts span {\n  padding: 0 0.5em;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100px;\n  height: 100px;\n  float: left;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker .image {\n  cursor: pointer;\n  max-height: 100%;\n  max-width: 100%;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  width: 20px;\n  height: 20px;\n  position: absolute;\n  right: 0;\n  transition: all 0.2s ease;\n  display: none;\n  z-index: 2;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  transition: all 0.2s ease;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite {\n  bottom: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path {\n  fill: #2ECC71;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  top: 0px;\n  transform: rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25) rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  fill: #F04747;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.deleteFavorite {\n  display: block;\n  cursor: pointer;\n}\ndiv#magane div.stickerWindow div.packs-toolbar {\n  position: absolute;\n  bottom: 0;\n  background: var(--background-tertiary);\n  display: flex;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x {\n  width: 100%;\n  height: 50px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs {\n  flex: 1 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs.packs-controls {\n  flex: 0 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs div.packs-wrapper {\n  white-space: nowrap;\n  float: left;\n  width: 100%;\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y {\n  width: 50px;\n  height: 100%;\n  flex-direction: column;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs {\n  flex: 1 1 auto;\n  height: 100%;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs.packs-controls {\n  flex: 0 0 auto;\n  height: auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs div.packs-wrapper {\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack {\n  display: inline-block;\n  height: 40px;\n  width: 40px;\n  margin: 5px;\n  cursor: pointer;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n  transition: all 0.2s ease;\n  filter: grayscale(100%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack:hover,\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.pack.active {\n  transform: scale(1.25);\n  filter: grayscale(0%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack > div {\n  background-image: url("/assets/62ed7720accb1adfe95565b114e843c6.png");\n  width: 32px;\n  height: 32px;\n  background-size: 1344px 1216px;\n  background-repeat: no-repeat;\n  margin-top: 4px;\n  margin-left: 4px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-favorite {\n  background-position: -1056px -288px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-plus {\n  background-position: -384px -896px;\n  /* make it greenish */\n  /* thanks to the magic of https://codepen.io/sosuke/pen/Pjoqqp */\n  filter: invert(63%) sepia(25%) saturate(813%) hue-rotate(55deg) brightness(98%) contrast(82%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-frequently-used {\n  background-position: -160px -960px;\n}\ndiv#magane .stickersModal {\n  z-index: 2001;\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  align-items: center;\n  justify-content: center;\n}\ndiv#magane .stickersModal.is-active {\n  display: flex;\n}\ndiv#magane .stickersModal .inputQuery {\n  width: calc(100% - 30px);\n  height: 36px;\n  box-sizing: border-box;\n  margin: 0 15px 10px;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .inputPackIndex {\n  width: 55px;\n  height: 36px;\n  box-sizing: border-box;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-background {\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  width: 100%;\n  height: 100%;\n  background-color: rgba(10, 10, 10, 0.86);\n}\ndiv#magane .stickersModal .modal-content,\ndiv#magane .stickersModal .modal-card {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n  background: var(--background-tertiary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig {\n  height: 100%;\n  width: 100%;\n  display: flex;\n  flex-direction: column;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs {\n  width: 100%;\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab {\n  color: var(--header-secondary);\n  display: inline-block;\n  border: none;\n  border-top: 0px transparent;\n  border-left: 0px transparent;\n  border-right: 0px transparent;\n  border-width: 1px;\n  border-style: solid;\n  border-bottom-color: var(--header-secondary);\n  padding: 20px;\n  cursor: pointer;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab:hover, div#magane .stickersModal .modal-content .stickersConfig .tabs .tab.is-active {\n  border-bottom-color: var(--interactive-active);\n  color: var(--interactive-active);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content {\n  height: calc(100% - 66px); /* .tabs height */\n  width: 100%;\n  padding: 10px 0;\n  box-sizing: border-box;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs {\n  display: flex;\n  flex-direction: column;\n  padding-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs .packs {\n  height: 100%;\n  width: 100%;\n  padding-bottom: 10px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section {\n  padding: 0 24px 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section .section-title, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section .section-title {\n  font-weight: 800;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section > p:last-of-type, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section > p:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a {\n  /* inherit Discord\'s link color */\n  color: var(--text-link);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a:hover, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a:hover {\n  text-decoration: underline;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped {\n  display: flex;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped input, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped input {\n  margin: 0;\n  width: auto;\n  flex-grow: 1;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped button, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped button {\n  margin-left: 4px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack {\n  height: 75px;\n  width: 100%;\n  float: left;\n  display: flex;\n  padding: 0 20px;\n  box-sizing: border-box;\n  margin-bottom: 5px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  flex: 0 0 auto;\n  min-width: 75px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  flex: 1 0 auto;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action.is-tight button {\n  width: auto;\n  padding-right: 0.5em;\n  padding-left: 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack {\n  width: 36px;\n  height: 36px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before, div#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index {\n  padding-top: 20px;\n  text-align: left;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  height: 75px;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle {\n  padding: 20px;\n  cursor: move;\n  padding-top: 30px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle span {\n  background: #555;\n  height: 2px;\n  width: 100%;\n  display: block;\n  margin-bottom: 6px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  padding-top: 20px;\n  text-align: right;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info {\n  flex: 1 1 auto;\n  padding: 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span {\n  display: block;\n  width: 100%;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span:nth-of-type(1) {\n  font-weight: bold;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(1) {\n  padding: 0 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(2) {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview img {\n  height: 100%;\n  width: 100%;\n}\ndiv#magane .stickersModal .modal-close {\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  background-color: rgba(10, 10, 10, 0.2);\n  border: none;\n  border-radius: 290486px;\n  cursor: pointer;\n  display: inline-block;\n  flex-grow: 0;\n  flex-shrink: 0;\n  font-size: 0;\n  outline: none;\n  vertical-align: top;\n  background: none;\n  position: absolute;\n  right: 20px;\n  top: 20px;\n  height: 32px;\n  max-height: 32px;\n  max-width: 32px;\n  min-height: 32px;\n  min-width: 32px;\n  width: 32px;\n  z-index: 1;\n}\ndiv#magane .stickersModal .modal-close:before, div#magane .stickersModal .modal-close:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-close:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-close:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-close:hover, div#magane .stickersModal .modal-close:focus {\n  background-color: rgba(10, 10, 10, 0.3);\n}\ndiv#magane .button {\n  align-items: center;\n  border: 1px solid transparent;\n  border-radius: 3px;\n  box-shadow: none;\n  display: inline-flex;\n  font-size: 1rem;\n  padding: calc(0.375em - 1px) 0.75em;\n  position: relative;\n  vertical-align: top;\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  cursor: pointer;\n  justify-content: center;\n  text-align: center;\n  white-space: nowrap;\n  border-color: transparent;\n  color: var(--header-secondary);\n  background-color: var(--background-secondary);\n  width: 62px; /* consistent width */\n}\ndiv#magane .button.is-danger {\n  color: #ffffff;\n  border-color: rgba(240, 71, 71, 0.3);\n  background: #f04747;\n}\ndiv#magane .button:hover, div#magane .button.is-primary:hover {\n  transform: scale3d(1.1, 1.1, 1.1);\n}\ndiv#magane .button.has-width-full {\n  width: 100%;\n}\ndiv#magane .button.has-width-full:hover {\n  /* TODO: Figure out how to do a more consistent scaling,\n\tregardless of the button\'s dynamic size. */\n  transform: scale3d(1.04, 1.04, 1.04);\n}\ndiv#magane .has-scroll-x {\n  overflow-x: overlay;\n}\ndiv#magane .has-scroll-y {\n  overflow-y: overlay;\n}\ndiv#magane ::-webkit-scrollbar {\n  /* Let\'s make the scrollbars pretty */\n  width: 6px;\n  height: 6px;\n}\ndiv#magane ::-webkit-scrollbar-track {\n  margin: 0;\n  background: transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-track-piece {\n  border: 0 solid transparent;\n  background: transparent;\n  margin: 0;\n}\ndiv#magane ::-webkit-scrollbar-thumb {\n  background: rgba(105, 96, 128, 0.5);\n  border: 0 solid transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-thumb:hover {\n  background: rgba(105, 96, 128, 0.75);\n}\ndiv#magane ::-webkit-scrollbar-thumb:active {\n  background: #696080;\n}\ndiv#magane code {\n  box-sizing: border-box;\n  padding: 2px 6px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n}\n\ndiv#maganeButton.channel-textarea-stickers {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n}\ndiv#maganeButton.channel-textarea-stickers:hover, div#maganeButton.channel-textarea-stickers.active {\n  filter: brightness(1.35);\n}\ndiv#maganeButton img.channel-textarea-stickers-content {\n  width: 24px;\n  height: 24px;\n  padding: 4px;\n  margin-left: 2px;\n  margin-right: 2px;\n}';
+"object" != typeof global.MAGANE_STYLES && (global.MAGANE_STYLES = {}), global.MAGANE_STYLES.main_scss = '/** Magane: main.scss **/\ndiv#magane {\n  display: flex;\n  flex-direction: row;\n  height: 44px;\n  position: absolute;\n  z-index: 100;\n}\ndiv#magane button, div#magane input, div#magane select, div#magane label, div#magane span, div#magane p, div#magane a, div#magane li, div#magane ul, div#magane div {\n  font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;\n  color: var(--header-secondary);\n  font-weight: 400;\n  line-height: 1.5;\n  font-size: 16px;\n  text-rendering: optimizeLegibility;\n  -webkit-text-size-adjust: 100%;\n\t -moz-text-size-adjust: 100%;\n\t\t  text-size-adjust: 100%;\n}\ndiv#magane div.stickerWindow {\n  z-index: 2000;\n  width: 600px;\n  min-height: 200px;\n  position: fixed;\n  background: var(--background-secondary);\n  max-height: 600px;\n  transition: all 0.2s ease;\n  border-radius: 4px;\n  box-shadow: var(--elevation-stroke), var(--elevation-high);\n}\ndiv#magane div.stickerWindow div.stickers {\n  height: 550px !important;\n  margin-bottom: 100px;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers.has-left-toolbar {\n  height: 600px !important;\n  margin-left: 50px;\n}\ndiv#magane div.stickerWindow div.stickers h3.getStarted {\n  text-align: center;\n  padding-top: 40%;\n  pointer-events: none;\n}\ndiv#magane div.stickerWindow div.stickers div.pack {\n  float: left;\n  display: flex;\n  flex-flow: wrap;\n  justify-content: center;\n  padding: 25px;\n  width: 100%;\n  box-sizing: border-box;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span {\n  color: var(--header-secondary);\n  width: 100%;\n  cursor: auto;\n  padding-left: 10px;\n  margin: 10px 0px;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts {\n  padding-left: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack span .counts span {\n  padding: 0 0.5em;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  width: 100px;\n  height: 100px;\n  float: left;\n  position: relative;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker .image {\n  cursor: pointer;\n  max-height: 100%;\n  max-width: 100%;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  width: 20px;\n  height: 20px;\n  position: absolute;\n  right: 0;\n  transition: all 0.2s ease;\n  display: none;\n  z-index: 2;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path, div#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  transition: all 0.2s ease;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite {\n  bottom: 0;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.addFavorite:hover svg path {\n  fill: #2ECC71;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite {\n  top: 0px;\n  transform: rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover {\n  transform: scale(1.25) rotateZ(45deg);\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker div.deleteFavorite:hover svg path {\n  fill: #F04747;\n}\ndiv#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.addFavorite, div#magane div.stickerWindow div.stickers div.pack div.sticker:hover div.deleteFavorite {\n  display: block;\n  cursor: pointer;\n}\ndiv#magane div.stickerWindow div.packs-toolbar {\n  position: absolute;\n  bottom: 0;\n  background: var(--background-tertiary);\n  display: flex;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x {\n  width: 100%;\n  height: 50px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs {\n  flex: 1 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs.packs-controls {\n  flex: 0 0 auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-x div.packs div.packs-wrapper {\n  white-space: nowrap;\n  float: left;\n  width: 100%;\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y {\n  width: 50px;\n  height: 100%;\n  flex-direction: column;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs {\n  flex: 1 1 auto;\n  height: 100%;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs.packs-controls {\n  flex: 0 0 auto;\n  height: auto;\n}\ndiv#magane div.stickerWindow div.packs-toolbar.has-scroll-y div.packs div.packs-wrapper {\n  font-size: 0; /* quick hax to clear whitespace */\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack {\n  display: inline-block;\n  height: 40px;\n  width: 40px;\n  margin: 5px;\n  cursor: pointer;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n  transition: all 0.2s ease;\n  filter: grayscale(100%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack:hover,\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.pack.active {\n  transform: scale(1.25);\n  filter: grayscale(0%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack > div {\n  background-image: url("/assets/62ed7720accb1adfe95565b114e843c6.png");\n  width: 32px;\n  height: 32px;\n  background-size: 1344px 1216px;\n  background-repeat: no-repeat;\n  margin-top: 4px;\n  margin-left: 4px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-favorite {\n  background-position: -1056px -288px;\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-plus {\n  background-position: -384px -896px;\n  /* make it greenish */\n  /* thanks to the magic of https://codepen.io/sosuke/pen/Pjoqqp */\n  filter: invert(63%) sepia(25%) saturate(813%) hue-rotate(55deg) brightness(98%) contrast(82%);\n}\ndiv#magane div.stickerWindow div.packs-toolbar div.packs div.pack div.icon-frequently-used {\n  background-position: -160px -960px;\n}\ndiv#magane .stickersModal {\n  z-index: 2001;\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  align-items: center;\n  justify-content: center;\n}\ndiv#magane .stickersModal.is-active {\n  display: flex;\n}\ndiv#magane .stickersModal .inputQuery {\n  width: calc(100% - 30px);\n  height: 36px;\n  box-sizing: border-box;\n  margin: 0 15px 10px;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .inputPackIndex {\n  width: 55px;\n  height: 36px;\n  box-sizing: border-box;\n  padding: 5px 12px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-background {\n  bottom: 0;\n  left: 0;\n  position: absolute;\n  right: 0;\n  top: 0;\n  width: 100%;\n  height: 100%;\n  background-color: rgba(10, 10, 10, 0.86);\n}\ndiv#magane .stickersModal .modal-content,\ndiv#magane .stickersModal .modal-card {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n  background: var(--background-tertiary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig {\n  height: 100%;\n  width: 100%;\n  display: flex;\n  flex-direction: column;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs {\n  width: 100%;\n  text-align: center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab {\n  color: var(--header-secondary);\n  display: inline-block;\n  border: none;\n  border-top: 0px transparent;\n  border-left: 0px transparent;\n  border-right: 0px transparent;\n  border-width: 1px;\n  border-style: solid;\n  border-bottom-color: var(--header-secondary);\n  padding: 20px;\n  cursor: pointer;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig .tabs .tab:hover, div#magane .stickersModal .modal-content .stickersConfig .tabs .tab.is-active {\n  border-bottom-color: var(--interactive-active);\n  color: var(--interactive-active);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content {\n  height: calc(100% - 66px); /* .tabs height */\n  width: 100%;\n  padding: 10px 0;\n  box-sizing: border-box;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs {\n  display: flex;\n  flex-direction: column;\n  padding-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.avail-packs .packs {\n  height: 100%;\n  width: 100%;\n  padding-bottom: 10px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section {\n  padding: 0 24px 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section .section-title, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section .section-title {\n  font-weight: 800;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section > p:last-of-type, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section > p:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a {\n  /* inherit Discord\'s link color */\n  color: var(--text-link);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .section a:hover, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .section a:hover {\n  text-decoration: underline;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped {\n  display: flex;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped input, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped input {\n  margin: 0;\n  width: auto;\n  flex-grow: 1;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.tab-content.import .input-grouped button, div#magane .stickersModal .modal-content .stickersConfig div.tab-content.misc .input-grouped button {\n  margin-left: 4px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack {\n  height: 75px;\n  width: 100%;\n  float: left;\n  display: flex;\n  padding: 0 20px;\n  box-sizing: border-box;\n  margin-bottom: 5px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack:last-of-type {\n  margin-bottom: 0;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle,\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  flex: 0 0 auto;\n  min-width: 75px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  flex: 1 0 auto;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action.is-tight button {\n  width: auto;\n  padding-right: 0.5em;\n  padding-left: 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack {\n  width: 36px;\n  height: 36px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before, div#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action button.delete-pack:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.index {\n  padding-top: 20px;\n  text-align: left;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview {\n  height: 75px;\n  background-position: center;\n  background-size: contain;\n  background-repeat: no-repeat;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle {\n  padding: 20px;\n  cursor: move;\n  padding-top: 30px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.handle span {\n  background: #555;\n  height: 2px;\n  width: 100%;\n  display: block;\n  margin-bottom: 6px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.action {\n  padding-top: 20px;\n  text-align: right;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info {\n  flex: 1 1 auto;\n  padding: 14px;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span {\n  display: block;\n  width: 100%;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span:nth-of-type(1) {\n  font-weight: bold;\n  color: var(--header-secondary);\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(1) {\n  padding: 0 0.5em;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.info > span .appendix span:nth-of-type(2) {\n  -webkit-user-select: text;\n\t -moz-user-select: text;\n\t\t  user-select: text;\n}\ndiv#magane .stickersModal .modal-content .stickersConfig div.pack div.preview img {\n  height: 100%;\n  width: 100%;\n}\ndiv#magane .stickersModal .modal-close {\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  background-color: rgba(10, 10, 10, 0.2);\n  border: none;\n  border-radius: 290486px;\n  cursor: pointer;\n  display: inline-block;\n  flex-grow: 0;\n  flex-shrink: 0;\n  font-size: 0;\n  outline: none;\n  vertical-align: top;\n  background: none;\n  position: absolute;\n  right: 20px;\n  top: 20px;\n  height: 32px;\n  max-height: 32px;\n  max-width: 32px;\n  min-height: 32px;\n  min-width: 32px;\n  width: 32px;\n  z-index: 1;\n}\ndiv#magane .stickersModal .modal-close:before, div#magane .stickersModal .modal-close:after {\n  background-color: var(--header-secondary);\n  content: "";\n  display: block;\n  left: 50%;\n  position: absolute;\n  top: 50%;\n  transform: translateX(-50%) translateY(-50%) rotate(45deg);\n  transform-origin: center center;\n}\ndiv#magane .stickersModal .modal-close:before {\n  height: 2px;\n  width: 50%;\n}\ndiv#magane .stickersModal .modal-close:after {\n  height: 50%;\n  width: 2px;\n}\ndiv#magane .stickersModal .modal-close:hover, div#magane .stickersModal .modal-close:focus {\n  background-color: rgba(10, 10, 10, 0.3);\n}\ndiv#magane .button {\n  align-items: center;\n  border: 1px solid transparent;\n  border-radius: 3px;\n  box-shadow: none;\n  display: inline-flex;\n  font-size: 1rem;\n  padding: calc(0.375em - 1px) 0.75em;\n  position: relative;\n  vertical-align: top;\n  -webkit-user-select: none;\n\t -moz-user-select: none;\n\t\t  user-select: none;\n  cursor: pointer;\n  justify-content: center;\n  text-align: center;\n  white-space: nowrap;\n  border-color: transparent;\n  color: var(--header-secondary);\n  background-color: var(--background-secondary);\n  width: 62px; /* consistent width */\n}\ndiv#magane .button.is-danger {\n  color: #ffffff;\n  border-color: rgba(240, 71, 71, 0.3);\n  background: #f04747;\n}\ndiv#magane .button:hover, div#magane .button.is-primary:hover {\n  transform: scale3d(1.1, 1.1, 1.1);\n}\ndiv#magane .button.has-width-full {\n  width: 100%;\n}\ndiv#magane .button.has-width-full:hover {\n  /* TODO: Figure out how to do a more consistent scaling,\n\tregardless of the button\'s dynamic size. */\n  transform: scale3d(1.04, 1.04, 1.04);\n}\ndiv#magane .has-scroll-x {\n  overflow-x: overlay;\n}\ndiv#magane .has-scroll-y {\n  overflow-y: overlay;\n}\ndiv#magane ::-webkit-scrollbar {\n  /* Let\'s make the scrollbars pretty */\n  width: 6px;\n  height: 6px;\n}\ndiv#magane ::-webkit-scrollbar-track {\n  margin: 0;\n  background: transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-track-piece {\n  border: 0 solid transparent;\n  background: transparent;\n  margin: 0;\n}\ndiv#magane ::-webkit-scrollbar-thumb {\n  background: rgba(105, 96, 128, 0.5);\n  border: 0 solid transparent;\n  border-radius: 5px;\n}\ndiv#magane ::-webkit-scrollbar-thumb:hover {\n  background: rgba(105, 96, 128, 0.75);\n}\ndiv#magane ::-webkit-scrollbar-thumb:active {\n  background: #696080;\n}\ndiv#magane code {\n  box-sizing: border-box;\n  padding: 2px 6px;\n  border-radius: 3px;\n  border: 1px solid var(--background-secondary);\n  background: var(--background-secondary);\n  color: var(--header-secondary);\n}\n\ndiv#maganeButton.channel-textarea-stickers {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n}\ndiv#maganeButton.channel-textarea-stickers:hover, div#maganeButton.channel-textarea-stickers.active {\n  filter: brightness(1.35);\n}\ndiv#maganeButton img.channel-textarea-stickers-content {\n  width: 24px;\n  height: 24px;\n  padding: 4px;\n  margin-left: 2px;\n  margin-right: 2px;\n}';
 
 const click_handler_17 = event => event.target.select(), click_handler_28 = event => event.stopPropagation(), click_handler_33 = event => event.stopPropagation();
 
@@ -1558,18 +1558,30 @@ function instance$1($$self, $$props, $$invalidate) {
 	}, toastInfo = (message, options = {}) => (options.type = "info", toast(message, options)), toastSuccess = (message, options = {}) => (options.type = "success", 
 	toast(message, options)), toastError = (message, options = {}) => (options.type = "error", 
 	toast(message, options)), toastWarn = (message, options = {}) => (options.type = "warn", 
-	toast(message, options)), destroyButtonComponents = () => {
-		activeComponent = null;
-		for (let i = 0; i < components.length; i++) components[i].$destroy();
-		components = [];
+	toast(message, options)), mountButtonComponent = textArea => {
+		const buttonsContainer = textArea.querySelector('[class^="buttons"]'), component = new Button({
+			target: buttonsContainer,
+			anchor: buttonsContainer.firstElementChild
+		});
+		return component.$on("click", () => toggleStickerWindow(void 0, component)), component.$on("grabPacks", () => grabPacks(!0)), 
+		component.textArea = textArea, component.lastTextAreaSize = {
+			width: textArea.clientWidth,
+			height: textArea.clientHeight
+		}, component;
+	}, updateStickerWindowPosition = component => {
+		log("Updating window's position…");
+		const props = component.textArea.querySelector('[class^="buttons"]').getBoundingClientRect();
+		if ($$invalidate(0, coords.wbottom = base.clientHeight - props.top + 8, coords), 
+		$$invalidate(0, coords.wright = base.clientWidth - props.right - 6, coords), !isMaganeBD) {
+			const baseProps = base.getBoundingClientRect();
+			$$invalidate(0, coords.wbottom += baseProps.top, coords), $$invalidate(0, coords.wright += baseProps.left, coords);
+		}
 	}, resizeObserverWorker = async entry => {
 		if (entry && 0 !== entry.contentRect.width && 0 !== entry.contentRect.height) for (const component of components) if (component.textArea === entry.target) {
 			if (component.lastTextAreaSize.width === entry.contentRect.width) return;
 			break;
 		}
-		resizeObserver.disconnect(), components.forEach(component => toggleStickerWindow(!1, component)), 
-		destroyButtonComponents();
-		(await ((selector, options = {}) => {
+		const textAreas = await ((selector, options = {}) => {
 			let poll;
 			return options.logname && log(`Waiting for ${options.logname}…`), new Promise(resolve => {
 				(poll = () => {
@@ -1583,26 +1595,37 @@ function instance$1($$self, $$props, $$invalidate) {
 		})('[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled-"])', {
 			logname: "textarea",
 			assert: element => {
-				const voiceChatWrapper = document.querySelector('[class^="channelChatWrapper-"]');
-				return !voiceChatWrapper || voiceChatWrapper.contains(element);
+				let valid = Boolean(element.querySelector('[class^="buttons"]'));
+				if (valid) {
+					const voiceChatWrapper = document.querySelector('[class^="channelChatWrapper-"]');
+					voiceChatWrapper && (valid = voiceChatWrapper.contains(element));
+				}
+				return valid;
 			},
 			multiple: !0
-		})).forEach(textArea => {
-			resizeObserver.observe(textArea), (textArea => {
-				const buttonsContainer = textArea.querySelector('[class^="buttons"]');
-				if (!buttonsContainer) return;
-				const component = new Button({
-					target: buttonsContainer,
-					anchor: buttonsContainer.firstElementChild
-				});
-				components.push(component), component.$on("click", () => toggleStickerWindow(void 0, component)), 
-				component.$on("grabPacks", () => grabPacks(!0)), component.textArea = textArea, 
-				component.lastTextAreaSize = {
+		}), componentsOld = components.slice(), componentsNew = [];
+		for (const textArea of textAreas) {
+			textArea._maganeID || (textArea._maganeID = Date.now());
+			let valid = !1;
+			for (let i = 0; i < componentsOld.length; i++) if (componentsOld[i].textArea === textArea) {
+				valid = !0, componentsOld[i].lastTextAreaSize = {
 					width: textArea.clientWidth,
 					height: textArea.clientHeight
-				};
-			})(textArea);
-		});
+				}, componentsNew.push(componentsOld[i]), componentsOld.splice(i, 1);
+				break;
+			}
+			if (valid) {
+				log(`Textarea #${textArea._maganeID}: still attached`);
+				continue;
+			}
+			const component = mountButtonComponent(textArea);
+			component ? (log(`Textarea #${textArea._maganeID}: attached`), resizeObserver.observe(textArea), 
+			componentsNew.push(component)) : log(`Textarea #${textArea._maganeID}: failed to attach`);
+		}
+		for (const component of componentsOld) log(`Textarea #${component.textArea._maganeID}: outdated, destroying…`), 
+		activeComponent === component && (toggleStickerWindow(!1, activeComponent), activeComponent = null), 
+		resizeObserver.unobserve(component.textArea), component.$destroy();
+		components = componentsNew, components.length ? activeComponent && updateStickerWindowPosition(activeComponent) : resizeObserverWorker();
 	}, resizeObserverQueuePush = entry => new Promise((resolve, reject) => {
 		resizeObserverQueue.push({
 			entry,
@@ -1629,10 +1652,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		resizeObserver = new ResizeObserver(entries => {
 			for (const entry of entries) {
 				if (!entry.contentRect) return;
-				resizeObserverQueuePush({
-					target: entry.target,
-					contentRect: entry.contentRect
-				});
+				resizeObserverQueuePush(entry);
 			}
 		}), resizeObserverWorker();
 	}, saveToLocalStorage = (key, payload) => {
@@ -1991,10 +2011,13 @@ function instance$1($$self, $$props, $$invalidate) {
 		}
 		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`);
 	}), onDestroy(() => {
-		document.removeEventListener("click", maganeBlurHandler), document.removeEventListener("keyup", onKeydownEvent), 
-		destroyButtonComponents();
+		document.removeEventListener("click", maganeBlurHandler), document.removeEventListener("keyup", onKeydownEvent);
+		let destroyedCount = 0;
+		for (let i = 0; i < components.length; i++) try {
+			components[i].$destroy(), destroyedCount++;
+		} catch (_) {}
 		for (const timeout of Object.values(waitForTimeouts)) clearTimeout(timeout);
-		resizeObserver && resizeObserver.disconnect(), setWindowMaganeAPIs(!1), log("Internal components cleaned up.");
+		resizeObserver && resizeObserver.disconnect(), setWindowMaganeAPIs(!1), log(`${destroyedCount}/${components.length} internal component(s) cleaned up.`);
 	});
 	const maganeBlurHandler = e => {
 		const stickerWindow = main.querySelector(".stickerWindow");
@@ -2011,19 +2034,15 @@ function instance$1($$self, $$props, $$invalidate) {
 		if (!document.body.contains(main)) return toastError("Oh no! Magane was unexpectedly destroyed.. Please consider updating to MaganeBD instead.", {
 			timeout: 6000
 		});
-		component || activeComponent || (activeComponent = components.find(component => document.body.contains(component.element)));
-		const toggledComponent = component || activeComponent, active = void 'undefined' === forceState ? !stickerWindowActive : forceState;
+		component && activeComponent && component !== activeComponent && (toggleStickerWindow(!1, activeComponent), 
+		activeComponent = null);
+		let toggledComponent = component || activeComponent;
+		if (!toggledComponent && components.length && (toggledComponent = components.find(component => document.body.contains(component.element))), 
+		!toggledComponent) return;
+		if (!document.body.contains(toggledComponent.textArea)) return;
+		const active = void 'undefined' === forceState ? !stickerWindowActive : forceState;
 		if (active) {
-			if ((textArea => {
-				const buttonsContainer = textArea.querySelector('[class^="buttons"]');
-				if (!buttonsContainer) return;
-				const props = buttonsContainer.getBoundingClientRect();
-				if (log("Updating window's position…"), $$invalidate(0, coords.wbottom = base.clientHeight - props.top + 8, coords), 
-				$$invalidate(0, coords.wright = base.clientWidth - props.right - 6, coords), !isMaganeBD) {
-					const baseProps = base.getBoundingClientRect();
-					$$invalidate(0, coords.wbottom += baseProps.top, coords), $$invalidate(0, coords.wright += baseProps.left, coords);
-				}
-			})(toggledComponent.textArea), !settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
+			if (updateStickerWindowPosition(toggledComponent), !settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
 				Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0) <= 700 && (toastWarn("Viewport height is less than 700px, Magane window may not display properly.", {
 					timeout: 6000
 				}), isWarnedAboutViewportHeight = !0);
