@@ -1636,10 +1636,9 @@
 
 	const assertRemotePackConsent = (context, onConfirm) => {
 		// Markdown, so we do double \n for new line
-		const content = `${context}\n\n` +
-			'**Please continue only if you trust this remote pack.**';
+		const content = `**Please continue only if you trust the remote packs.**\n\n${context}`;
 		BdApi.showConfirmationModal(
-			'Import Remote Pack',
+			'Import Remote Packs',
 			content,
 			{
 				confirmText: 'Import',
@@ -1652,54 +1651,91 @@
 
 	const parseRemotePackUrl = () => {
 		if (!remotePackUrl) return;
-		assertRemotePackConsent(`URL:\n\n${remotePackUrl}`, async () => {
-			try {
-				toast('Loading pack information\u2026', { nolog: true });
-				const pack = await fetchRemotePack(remotePackUrl);
-				pack.id = `custom-${pack.id}`;
-				const stored = _appendPack(pack.id, pack);
-				toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
-				remotePackUrl = null;
-			} catch (error) {
-				console.error(error);
-				toastError(error.toString(), { nolog: true });
-			}
-		});
-	};
 
-	const onLocalRemotePackChange = event => {
-		const { files } = event.target;
-		if (!files.length) return false;
+		const remotePackUrls = remotePackUrl.split('\n')
+			.map(url => url.trim())
+			.filter(url => url.length);
 
-		const file = files[0];
-		const reader = new FileReader();
-		reader.onload = e => {
-			// Reset selected file in the hidden input
-			event.target.value = '';
+		if (!remotePackUrls.length) return;
 
-			let result;
-			try {
-				result = JSON.parse(e.target.result);
-			} catch (error) {
-				console.error(error);
-				toastError('The selected file is not a valid JSON file.');
-			}
-
-			assertRemotePackConsent(`File:\n\n${file.name}`, async () => {
+		/* eslint-disable-next-line prefer-template */
+		assertRemotePackConsent('URLs:\n\n```\n' + remotePackUrls.join('\n') + '\n```', async () => {
+			const failed = [];
+			for (const url of remotePackUrls) {
 				try {
-					const pack = await processRemotePack(result);
+					toast('Loading pack information\u2026', { nolog: true });
+					const pack = await fetchRemotePack(url);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
 					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
+					failed.push(url);
 				}
-			});
-		};
+			}
 
-		log(`Reading ${file.name}\u2026`);
-		reader.readAsText(file);
+			if (failed.length) {
+				toastError('Failed to add some remote packs. Their URLs have been kept in the input box.');
+				remotePackUrl = failed.join('\n');
+			} else {
+				remotePackUrl = '';
+			}
+		});
+	};
+
+	const onLocalRemotePackChange = async event => {
+		const { files } = event.target;
+		if (!files.length) return false;
+
+		const results = [];
+
+		toast(`Reading ${files.length} file${files.length === 1 ? '' : 's'}\u2026`);
+		for (const file of files) {
+			await new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = e => {
+					try {
+						const data = JSON.parse(e.target.result);
+						results.push({ name: file.name, data });
+						resolve();
+					} catch (error) {
+						reject(error);
+					}
+				};
+				log(`Reading ${file.name}\u2026`);
+				reader.readAsText(file);
+			}).catch(error => {
+				console.error(error);
+				toastError(`${file.name} is not a valid JSON file.`);
+			});
+		}
+
+		// Reset selected files in the hidden input
+		event.target.value = '';
+
+		const fileNames = results.map(result => result.name);
+
+		/* eslint-disable-next-line prefer-template */
+		assertRemotePackConsent('Files:\n\n```\n' + fileNames.join('\n') + '\n```', async () => {
+			const failedResults = [];
+			for (const result of results) {
+				try {
+					const pack = await processRemotePack(result.data);
+					pack.id = `custom-${pack.id}`;
+					const stored = _appendPack(pack.id, pack);
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+				} catch (error) {
+					console.error(error);
+					toastError(error.toString(), { nolog: true });
+					failedResults.push(result.name);
+				}
+			}
+
+			if (failedResults.length) {
+				toastError(`Failed to add: ${failedResults.join(',')}.`);
+			}
+		});
 	};
 
 	const loadLocalRemotePack = () => {
@@ -2263,7 +2299,7 @@
 											on:click="{ () => updateRemotePack(pack.id) }"
 											title="Update">Up</button>
 										{ /if }
-										<button class="button delete-pack"
+										<button class="button delete-pack is-danger"
 											on:click="{ () => deleteLocalPack(pack.id) }"
 											title="Purge"></button>
 										{ /if }
@@ -2279,30 +2315,30 @@
 						<div class="tab-content has-scroll-y import" style="{ activeTab === 2 ? '' : 'display: none;' }">
 							<div class="section line-proxy">
 								<p class="section-title">LINE Store Proxy</p>
-								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.</p>
+								<p>If you are looking for stickers pack that are not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a>, pick whichever packs you want, then paste their full URLs in the box below (separated by new lines).</p>
 								<p>e.g. https://store.line.me/stickershop/product/17573/ja</p>
 								<p class="input-grouped">
-									<input
+									<textarea
 										bind:value={ linePackSearch }
+										autocomplete="off"
 										class="inputQuery"
-										type="text"
-										placeholder="LINE Sticker Pack URL" />
+										placeholder="LINE Sticker Pack URLs" />
 									<button class="button is-primary"
 										on:click="{ () => parseLinePack() }">Add</button>
 								</p>
 							</div>
 							<div class="section remote-packs">
 								<p class="section-title">Remote Packs</p>
-								<p>You can paste URL to a JSON config file of a remote pack in here.<br>
+								<p>You can paste URLs to JSON config files of remote packs in here (separated by new lines).<br>
 									This also supports public album links of any file hosting websites running <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>.</p>
 								<p>e.g. https://example.com/packs/my_custom_pack.json<br>
 									https://chibisafe.moe/a/my_album</p>
 								<p class="input-grouped">
-									<input
+									<textarea
 										bind:value={ remotePackUrl }
+										autocomplete="off"
 										class="inputQuery"
-										type="text"
-										placeholder="Remote Pack JSON or Chibisafe Album URL" />
+										placeholder="Remote Pack JSON or Chibisafe Album URLs" />
 									<button class="button is-primary"
 										on:click="{ () => parseRemotePackUrl() }">Add</button>
 								</p>
@@ -2310,12 +2346,13 @@
 									<input
 										id="localRemotePackInput"
 										type="file"
+										multiple
 										style="display: none"
 										accept="application/JSON"
 										on:click="{ event => event.stopPropagation() }"
 										on:change="{ onLocalRemotePackChange }" />
 									<button class="button has-width-full"
-										on:click="{ () => loadLocalRemotePack() }">Load local JSON</button>
+										on:click="{ () => loadLocalRemotePack() }">Load local JSON files</button>
 								</p>
 								<p>
 									<button class="button is-primary has-width-full"
