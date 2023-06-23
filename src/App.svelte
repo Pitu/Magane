@@ -1575,7 +1575,8 @@
 
 		// Formatting is very particular, so we do this the old-fashioned way
 		/* eslint-disable prefer-template */
-		const content = `**ID:** \`${id}\`\n\n` +
+		const content = '**ID:**\n\n' +
+			'```\n' + id + '\n```\n\n' +
 			'**Name:**\n\n' +
 			localPacks[id].name + '\n\n' +
 			'**Count:**\n\n' +
@@ -1585,7 +1586,7 @@
 			'**Home URL:**\n\n' +
 			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
 			'**Update URL:**\n\n' +
-			(localPacks[id].updateUrl) || 'N/A';
+			('```\n' + localPacks[id].updateUrl + '\n```') || 'N/A';
 		/* eslint-enable prefer-template */
 
 		BdApi.showConfirmationModal(
