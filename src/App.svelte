@@ -56,6 +56,7 @@
 		disableDownscale: false,
 		disableImportedObfuscation: false,
 		alwaysSendAsLink: false,
+		ctrlInvertSendBehavior: false,
 		ignoreEmbedLinksPermission: false,
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
@@ -710,7 +711,7 @@
 		});
 	};
 
-	const sendSticker = async (pack, id) => {
+	const sendSticker = async (pack, id, event) => {
 		if (onCooldown) {
 			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1500 });
 		} else if (!activeComponent) {
@@ -768,7 +769,12 @@
 				}
 			}
 
-			if (!settings.alwaysSendAsLink && hasPermission('ATTACH_FILES', channelId)) {
+			let sendAsLink = settings.alwaysSendAsLink;
+			if (event && event.ctrlKey && settings.ctrlInvertSendBehavior) {
+				sendAsLink = !sendAsLink;
+			}
+
+			if (!sendAsLink && hasPermission('ATTACH_FILES', channelId)) {
 				log(`Fetching sticker from remote: ${url}`);
 				const response = await fetch(url, { cache: 'force-cache' });
 				const blob = await response.blob();
@@ -810,7 +816,7 @@
 					]
 				});
 			} else if (settings.ignoreEmbedLinksPermission || hasPermission('EMBED_LINKS', channelId)) {
-				if (!settings.alwaysSendAsLink) {
+				if (!sendAsLink) {
 					toastWarn('You do not have permission to attach files, sending sticker as link\u2026');
 				}
 
@@ -2066,7 +2072,7 @@
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? simplePacksData[sticker.pack].name : '' }"
-							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
 						>
 						<div class="deleteFavorite"
 							title="Unfavorite"
@@ -2090,7 +2096,7 @@
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? `${simplePacksData[sticker.pack].name} – ` : '' }Used: {sticker.used}"
-							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
 						<div class="addFavorite"
@@ -2124,7 +2130,7 @@
 							class="image"
 							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
-							on:click="{ () => sendSticker(pack.id, sticker) }"
+							on:click="{ event => sendSticker(pack.id, sticker, event) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
 						<div class="addFavorite"
@@ -2436,6 +2442,15 @@
 											type="checkbox"
 											bind:checked={ settings.alwaysSendAsLink } />
 										Always send stickers as links instead of uploads
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="ctrlInvertSendBehavior"
+											type="checkbox"
+											bind:checked={ settings.ctrlInvertSendBehavior } />
+										Allow inverting send behavior if holding Ctrl when sending stickers (if always send as links is enabled, holding Ctrl when sending will instead send as uploads, and vice versa)
 									</label>
 								</p>
 								<p>
