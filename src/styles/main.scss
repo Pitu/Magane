@@ -12,7 +12,7 @@ div#magane {
 	position: absolute;
 	z-index: 100;
 
-	button, input, select, label, span, p, a, li, ul, div {
+	button, input, select, label, span, p, a, li, ul, div, textarea {
 		font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 		color: $textColor;
 		font-weight: 400;
@@ -252,6 +252,11 @@ div#magane {
 			color: $textColor;
 		}
 
+		textarea.inputQuery {
+			height: auto;
+			min-height: 54px;
+		}
+
 		.inputPackIndex {
 			width: 55px;
 			height: 36px;
@@ -364,6 +369,12 @@ div#magane {
 							display: flex;
 
 							input {
+								margin: 0;
+								width: auto;
+								flex-grow: 1;
+							}
+
+							textarea {
 								margin: 0;
 								width: auto;
 								flex-grow: 1;

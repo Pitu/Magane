@@ -1,6 +1,6 @@
 {
   "name": "magane",
-  "version": "3.2.11",
+  "version": "3.2.12",
   "description": "A lie about a lie... It turns inside-out on itself.",
   "author": "Pitu <heyitspitu@gmail.com>",
   "license": "MIT",
@@ -37,6 +37,7 @@
     "rollup-plugin-svelte": "^6.1.1",
     "rollup-plugin-terser": "^5.3.0",
     "sass": "^1.52.3",
+    "semver": "^7.5.3",
     "svelte": "^3.48.0",
     "svelte-preprocess": "^4.10.7",
     "svelte-scrollto": "^0.2.0"

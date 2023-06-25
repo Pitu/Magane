@@ -4,7 +4,12 @@
 	import Button from './Button.svelte';
 
 	import * as animateScroll from 'svelte-scrollto';
+	import SemverGt from 'semver/functions/gt';
 	import './styles/main.scss';
+
+	const bdPluginName = 'MaganeBD';
+	const githubUrl = 'https://github.com/Pitu/Magane/commits/master';
+	const updateUrl = 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js';
 
 	// APIs
 	const Modules = {};
@@ -48,6 +53,7 @@
 	const waitForTimeouts = {};
 
 	const settings = {
+		disableUpdateCheck: false,
 		enableWindowMagane: false,
 		disableToasts: false,
 		closeWindowOnSend: false,
@@ -56,6 +62,7 @@
 		disableDownscale: false,
 		disableImportedObfuscation: false,
 		alwaysSendAsLink: false,
+		ctrlInvertSendBehavior: false,
 		ignoreEmbedLinksPermission: false,
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
@@ -332,7 +339,7 @@
 		base = main.parentNode.parentNode;
 		isMaganeBD = base === document.body;
 		if (isMaganeBD) {
-			log('Magane is mounted with MaganeBD.');
+			log('Magane is likely mounted with MaganeBD.');
 		} else {
 			log('Magane is mounted with legacy method.');
 		}
@@ -415,6 +422,53 @@
 		if (storedSettings) {
 			applySettings(storedSettings);
 		}
+	};
+
+	const checkUpdate = async (manual = false) => {
+		// Check if "MaganeBD" plugin is enabled, sanity-check to ensure the running script is it
+		if (!BdApi.Plugins.isEnabled(bdPluginName)) {
+			return toast(`Update check skipped, is this plugin not named ${bdPluginName}?`);
+		}
+
+		const currentVersion = BdApi.Plugins.get(bdPluginName).version;
+
+		log(`Fetching remote dist file from: ${updateUrl}`);
+		if (manual) toast('Checking for updates\u2026', { nolog: true });
+
+		await fetch(updateUrl, { cache: 'no-cache' }).then(async response => {
+			log('Remote dist file fetched.');
+
+			const data = await response.text();
+			const match = data.match(/^ \* @version ([a-zA-Z0-9.-]+)$/m);
+			const remoteVersion = match && match[1];
+
+			if (remoteVersion) {
+				if (SemverGt(remoteVersion, currentVersion)) {
+					log(`Update found: ${remoteVersion} > ${currentVersion}.`);
+
+					BdApi.UI.showNotice(`Magane v${currentVersion} found an update: v${remoteVersion}. Please download the update manually.`, {
+						buttons: [
+							{
+								label: 'GitHub',
+								onClick: () => window.open(githubUrl, { target: '_blank' })
+							},
+							{
+								label: 'Download',
+								onClick: () => window.open(updateUrl, { target: '_blank' })
+							}
+						]
+					});
+				} else {
+					log(`No updates found: ${remoteVersion} <= ${currentVersion}.`);
+					if (manual) toast('No updates found.', { nolog: true });
+				}
+			} else {
+				toastWarn('Failed to parse version string from remote dist file.');
+			}
+		}).catch(error => {
+			console.error(error);
+			toastError(`Unexpected error occurred when checking for Magane's updates. Check your console for details.`);
+		});
 	};
 
 	const isLocalPackID = id => {
@@ -710,7 +764,7 @@
 		});
 	};
 
-	const sendSticker = async (pack, id) => {
+	const sendSticker = async (pack, id, event) => {
 		if (onCooldown) {
 			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1500 });
 		} else if (!activeComponent) {
@@ -768,7 +822,12 @@
 				}
 			}
 
-			if (!settings.alwaysSendAsLink && hasPermission('ATTACH_FILES', channelId)) {
+			let sendAsLink = settings.alwaysSendAsLink;
+			if (event && event.ctrlKey && settings.ctrlInvertSendBehavior) {
+				sendAsLink = !sendAsLink;
+			}
+
+			if (!sendAsLink && hasPermission('ATTACH_FILES', channelId)) {
 				log(`Fetching sticker from remote: ${url}`);
 				const response = await fetch(url, { cache: 'force-cache' });
 				const blob = await response.blob();
@@ -810,7 +869,7 @@
 					]
 				});
 			} else if (settings.ignoreEmbedLinksPermission || hasPermission('EMBED_LINKS', channelId)) {
-				if (!settings.alwaysSendAsLink) {
+				if (!sendAsLink) {
 					toastWarn('You do not have permission to attach files, sending sticker as link\u2026');
 				}
 
@@ -1235,6 +1294,11 @@
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
 		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`);
+
+		if (!settings.disableUpdateCheck) {
+			// Check for updates
+			await checkUpdate();
+		}
 	});
 
 	onDestroy(() => {
@@ -1575,7 +1639,8 @@
 
 		// Formatting is very particular, so we do this the old-fashioned way
 		/* eslint-disable prefer-template */
-		const content = `**ID:** \`${id}\`\n\n` +
+		const content = '**ID:**\n\n' +
+			'```\n' + id + '\n```\n\n' +
 			'**Name:**\n\n' +
 			localPacks[id].name + '\n\n' +
 			'**Count:**\n\n' +
@@ -1585,7 +1650,7 @@
 			'**Home URL:**\n\n' +
 			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
 			'**Update URL:**\n\n' +
-			(localPacks[id].updateUrl) || 'N/A';
+			('```\n' + localPacks[id].updateUrl + '\n```') || 'N/A';
 		/* eslint-enable prefer-template */
 
 		BdApi.showConfirmationModal(
@@ -1635,10 +1700,9 @@
 
 	const assertRemotePackConsent = (context, onConfirm) => {
 		// Markdown, so we do double \n for new line
-		const content = `${context}\n\n` +
-			'**Please continue only if you trust this remote pack.**';
+		const content = `**Please continue only if you trust the remote packs.**\n\n${context}`;
 		BdApi.showConfirmationModal(
-			'Import Remote Pack',
+			'Import Remote Packs',
 			content,
 			{
 				confirmText: 'Import',
@@ -1651,54 +1715,91 @@
 
 	const parseRemotePackUrl = () => {
 		if (!remotePackUrl) return;
-		assertRemotePackConsent(`URL:\n\n${remotePackUrl}`, async () => {
-			try {
-				toast('Loading pack information\u2026', { nolog: true });
-				const pack = await fetchRemotePack(remotePackUrl);
-				pack.id = `custom-${pack.id}`;
-				const stored = _appendPack(pack.id, pack);
-				toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
-				remotePackUrl = null;
-			} catch (error) {
-				console.error(error);
-				toastError(error.toString(), { nolog: true });
-			}
-		});
-	};
 
-	const onLocalRemotePackChange = event => {
-		const { files } = event.target;
-		if (!files.length) return false;
+		const remotePackUrls = remotePackUrl.split('\n')
+			.map(url => url.trim())
+			.filter(url => url.length);
 
-		const file = files[0];
-		const reader = new FileReader();
-		reader.onload = e => {
-			// Reset selected file in the hidden input
-			event.target.value = '';
+		if (!remotePackUrls.length) return;
 
-			let result;
-			try {
-				result = JSON.parse(e.target.result);
-			} catch (error) {
-				console.error(error);
-				toastError('The selected file is not a valid JSON file.');
-			}
-
-			assertRemotePackConsent(`File:\n\n${file.name}`, async () => {
+		/* eslint-disable-next-line prefer-template */
+		assertRemotePackConsent('URLs:\n\n```\n' + remotePackUrls.join('\n') + '\n```', async () => {
+			const failed = [];
+			for (const url of remotePackUrls) {
 				try {
-					const pack = await processRemotePack(result);
+					toast('Loading pack information\u2026', { nolog: true });
+					const pack = await fetchRemotePack(url);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
 					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
+					failed.push(url);
 				}
-			});
-		};
+			}
 
-		log(`Reading ${file.name}\u2026`);
-		reader.readAsText(file);
+			if (failed.length) {
+				toastError('Failed to add some remote packs. Their URLs have been kept in the input box.');
+				remotePackUrl = failed.join('\n');
+			} else {
+				remotePackUrl = '';
+			}
+		});
+	};
+
+	const onLocalRemotePackChange = async event => {
+		const { files } = event.target;
+		if (!files.length) return false;
+
+		const results = [];
+
+		toast(`Reading ${files.length} file${files.length === 1 ? '' : 's'}\u2026`);
+		for (const file of files) {
+			await new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = e => {
+					try {
+						const data = JSON.parse(e.target.result);
+						results.push({ name: file.name, data });
+						resolve();
+					} catch (error) {
+						reject(error);
+					}
+				};
+				log(`Reading ${file.name}\u2026`);
+				reader.readAsText(file);
+			}).catch(error => {
+				console.error(error);
+				toastError(`${file.name} is not a valid JSON file.`);
+			});
+		}
+
+		// Reset selected files in the hidden input
+		event.target.value = '';
+
+		const fileNames = results.map(result => result.name);
+
+		/* eslint-disable-next-line prefer-template */
+		assertRemotePackConsent('Files:\n\n```\n' + fileNames.join('\n') + '\n```', async () => {
+			const failedResults = [];
+			for (const result of results) {
+				try {
+					const pack = await processRemotePack(result.data);
+					pack.id = `custom-${pack.id}`;
+					const stored = _appendPack(pack.id, pack);
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+				} catch (error) {
+					console.error(error);
+					toastError(error.toString(), { nolog: true });
+					failedResults.push(result.name);
+				}
+			}
+
+			if (failedResults.length) {
+				toastError(`Failed to add: ${failedResults.join(',')}.`);
+			}
+		});
 	};
 
 	const loadLocalRemotePack = () => {
@@ -2029,7 +2130,7 @@
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? simplePacksData[sticker.pack].name : '' }"
-							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
 						>
 						<div class="deleteFavorite"
 							title="Unfavorite"
@@ -2053,7 +2154,7 @@
 							src="{ `${formatUrl(sticker.pack, sticker.id)}` }"
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? `${simplePacksData[sticker.pack].name} – ` : '' }Used: {sticker.used}"
-							on:click="{ () => sendSticker(sticker.pack, sticker.id) }"
+							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
 						<div class="addFavorite"
@@ -2087,7 +2188,7 @@
 							class="image"
 							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
-							on:click="{ () => sendSticker(pack.id, sticker) }"
+							on:click="{ event => sendSticker(pack.id, sticker, event) }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
 						<div class="addFavorite"
@@ -2262,7 +2363,7 @@
 											on:click="{ () => updateRemotePack(pack.id) }"
 											title="Update">Up</button>
 										{ /if }
-										<button class="button delete-pack"
+										<button class="button delete-pack is-danger"
 											on:click="{ () => deleteLocalPack(pack.id) }"
 											title="Purge"></button>
 										{ /if }
@@ -2278,30 +2379,30 @@
 						<div class="tab-content has-scroll-y import" style="{ activeTab === 2 ? '' : 'display: none;' }">
 							<div class="section line-proxy">
 								<p class="section-title">LINE Store Proxy</p>
-								<p>If you are looking for a sticker pack that is not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a> and pick whatever pack you want and paste the full URL in the box below.</p>
+								<p>If you are looking for stickers pack that are not provided by Magane, you can go to the <a href="https://store.line.me/" target="_blank">LINE Store</a>, pick whichever packs you want, then paste their full URLs in the box below (separated by new lines).</p>
 								<p>e.g. https://store.line.me/stickershop/product/17573/ja</p>
 								<p class="input-grouped">
-									<input
+									<textarea
 										bind:value={ linePackSearch }
+										autocomplete="off"
 										class="inputQuery"
-										type="text"
-										placeholder="LINE Sticker Pack URL" />
+										placeholder="LINE Sticker Pack URLs" />
 									<button class="button is-primary"
 										on:click="{ () => parseLinePack() }">Add</button>
 								</p>
 							</div>
 							<div class="section remote-packs">
 								<p class="section-title">Remote Packs</p>
-								<p>You can paste URL to a JSON config file of a remote pack in here.<br>
+								<p>You can paste URLs to JSON config files of remote packs in here (separated by new lines).<br>
 									This also supports public album links of any file hosting websites running <a href="https://github.com/WeebDev/chibisafe" target="_blank">Chibisafe</a>.</p>
 								<p>e.g. https://example.com/packs/my_custom_pack.json<br>
 									https://chibisafe.moe/a/my_album</p>
 								<p class="input-grouped">
-									<input
+									<textarea
 										bind:value={ remotePackUrl }
+										autocomplete="off"
 										class="inputQuery"
-										type="text"
-										placeholder="Remote Pack JSON or Chibisafe Album URL" />
+										placeholder="Remote Pack JSON or Chibisafe Album URLs" />
 									<button class="button is-primary"
 										on:click="{ () => parseRemotePackUrl() }">Add</button>
 								</p>
@@ -2309,12 +2410,13 @@
 									<input
 										id="localRemotePackInput"
 										type="file"
+										multiple
 										style="display: none"
 										accept="application/JSON"
 										on:click="{ event => event.stopPropagation() }"
 										on:change="{ onLocalRemotePackChange }" />
 									<button class="button has-width-full"
-										on:click="{ () => loadLocalRemotePack() }">Load local JSON</button>
+										on:click="{ () => loadLocalRemotePack() }">Load local JSON files</button>
 								</p>
 								<p>
 									<button class="button is-primary has-width-full"
@@ -2326,8 +2428,23 @@
 
 						<!-- tab: Misc -->
 						<div class="tab-content has-scroll-y misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
+							<div class="section checkupdate">
+								<p>
+									<button class="button has-width-full"
+										on:click="{ () => checkUpdate(true) }">Check for updates</button>
+								</p>
+							</div>
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
+								<p>
+									<label>
+										<input
+											name="disableUpdateCheck"
+											type="checkbox"
+											bind:checked={ settings.disableUpdateCheck } />
+										Disable automatically checking for updates on launch
+									</label>
+								</p>
 								<p>
 									<label>
 										<input
@@ -2398,6 +2515,15 @@
 											type="checkbox"
 											bind:checked={ settings.alwaysSendAsLink } />
 										Always send stickers as links instead of uploads
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="ctrlInvertSendBehavior"
+											type="checkbox"
+											bind:checked={ settings.ctrlInvertSendBehavior } />
+										Allow inverting send behavior if holding Ctrl when sending stickers (if always send as links is enabled, holding Ctrl when sending will instead send as uploads, and vice versa)
 									</label>
 								</p>
 								<p>
