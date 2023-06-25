@@ -4,7 +4,12 @@
 	import Button from './Button.svelte';
 
 	import * as animateScroll from 'svelte-scrollto';
+	import SemverGt from 'semver/functions/gt';
 	import './styles/main.scss';
+
+	const bdPluginName = 'MaganeBD';
+	const githubUrl = 'https://github.com/Pitu/Magane/commits/master';
+	const updateUrl = 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js';
 
 	// APIs
 	const Modules = {};
@@ -48,6 +53,7 @@
 	const waitForTimeouts = {};
 
 	const settings = {
+		disableUpdateCheck: false,
 		enableWindowMagane: false,
 		disableToasts: false,
 		closeWindowOnSend: false,
@@ -333,7 +339,7 @@
 		base = main.parentNode.parentNode;
 		isMaganeBD = base === document.body;
 		if (isMaganeBD) {
-			log('Magane is mounted with MaganeBD.');
+			log('Magane is likely mounted with MaganeBD.');
 		} else {
 			log('Magane is mounted with legacy method.');
 		}
@@ -416,6 +422,53 @@
 		if (storedSettings) {
 			applySettings(storedSettings);
 		}
+	};
+
+	const checkUpdate = async (manual = false) => {
+		// Check if "MaganeBD" plugin is enabled, sanity-check to ensure the running script is it
+		if (!BdApi.Plugins.isEnabled(bdPluginName)) {
+			return toast(`Update check skipped, is this plugin not named ${bdPluginName}?`);
+		}
+
+		const currentVersion = BdApi.Plugins.get(bdPluginName).version;
+
+		log(`Fetching remote dist file from: ${updateUrl}`);
+		if (manual) toast('Checking for updates\u2026', { nolog: true });
+
+		await fetch(updateUrl, { cache: 'no-cache' }).then(async response => {
+			log('Remote dist file fetched.');
+
+			const data = await response.text();
+			const match = data.match(/^ \* @version ([a-zA-Z0-9.-]+)$/m);
+			const remoteVersion = match && match[1];
+
+			if (remoteVersion) {
+				if (SemverGt(remoteVersion, currentVersion)) {
+					log(`Update found: ${remoteVersion} > ${currentVersion}.`);
+
+					BdApi.UI.showNotice(`Magane v${currentVersion} found an update: v${remoteVersion}. Please download the update manually.`, {
+						buttons: [
+							{
+								label: 'GitHub',
+								onClick: () => window.open(githubUrl, { target: '_blank' })
+							},
+							{
+								label: 'Download',
+								onClick: () => window.open(updateUrl, { target: '_blank' })
+							}
+						]
+					});
+				} else {
+					log(`No updates found: ${remoteVersion} <= ${currentVersion}.`);
+					if (manual) toast('No updates found.', { nolog: true });
+				}
+			} else {
+				toastWarn('Failed to parse version string from remote dist file.');
+			}
+		}).catch(error => {
+			console.error(error);
+			toastError(`Unexpected error occurred when checking for Magane's updates. Check your console for details.`);
+		});
 	};
 
 	const isLocalPackID = id => {
@@ -1241,6 +1294,11 @@
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
 		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`);
+
+		if (!settings.disableUpdateCheck) {
+			// Check for updates
+			await checkUpdate();
+		}
 	});
 
 	onDestroy(() => {
@@ -2370,8 +2428,23 @@
 
 						<!-- tab: Misc -->
 						<div class="tab-content has-scroll-y misc" style="{ activeTab === 3 ? '' : 'display: none;' }">
+							<div class="section checkupdate">
+								<p>
+									<button class="button has-width-full"
+										on:click="{ () => checkUpdate(true) }">Check for updates</button>
+								</p>
+							</div>
 							<div class="section settings" on:change="{ onSettingsChange }">
 								<p class="section-title">Settings</p>
+								<p>
+									<label>
+										<input
+											name="disableUpdateCheck"
+											type="checkbox"
+											bind:checked={ settings.disableUpdateCheck } />
+										Disable automatically checking for updates on launch
+									</label>
+								</p>
 								<p>
 									<label>
 										<input
