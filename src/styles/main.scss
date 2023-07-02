@@ -604,11 +604,11 @@ div#magane {
 	}
 
 	.has-scroll-x {
-		overflow-x: overlay;
+		overflow-x: auto;
 	}
 
 	.has-scroll-y {
-		overflow-y: overlay;
+		overflow-y: auto;
 	}
 
 	::-webkit-scrollbar {
