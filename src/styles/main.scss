@@ -54,7 +54,7 @@ div#magane {
 				display: flex;
 				flex-flow: wrap;
 				justify-content: center;
-				padding: 25px;
+				padding: 20px;
 				width: 100%;
 				box-sizing: border-box;
 
@@ -605,10 +605,12 @@ div#magane {
 
 	.has-scroll-x {
 		overflow-x: auto;
+		scrollbar-gutter: stable;
 	}
 
 	.has-scroll-y {
 		overflow-y: auto;
+		scrollbar-gutter: stable;
 	}
 
 	::-webkit-scrollbar {
