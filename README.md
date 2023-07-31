@@ -26,26 +26,23 @@ Currently the best way to get this up and running is by using [BetterDiscord](ht
 
 #### BetterDiscord
 
-- Grab the prebuilt plugin file from [https://magane.moe/api/dist/betterdiscord](https://magane.moe/api/dist/.etterdiscord).
-- Place it in your **plugins** directory.
-- Activate it from Discord's **User Settings > BetterDiscord > Plugins**.
+- Grab the pre-built plugin file from [https://magane.moe/api/dist/betterdiscord](https://magane.moe/api/dist/.etterdiscord).
+- Place the plugin file into your BetterDiscord's **plugins** directory.
+- Activate Magane from Discord's **User Settings > BetterDiscord > Plugins**.
 
 #### Vencord
 
 > This is for the more advanced users.  
 > Be advised that Magane's update checker is not available on Vencord.
 
-- Grab `magane.vencord.js` from [dist](tree/master/dist) directory.
+- Grab the pre-built plugin file, `magane.vencord.js`, from this repo's dist directory, [https://github.com/Pitu/Magane/tree/master/dist](https://github.com/Pitu/Magane/tree/master/dist).
 - Download Vencord git from `https://github.com/Vendicated/Vencord`.
-- In Vencord Git directory, navigate to `src`, and create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
+- Follow its advanced user's installation guide at `https://github.com/Vendicated/Vencord/blob/main/docs/1_INSTALLING.md`.
+- In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
 - Drop Magane plugin into it.
-- Build Vencord, then inject it into your Discord installation.
-    ```sh
-    pnpm install --frozen-lockfile
-    pnpm build
-    pnpm inject
-    ```
-- Activate it from Discord's **User Settings > Vencord > Plugins**.
+- Rebuild Vencord (`pnpm build`), then restart your Discord.
+- Optionally, if you had not done it before, you must inject Vencord into your Discord installation (`pnpm inject`).
+- Activate Magane from Discord's **User Settings > Vencord > Plugins**.
 
 ### So how exactly do I use it after adding the script?
 
