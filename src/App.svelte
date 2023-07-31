@@ -1,5 +1,5 @@
 <script>
-	/* global BdApi */
+	/* global BdApi, VencordApi */
 	import { onMount, onDestroy } from 'svelte';
 	import Button from './Button.svelte';
 
@@ -7,9 +7,120 @@
 	import SemverGt from 'semver/functions/gt';
 	import './styles/main.scss';
 
-	const bdPluginName = 'MaganeBD';
+	const log = (message, type = 'log') => {
+		type = ['log', 'info', 'warn', 'error'].includes(type) ? type : 'log';
+		return console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
+	};
+
+	const MountType = {
+		LEGACY: 'legacy',
+		BETTERDISCORD: 'betterdiscord',
+		VENCORD: 'vencord'
+	};
+	let mountType = null;
+
+	// Build script for other mods should probably find-replace the following if necessary.
+	const pluginName = 'MaganeBD';
 	const githubUrl = 'https://github.com/Pitu/Magane/commits/master';
 	const updateUrl = 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js';
+
+	// For BetterDiscord, always use BdApi helper functions.
+	// For other mods, their respective build scripts will have to find-replace
+	// MockApi and MockApi.functionName with their respective helper functions.
+	const MockApi = {};
+	const Helper = {
+		findByProps(...args) {
+			switch (mountType) {
+				case MountType.BETTERDISCORD:
+					return BdApi.findModuleByProps(...args);
+				case MountType.VENCORD:
+					return VencordApi.findByPropsLazy(...args);
+				default:
+					return MockApi.findByProps(...args);
+			}
+		},
+		find(...args) {
+			switch (mountType) {
+				case MountType.BETTERDISCORD:
+					return BdApi.Webpack.getModule(...args);
+				case MountType.VENCORD:
+					return VencordApi.findLazy(args[0]);
+				default:
+					return MockApi.findLazy(...args);
+			}
+		},
+		Alerts: {
+			show(...args) {
+				switch (mountType) {
+					case MountType.BETTERDISCORD:
+						return BdApi.showConfirmationModal(...args);
+					case MountType.VENCORD:
+						return VencordApi.Alerts.show(
+							Object.assign(
+								{},
+								{
+									title: args[0],
+									body: args[1]
+								},
+								args.slice(2)
+							)
+						);
+					default:
+						return MockApi.Alerts.show(...args);
+				}
+			}
+		},
+		Toasts: {
+			show(...args) {
+				switch (mountType) {
+					case MountType.BETTERDISCORD:
+						return BdApi.showToast(...args);
+					case MountType.VENCORD:
+						// fix warn type for Vencord
+						if (args[1] && args[1].type === 'warn') {
+							args[1].type = 'warning';
+						}
+						return VencordApi.Toasts.show(...args);
+					default:
+						return MockApi.Toasts.show(...args);
+				}
+			}
+		},
+		Plugins: {
+			isEnabled(...args) {
+				switch (mountType) {
+					case MountType.BETTERDISCORD:
+						return BdApi.Plugins.isEnabled(...args);
+					case MountType.VENCORD:
+						return null; // TODO Vencord
+					default:
+						return MockApi.Plugins.isEnabled(...args);
+				}
+			},
+			getVersion(...args) {
+				switch (mountType) {
+					case MountType.BETTERDISCORD:
+						return BdApi.Plugins.get(...args).version;
+					case MountType.VENCORD:
+						return null; // TODO Vencord
+					default:
+						return MockApi.Plugins.getVersion(...args);
+				}
+			}
+		},
+		UI: {
+			showNotice(...args) {
+				switch (mountType) {
+					case MountType.BETTERDISCORD:
+						return BdApi.UI.showNotice(...args);
+					case MountType.VENCORD:
+						return null; // TODO Vencord
+					default:
+						return MockApi.UI.showNotice(...args);
+				}
+			}
+		}
+	};
 
 	// APIs
 	const Modules = {};
@@ -19,7 +130,6 @@
 	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled-"])';
 	let main = null;
 	let base = null;
-	let isMaganeBD = null;
 	let forceHideMagane = false;
 	let components = [];
 	let activeComponent = null;
@@ -80,17 +190,12 @@
 		'magane.stats'
 	];
 
-	const log = (message, type = 'log') => {
-		type = ['log', 'info', 'warn', 'error'].includes(type) ? type : 'log';
-		return console[type]('%c[Magane]%c', 'color: #3a71c1; font-weight: 700', '', message);
-	};
-
 	const toast = (message, options = {}) => {
 		if (!options.nolog || settings.disableToasts) {
 			log(message, options.type);
 		}
 		if (!settings.disableToasts) {
-			BdApi.showToast(message, options);
+			Helper.Toasts.show(message, options);
 		}
 	};
 
@@ -172,7 +277,7 @@
 		coords.wbottom = (base.clientHeight - props.top) + 8;
 		coords.wright = (base.clientWidth - props.right) - 6;
 
-		if (!isMaganeBD) {
+		if (mountType === MountType.LEGACY) {
 			const baseProps = base.getBoundingClientRect();
 			coords.wbottom += baseProps.top;
 			coords.wright += baseProps.left;
@@ -334,35 +439,23 @@
 		resizeObserverWorker();
 	};
 
-	const initButton = async () => {
-		// Simple check if Magane is mounted with legacy method or MaganeBD
-		base = main.parentNode.parentNode;
-		isMaganeBD = base === document.body;
-		if (isMaganeBD) {
-			log('Magane is likely mounted with MaganeBD.');
-		} else {
-			log('Magane is mounted with legacy method.');
-		}
-		initResizeObserver();
-	};
-
 	const initModules = () => {
 		// Channel store & actions
-		Modules.ChannelStore = BdApi.findModuleByProps('getChannel', 'getDMFromUserId');
-		Modules.SelectedChannelStore = BdApi.findModuleByProps('getLastSelectedChannelId');
+		Modules.ChannelStore = Helper.findByProps('getChannel', 'getDMFromUserId');
+		Modules.SelectedChannelStore = Helper.findByProps('getLastSelectedChannelId');
 
 		// Permissions
-		Modules.DiscordConstants = BdApi.findModuleByProps('Permissions', 'ActivityTypes', 'StatusTypes');
-		Modules.DiscordPermissions = BdApi.Webpack.getModule(m => m.ADD_REACTIONS, { searchExports: true });
-		Modules.Permissions = BdApi.findModuleByProps('computePermissions');
-		Modules.UserStore = BdApi.findModuleByProps('getCurrentUser', 'getUser');
+		Modules.DiscordConstants = Helper.findByProps('Permissions', 'ActivityTypes', 'StatusTypes');
+		Modules.DiscordPermissions = Helper.find(m => m.ADD_REACTIONS, { searchExports: true });
+		Modules.Permissions = Helper.findByProps('computePermissions');
+		Modules.UserStore = Helper.findByProps('getCurrentUser', 'getUser');
 
 		// Misc
-		Modules.DraftStore = BdApi.findModuleByProps('getDraft', 'getState');
-		Modules.MessageUpload = BdApi.findModuleByProps('instantBatchUpload');
-		Modules.MessageUtils = BdApi.findModuleByProps('sendMessage');
-		Modules.PendingReplyStore = BdApi.findModuleByProps('getPendingReply');
-		Modules.UploadObject = BdApi.Webpack.getModule(
+		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
+		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
+		Modules.MessageUtils = Helper.findByProps('sendMessage');
+		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
+		Modules.UploadObject = Helper.find(
 			m => m.prototype && m.prototype.upload && m.prototype.getSize,
 			{ searchExports: true }
 		);
@@ -425,12 +518,12 @@
 	};
 
 	const checkUpdate = async (manual = false) => {
-		// Check if "MaganeBD" plugin is enabled, sanity-check to ensure the running script is it
-		if (!BdApi.Plugins.isEnabled(bdPluginName)) {
-			return toast(`Update check skipped, is this plugin not named ${bdPluginName}?`);
+		// Check if hard-coded plugin name is enabled, sanity-check to ensure the running script is it
+		if (!Helper.Plugins.isEnabled(pluginName)) {
+			return toast(`Update check skipped, is this plugin not named ${pluginName}?`);
 		}
 
-		const currentVersion = BdApi.Plugins.get(bdPluginName).version;
+		const currentVersion = Helper.Plugins.getVersion(pluginName);
 
 		log(`Fetching remote dist file from: ${updateUrl}`);
 		if (manual) toast('Checking for updates\u2026', { nolog: true });
@@ -446,7 +539,7 @@
 				if (SemverGt(remoteVersion, currentVersion)) {
 					log(`Update found: ${remoteVersion} > ${currentVersion}.`);
 
-					BdApi.UI.showNotice(`Magane v${currentVersion} found an update: v${remoteVersion}. Please download the update manually.`, {
+					Helper.UI.showNotice(`Magane v${currentVersion} found an update: v${remoteVersion}. Please download the update manually.`, {
 						buttons: [
 							{
 								label: 'GitHub',
@@ -1277,26 +1370,54 @@
 	};
 
 	onMount(async () => {
+		// Simple check if Magane is mounted with legacy method or MaganeBD
+		base = main.parentNode.parentNode;
+
+		// If base is document.body, assumes BetterDiscord
+		mountType = document.body
+			? MountType.BETTERDISCORD
+			: MountType.LEGACY;
+
+		// Build script for other mods should probably find-replace the following if necessary.
+		mountType = mountType; // Svelte builds this line into: $$invalidate(0, mountType)
+
+		switch (mountType) {
+			case MountType.BETTERDISCORD:
+				log('Magane is likely mounted with MaganeBD.');
+				break;
+			case MountType.VENCORD:
+				log('Magane is mounted with MaganeVencord.');
+				break;
+			default:
+				log('Magane is mounted with other or legacy method.');
+		}
+
 		const startTime = Date.now();
+
 		try {
 			toast('Loading Magane\u2026');
+
 			// Background tasks
 			initModules();
 			getLocalStorage();
 			loadSettings();
+
 			await grabPacks();
 			await migrateStringPackIds();
+
 			toastSuccess('Magane is now ready!');
-			// Init button & ResizeObserver
-			initButton();
+
+			// Init ResizeObserver
+			initResizeObserver();
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred when initializing Magane. Check your console for details.');
 		}
+
 		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`);
 
-		if (!settings.disableUpdateCheck) {
-			// Check for updates
+		// Only check for updates if running on BetterDiscord
+		if (!settings.disableUpdateCheck && mountType === MountType.BETTERDISCORD) {
 			await checkUpdate();
 		}
 	});
@@ -1653,7 +1774,7 @@
 			('```\n' + localPacks[id].updateUrl + '\n```') || 'N/A';
 		/* eslint-enable prefer-template */
 
-		BdApi.showConfirmationModal(
+		Helper.Alerts.show(
 			localPacks[id].name,
 			content
 		);
@@ -1701,7 +1822,7 @@
 	const assertRemotePackConsent = (context, onConfirm) => {
 		// Markdown, so we do double \n for new line
 		const content = `**Please continue only if you trust the remote packs.**\n\n${context}`;
-		BdApi.showConfirmationModal(
+		Helper.Alerts.show(
 			'Import Remote Packs',
 			content,
 			{
@@ -1817,7 +1938,7 @@
 
 		// Markdown, so we do double \n for new line
 		const content = `**Please confirm that you want to update __${packs.length}__ remote pack${packs.length === 1 ? '' : 's'}.**`;
-		BdApi.showConfirmationModal(
+		Helper.Alerts.show(
 			`Update ${packs.length} remote pack${packs.length === 1 ? '' : 's'}`,
 			content,
 			{
@@ -2043,7 +2164,7 @@
 			}
 
 			content += '\n**Please continue only if you trust this database file.**';
-			BdApi.showConfirmationModal(
+			Helper.Alerts.show(
 				'Replace Database',
 				content.replace(/\n/g, '\n\n'), // Markdown, so we do double \n for new line
 				{
@@ -2113,7 +2234,7 @@
 
 <main bind:this={ main }>
 	<div id="magane"
-		style="{ isMaganeBD ? '' : `top: ${coords.top}px; left: ${coords.left}px;` } { forceHideMagane ? 'display: none;' : ''}">
+		style="{ mountType === MountType.LEGACY ? `top: ${coords.top}px; left: ${coords.left}px;` : '' } { forceHideMagane ? 'display: none;' : ''}">
 
 		<div class="stickerWindow" style="bottom: { `${coords.wbottom}px` }; right: { `${coords.wright}px` }; { stickerWindowActive ? '' : 'display: none;' }">
 			<div class="stickers has-scroll-y { settings.useLeftToolbar ? 'has-left-toolbar' : '' }" style="">
