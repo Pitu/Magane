@@ -75,22 +75,14 @@ export default {
 			delimiters: ['', ''],
 			preventAssignment: false,
 			values: {
-				'"use strict";': '"use strict"\n__VencordImports__;',
-
-				// This is so hacky, lmao
-				', vencordMain = definePlugin({': ';\n\nexport default definePlugin({',
-				'module.exports = vencordMain;': ''
+				'"use strict";': '"use strict"\n__VencordImports__;'
 			}
 		}),
 		!production && replace({
 			delimiters: ['', ''],
 			preventAssignment: false,
 			values: {
-				'\'use strict\';': '\'use strict\';\n__VencordImports__;',
-
-				// This is so hacky, lmao
-				'var vencordMain = definePlugin({': 'export default definePlugin({',
-				'module.exports = vencordMain;': ''
+				'\'use strict\';': '\'use strict\';\n__VencordImports__;'
 			}
 		}),
 		replace({
@@ -101,7 +93,11 @@ export default {
 				'VencordApi.': '',
 
 				// Svelte syntax, lmao..
-				'$$invalidate(0, mountType)': '$$invalidate(0, mountType = MountType.VENCORD)'
+				'$$invalidate(0, mountType)': '$$invalidate(0, mountType = MountType.VENCORD)',
+
+				// This is so hacky, lmao
+				'var vencordMain = definePlugin({': 'export default definePlugin({',
+				'module.exports = vencordMain;': ''
 			}
 		}),
 		Boolean(process.env.VENCORD_PLUGIN_PATH) &&

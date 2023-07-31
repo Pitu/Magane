@@ -19,15 +19,30 @@
 	};
 	let mountType = null;
 
-	// Build script for other mods should probably find-replace the following if necessary.
-	const pluginName = 'MaganeBD';
+	/*
+		Built-in update checker is not available outside of BetterDiscord.
+		Find-replacing these is not possible due to Svelte directly injecting string constants
+		into any functions that use them when building in production mode.
+	*/
+	const bdPluginName = 'MaganeBD';
 	const githubUrl = 'https://github.com/Pitu/Magane/commits/master';
 	const updateUrl = 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js';
 
-	// For BetterDiscord, always use BdApi helper functions.
-	// For other mods, their respective build scripts will have to find-replace
-	// MockApi and MockApi.functionName with their respective helper functions.
-	const MockApi = {};
+	// APIs
+	const Modules = {};
+
+	/*
+		For BetterDiscord, use BdApi helper functions.
+		For other mods, their respective build scripts will have to find-replace
+		MOCK_API and MOCK_API.functionName with their respective helper functions.
+	*/
+	const MOCK_API = {};
+	const VENCORD_TOASTS_TYPE = {
+		info: 0,
+		success: 1,
+		error: 2,
+		warn: 2
+	};
 	const Helper = {
 		findByProps(...args) {
 			switch (mountType) {
@@ -36,7 +51,7 @@
 				case MountType.VENCORD:
 					return VencordApi.findByPropsLazy(...args);
 				default:
-					return MockApi.findByProps(...args);
+					return MOCK_API.FINDBYPROPS(...args);
 			}
 		},
 		find(...args) {
@@ -46,44 +61,70 @@
 				case MountType.VENCORD:
 					return VencordApi.findLazy(args[0]);
 				default:
-					return MockApi.findLazy(...args);
+					return MOCK_API.FIND(...args);
 			}
 		},
 		Alerts: {
 			show(...args) {
-				switch (mountType) {
-					case MountType.BETTERDISCORD:
-						return BdApi.showConfirmationModal(...args);
-					case MountType.VENCORD:
-						return VencordApi.Alerts.show(
-							Object.assign(
-								{},
-								{
-									title: args[0],
-									body: args[1]
-								},
-								args.slice(2)
-							)
-						);
-					default:
-						return MockApi.Alerts.show(...args);
+				if (mountType === MountType.BETTERDISCORD) {
+					return BdApi.showConfirmationModal(...args);
+				} else if (mountType === MountType.VENCORD) {
+					const title = args[0];
+
+					// Re-map Markdown formatting to pure HTML
+					// Once again I'm reminded how whack it is to implant Svelte into React
+					const body = Modules.React.createElement('div', {
+						dangerouslySetInnerHTML: {
+							__html: args[1]
+								.replace(/\*\*(.*?)\*\*/gm, '<b>$1</b>')
+								.replace(/__(.*?)__/gm, '<u>$1</u>')
+								.replace(/```\n(.*?)\n```/gsm, '<code>$1</code>')
+								.replace(/\n\n/gm, '<br>')
+						},
+						style: {
+							'user-select': 'text'
+						}
+					});
+
+					return VencordApi.Alerts.show(Object.assign({
+						title,
+						body
+					}, ...args.slice(2)));
 				}
+
+				return MOCK_API.ALERTS_SHOW(...args);
 			}
 		},
 		Toasts: {
 			show(...args) {
-				switch (mountType) {
-					case MountType.BETTERDISCORD:
-						return BdApi.showToast(...args);
-					case MountType.VENCORD:
-						// fix warn type for Vencord
-						if (args[1] && args[1].type === 'warn') {
-							args[1].type = 'warning';
-						}
-						return VencordApi.Toasts.show(...args);
-					default:
-						return MockApi.Toasts.show(...args);
+				if (mountType === MountType.BETTERDISCORD) {
+					return BdApi.showToast(...args);
+				} else if (mountType === MountType.VENCORD) {
+					const message = args[0];
+					const options = Object.assign({}, ...args.slice(1));
+					let type = 0;
+
+					// Re-map options for Vencord
+					if (options.type) {
+						type = VENCORD_TOASTS_TYPE[options.type];
+						delete options.type;
+					}
+					if (options.timeout !== undefined) {
+						options.duration = options.timeout;
+						delete options.timeout;
+					}
+
+					// Force position to bottom
+					options.position = 1;
+
+					return VencordApi.Toasts.show({
+						message,
+						type,
+						options
+					});
 				}
+
+				return MOCK_API.TOASTS_SHOW(...args);
 			}
 		},
 		Plugins: {
@@ -94,7 +135,7 @@
 					case MountType.VENCORD:
 						return null; // TODO Vencord
 					default:
-						return MockApi.Plugins.isEnabled(...args);
+						return MOCK_API.PLUGINS_ISENABLED(...args);
 				}
 			},
 			getVersion(...args) {
@@ -104,7 +145,7 @@
 					case MountType.VENCORD:
 						return null; // TODO Vencord
 					default:
-						return MockApi.Plugins.getVersion(...args);
+						return MOCK_API.PLUGINS_GETVERSION(...args);
 				}
 			}
 		},
@@ -116,14 +157,11 @@
 					case MountType.VENCORD:
 						return null; // TODO Vencord
 					default:
-						return MockApi.UI.showNotice(...args);
+						return MOCK_API.UI_SHOWNOTICE(...args);
 				}
 			}
 		}
 	};
-
-	// APIs
-	const Modules = {};
 
 	const coords = { top: 0, left: 0 };
 	const selectorVoiceChatWrapper = '[class^="channelChatWrapper-"]';
@@ -195,6 +233,7 @@
 			log(message, options.type);
 		}
 		if (!settings.disableToasts) {
+			delete options.nolog;
 			Helper.Toasts.show(message, options);
 		}
 	};
@@ -459,6 +498,7 @@
 			m => m.prototype && m.prototype.upload && m.prototype.getSize,
 			{ searchExports: true }
 		);
+		Modules.React = Helper.findByProps('createElement', 'version');
 	};
 
 	const getLocalStorage = () => {
@@ -518,12 +558,16 @@
 	};
 
 	const checkUpdate = async (manual = false) => {
-		// Check if hard-coded plugin name is enabled, sanity-check to ensure the running script is it
-		if (!Helper.Plugins.isEnabled(pluginName)) {
-			return toast(`Update check skipped, is this plugin not named ${pluginName}?`);
+		if (mountType !== MountType.BETTERDISCORD) {
+			return toastWarn('Sorry, update checker is only available when running on BetterDiscord.');
 		}
 
-		const currentVersion = Helper.Plugins.getVersion(pluginName);
+		// Check if hard-coded plugin name is enabled, sanity-check to ensure the running script is it
+		if (!Helper.Plugins.isEnabled(bdPluginName)) {
+			return toastWarn(`Update check skipped, is this plugin not named ${bdPluginName}?`);
+		}
+
+		const currentVersion = Helper.Plugins.getVersion(bdPluginName);
 
 		log(`Fetching remote dist file from: ${updateUrl}`);
 		if (manual) toast('Checking for updates\u2026', { nolog: true });
@@ -1942,13 +1986,13 @@
 			`Update ${packs.length} remote pack${packs.length === 1 ? '' : 's'}`,
 			content,
 			{
-				confirmText: 'Import',
+				confirmText: 'Yes, update all!',
 				cancelText: 'Cancel',
 				danger: true,
 				onConfirm: async () => {
 					try {
 						for (let i = 0; i < packs.length; i++) {
-							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 1000 });
+							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 500 });
 							const stored = await updateRemotePack(packs[i], true);
 							if (!stored) break;
 						}
@@ -2168,7 +2212,7 @@
 				'Replace Database',
 				content.replace(/\n/g, '\n\n'), // Markdown, so we do double \n for new line
 				{
-					confirmText: 'Replace',
+					confirmText: 'Go ahead!',
 					cancelText: 'Cancel',
 					danger: true,
 					onConfirm: async () => {

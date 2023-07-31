@@ -1,8 +1,10 @@
 /* global definePlugin */
 const App = require('./App.svelte');
 
+const pluginName = 'MaganeVencord';
+
 export default definePlugin({
-	name: 'MaganeVencord',
+	name: pluginName,
 	authors: [], // blank, authors for Vencord plugins must be hard-coded in their repo's Constants
 	description: 'Bringing LINE stickers to Discord in a chaotic way. Vencord-plugin edition.',
 
@@ -13,7 +15,7 @@ export default definePlugin({
 	start() {
 		for (const id of Object.keys(window.MAGANE_STYLES)) {
 			const style = document.createElement('style');
-			style.id = `${this.constructor.name}-${id}`;
+			style.id = `${pluginName}-${id}`;
 			style.innerText = window.MAGANE_STYLES[id];
 			document.head.appendChild(style);
 		}
@@ -36,7 +38,7 @@ export default definePlugin({
 			this.container.remove();
 		}
 		for (const id of Object.keys(window.MAGANE_STYLES)) {
-			const _style = document.head.getElementById(`${this.constructor.name}-${id}`);
+			const _style = document.head.getElementById(`${pluginName}-${id}`);
 			if (_style) {
 				_style.remove();
 			}
