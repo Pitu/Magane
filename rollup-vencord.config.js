@@ -108,8 +108,7 @@ export default {
 			command(`cp --force "${file}" "${process.env.VENCORD_PLUGIN_PATH}"`, {
 				once: false,
 				wait: true
-			}) &&
-			console.log(`Copied build file to ${process.env.VENCORD_PLUGIN_PATH}`)
+			})
 	],
 	watch: {
 		clearScreen: false
