@@ -2,7 +2,6 @@ import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import command from 'rollup-plugin-command';
-import license from 'rollup-plugin-license';
 import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
 import postcss from 'rollup-plugin-postcss';
@@ -11,11 +10,10 @@ import autoPreprocess from 'svelte-preprocess';
 import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
-const file = path.resolve(__dirname, production ? 'dist' : 'dist-dev', 'magane.plugin.js');
-const meta = path.resolve(__dirname, 'src/bd-meta.txt');
+const file = path.resolve(__dirname, production ? 'dist' : 'dist-dev', 'magane.vencord.js');
 
 export default {
-	input: 'src/bd-main.js',
+	input: 'src/vencord-main.js',
 	output: {
 		file,
 		format: 'cjs',
@@ -26,12 +24,6 @@ export default {
 		sourcemap: false
 	},
 	plugins: [
-		!production && {
-			name: 'watch-extras',
-			buildStart() {
-				this.addWatchFile(meta);
-			}
-		},
 		svelte({
 			dev: !production,
 			emitCss: true,
@@ -79,17 +71,37 @@ export default {
 				'    ': '\t'
 			}
 		}),
-		license({
-			banner: {
-				commentStyle: 'regular',
-				content: {
-					file: meta,
-					encoding: 'utf-8'
-				}
+		production && replace({
+			delimiters: ['', ''],
+			preventAssignment: false,
+			values: {
+				'"use strict";': '"use strict"\n__VencordImports__;'
 			}
 		}),
-		Boolean(process.env.BD_PLUGIN_PATH) &&
-			command(`cp --force "${file}" "${process.env.BD_PLUGIN_PATH}"`, {
+		!production && replace({
+			delimiters: ['', ''],
+			preventAssignment: false,
+			values: {
+				'\'use strict\';': '\'use strict\';\n__VencordImports__;'
+			}
+		}),
+		replace({
+			delimiters: ['', ''],
+			preventAssignment: false,
+			values: {
+				'__VencordImports__;': 'import definePlugin from "@utils/types";\nimport { findByPropsLazy, findLazy } from "@webpack";\nimport { Alerts, Toasts } from "@webpack/common";',
+				'VencordApi.': '',
+
+				// Svelte syntax, lmao..
+				'$$invalidate(0, mountType)': '$$invalidate(0, mountType = MountType.VENCORD)',
+
+				// This is so hacky, lmao
+				'var vencordMain = definePlugin({': 'export default definePlugin({',
+				'module.exports = vencordMain;': ''
+			}
+		}),
+		Boolean(process.env.VENCORD_PLUGIN_PATH) &&
+			command(`cp --force "${file}" "${process.env.VENCORD_PLUGIN_PATH}"`, {
 				once: false,
 				wait: true
 			})

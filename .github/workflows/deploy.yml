@@ -49,6 +49,9 @@ jobs:
       - name: Build application (BetterDiscord plugin)
         run: yarn build-bd
 
+      - name: Build application (Vencord plugin)
+        run: yarn build-vc
+
       - uses: EndBug/add-and-commit@v6
         with:
           branch: master
