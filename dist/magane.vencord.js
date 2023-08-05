@@ -1,23 +1,7 @@
-/**
- * @name MaganeBD
- * @displayName MaganeBD
- * @description Bringing LINE stickers to Discord in a chaotic way. BetterDiscord-plugin edition.
- * @author Kana, Bobby
- * @authorId 176200089226706944
- * @authorLink https://github.com/Pitu
- * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.13
- * @invite 5g6vgwn
- * @source https://github.com/Pitu/Magane
- * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
- * @website https://magane.moe
- * @donate https://github.com/sponsors/Pitu
- * @patreon https://patreon.com/pitu
- */
-
-"use strict";
-
-var commonjsGlobal = "undefined" != typeof globalThis ? globalThis : "undefined" != typeof window ? window : "undefined" != typeof global ? global : "undefined" != typeof self ? self : {};
+"use strict"
+import definePlugin from "@utils/types";
+import { findByPropsLazy, findLazy } from "@webpack";
+import { Alerts, Toasts } from "@webpack/common";
 
 function noop() {}
 
@@ -490,7 +474,9 @@ var constants = {
 	SEMVER_SPEC_VERSION: "2.0.0",
 	FLAG_INCLUDE_PRERELEASE: 0b001,
 	FLAG_LOOSE: 0b010
-}, re_1 = function createCommonjsModule(fn, module) {
+};
+
+var re_1 = function createCommonjsModule(fn, module) {
 	return fn(module = {
 		exports: {}
 	}, module.exports), module.exports;
@@ -1765,7 +1751,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				return BdApi.findModuleByProps(...args);
 
 			  case MountType.VENCORD:
-				return VencordApi.findByPropsLazy(...args);
+				return findByPropsLazy(...args);
 
 			  default:
 				return MOCK_API.FINDBYPROPS(...args);
@@ -1777,7 +1763,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				return BdApi.Webpack.getModule(...args);
 
 			  case MountType.VENCORD:
-				return VencordApi.findLazy(args[0]);
+				return findLazy(args[0]);
 
 			  default:
 				return MOCK_API.FIND(...args);
@@ -1795,7 +1781,7 @@ function instance$1($$self, $$props, $$invalidate) {
 							"user-select": "text"
 						}
 					});
-					return VencordApi.Alerts.show(Object.assign({
+					return Alerts.show(Object.assign({
 						title,
 						body
 					}, ...args.slice(2)));
@@ -1811,7 +1797,7 @@ function instance$1($$self, $$props, $$invalidate) {
 					let type = 0;
 					return options.type && (type = VENCORD_TOASTS_TYPE[options.type], delete options.type), 
 					void 0 !== options.timeout && (options.duration = options.timeout, delete options.timeout), 
-					options.position = 1, VencordApi.Toasts.show({
+					options.position = 1, Toasts.show({
 						message,
 						type,
 						options
@@ -2348,7 +2334,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	};
 	onMount(async () => {
 		switch (base = main.parentNode.parentNode, $$invalidate(0, mountType = document.body ? MountType.BETTERDISCORD : MountType.LEGACY), 
-		$$invalidate(0, mountType), mountType) {
+		$$invalidate(0, mountType = MountType.VENCORD), mountType) {
 		  case MountType.BETTERDISCORD:
 			log("Magane is likely mounted with MaganeBD.");
 			break;
@@ -2864,22 +2850,29 @@ var App$2 = function getCjsExportFromNamespace(n) {
 	}
 }));
 
-module.exports = class MaganeBD {
-	log(message, type = "log") {
-		return console[type]("%c[MaganeBD]%c", "color: #3a71c1; font-weight: 700", "", message);
-	}
-	load() {}
+export default definePlugin({
+	name: "MaganeVencord",
+	authors: [],
+	description: "Bringing LINE stickers to Discord in a chaotic way. Vencord-plugin edition.",
+	log: (message, type = "log") => console[type]("%c[MaganeVencord]%c", "color: #3a71c1; font-weight: 700", "", message),
 	start() {
-		for (const id of Object.keys(commonjsGlobal.MAGANE_STYLES)) BdApi.injectCSS(`${this.constructor.name}-${id}`, commonjsGlobal.MAGANE_STYLES[id]);
+		for (const id of Object.keys(window.MAGANE_STYLES)) {
+			const style = document.createElement("style");
+			style.id = "MaganeVencord-" + id, style.innerText = window.MAGANE_STYLES[id], document.head.appendChild(style);
+		}
 		this.log("Mounting container into DOM…"), this.container = document.createElement("div"), 
 		this.container.id = "maganeContainer", document.body.appendChild(this.container), 
 		this.app = new App$2({
 			target: this.container
 		});
-	}
+	},
 	stop() {
 		this.app && (this.log("Destroying Svelte component…"), this.app.$destroy()), this.container && (this.log("Removing container from DOM…"), 
 		this.container.remove());
-		for (const id of Object.keys(commonjsGlobal.MAGANE_STYLES)) BdApi.clearCSS(`${this.constructor.name}-${id}`);
+		for (const id of Object.keys(window.MAGANE_STYLES)) {
+			const _style = document.head.getElementById("MaganeVencord-" + id);
+			_style && _style.remove();
+		}
 	}
-};
+});
+
