@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.13
+ * @version 3.2.14
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -2459,6 +2459,12 @@ function instance$1($$self, $$props, $$invalidate) {
 		if (opts) for (const key of Object.keys(opts)) pack[key] = opts[key];
 		switch (pack.remoteType) {
 		  case 1:
+			pack.name = String(data.album.name), pack.thumbs = [];
+			for (let i = 0; i < data.album.files.length; i++) pack.files.push(data.album.files[i].url), 
+			pack.thumbs.push(data.album.files[i].thumb || null);
+			break;
+
+		  case 2:
 			pack.name = String(data.name), pack.thumbs = [];
 			for (let i = 0; i < data.files.length; i++) pack.files.push(data.files[i].url), 
 			pack.thumbs.push(data.files[i].thumb || null);
@@ -2478,6 +2484,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		return pack.count = pack.files.length, Array.isArray(pack.thumbs) && pack.thumbs.every(thumb => null === thumb) && (pack.thumbs = []), 
 		pack;
 	}, fetchRemotePack = async (url, bypassCheck = !1, remoteType) => {
+		let data;
 		const opts = {
 			updateUrl: url
 		};
@@ -2494,15 +2501,21 @@ function instance$1($$self, $$props, $$invalidate) {
 					result: _match
 				});
 			}
-			switch (match.index) {
-			  case 0:
-				opts.id = `${match.result[2]}-${match.result[3]}`, opts.homeUrl = url, opts.updateUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`, 
-				opts.remoteType = 1;
+			if (0 === match.index) {
+				opts.id = `${match.result[2]}-${match.result[3]}`, opts.homeUrl = url, opts.updateUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
+				const suffix = "/view?page=1&limit=500";
+				log("Fetching chibisafe album: " + (opts.updateUrl + suffix));
+				let response = await fetch(opts.updateUrl + suffix, {
+					cache: "no-cache"
+				}).catch(response => response);
+				if (!response || 200 !== response.status && 304 !== response.status) {
+					const _status = response && response.status ? `${response.status} ${response.statusText}`.trim() : "N/A";
+					log(`HTTP error ${_status}, re-trying with: ${opts.updateUrl}`), response = await fetch(opts.updateUrl, {
+						cache: "no-cache"
+					}), data = await response.json(), opts.remoteType = 2;
+				} else data = await response.json(), opts.remoteType = 1;
 			}
 		}
-		const response = await fetch(opts.updateUrl, {
-			cache: "no-cache"
-		}), data = await response.json();
 		if (!data) throw new Error("Unable to parse data. Check your console for details.");
 		return processRemotePack(data, opts);
 	}, updateRemotePack = async (id, silent = !1) => {
