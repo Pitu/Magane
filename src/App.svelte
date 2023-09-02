@@ -1651,6 +1651,15 @@
 		// Expandable if required
 		switch (pack.remoteType) {
 			case 1: // Chibisafe Albums
+				pack.name = String(data.album.name);
+
+				pack.thumbs = [];
+				for (let i = 0; i < data.album.files.length; i++) {
+					pack.files.push(data.album.files[i].url);
+					pack.thumbs.push(data.album.files[i].thumb || null);
+				}
+				break;
+			case 2: // Old Chibisafe and Lolisafe v3 Albums
 				pack.name = String(data.name);
 
 				pack.thumbs = [];
@@ -1702,6 +1711,8 @@
 	};
 
 	const fetchRemotePack = async (url, bypassCheck = false, remoteType) => {
+		let data;
+
 		const opts = { updateUrl: url };
 		if (bypassCheck) {
 			opts.remoteType = remoteType;
@@ -1727,18 +1738,33 @@
 				}
 			}
 
-			switch (match.index) {
-				case 0:
-					opts.id = `${match.result[2]}-${match.result[3]}`;
-					opts.homeUrl = url;
-					opts.updateUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
+			if (match.index === 0) {
+				opts.id = `${match.result[2]}-${match.result[3]}`;
+				opts.homeUrl = url;
+				opts.updateUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
+				const suffix = '/view?page=1&limit=500';
+
+				log(`Fetching chibisafe album: ${opts.updateUrl + suffix}`);
+				let response = await fetch(opts.updateUrl + suffix, { cache: 'no-cache' })
+					.catch(response => response); // ignore network errors, but mainly cors
+
+				if (response && (response.status === 200 || response.status === 304)) {
+					data = await response.json();
 					opts.remoteType = 1;
-					break;
+				} else {
+					// Fallback to old API for backwards-compatibility,
+					// also to support my lolisafe v3 forks cause im too lazy to update its API
+					const _status = (response && response.status)
+						? `${response.status} ${response.statusText}`.trim()
+						: 'N/A';
+					log(`HTTP error ${_status}, re-trying with: ${opts.updateUrl}`);
+					response = await fetch(opts.updateUrl, { cache: 'no-cache' });
+					data = await response.json();
+					opts.remoteType = 2;
+				}
 			}
 		}
 
-		const response = await fetch(opts.updateUrl, { cache: 'no-cache' });
-		const data = await response.json();
 		if (!data) {
 			throw new Error('Unable to parse data. Check your console for details.');
 		}
