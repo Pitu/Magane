@@ -200,6 +200,12 @@
 	let isWarnedAboutViewportHeight = false;
 	const waitForTimeouts = {};
 
+	// For display in info popup only, expandable if required
+	const remotePackTypes = {
+		1: 'Chibisafe Albums',
+		2: 'Old Chibisafe / Lolisafe v3 Albums'
+	};
+
 	const settings = {
 		disableUpdateCheck: false,
 		enableWindowMagane: false,
@@ -1710,58 +1716,70 @@
 		return pack;
 	};
 
-	const fetchRemotePack = async (url, bypassCheck = false, remoteType) => {
+	const fetchRemotePack = async url => {
+		const opts = { updateUrl: url };
+
+		if (!url || !/^https?:\/\//.test(url)) {
+			throw new Error('URL must have HTTP(s) protocol.');
+		}
+
+		// Expandable if required
+		const regExes = [
+			// RegEx for Chibisafe album links (basically /a/identifier)
+			/^(.+:\/\/)(.+)\/a\/([^/\s]+)/,
+			// RegEx for old method of saving Chibisafe album API (/api/album/identifier)
+			/^(.+:\/\/)(.+)\/api\/album\/([^/\s]+)/
+		];
+
+		let match = { index: -1 };
+		for (let i = 0; i < regExes.length; i++) {
+			const _match = url.match(regExes[i]);
+			if (_match && !_match.some(m => m === undefined)) {
+				match = {
+					index: i,
+					result: _match
+				};
+			}
+		}
+
 		let data;
 
-		const opts = { updateUrl: url };
-		if (bypassCheck) {
-			opts.remoteType = remoteType;
-		} else {
-			if (!url || !/^https?:\/\//.test(url)) {
-				throw new Error('URL must have HTTP(s) protocol.');
+		if (match.index === 0 || match.index === 1) {
+			// Re-map old method of saving Chibisafe album API
+			if (match.index === 1) {
+				// Basically restores it to its original public album link
+				url = `${match.result[1]}${match.result[2]}/a/${match.result[3]}`;
 			}
 
-			// Expandable if required
-			const regExes = [
-				// RegEx for chibisafe album links (basically must have /a/identifier)
-				/^(.+:\/\/)(.+)\/a\/([^/\s]+)/
-			];
+			opts.id = `${match.result[2]}-${match.result[3]}`;
+			opts.homeUrl = url;
+			opts.updateUrl = url;
 
-			let match = { index: -1 };
-			for (let i = 0; i < regExes.length; i++) {
-				const _match = url.match(regExes[i]);
-				if (_match && !_match.some(m => m === undefined)) {
-					match = {
-						index: i,
-						result: _match
-					};
-				}
-			}
+			// API will now be always deteremined on-the-fly,
+			// to allow changing this in the future, if required,
+			// without breaking packs saved with any older methods.
+			const downloadUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
 
-			if (match.index === 0) {
-				opts.id = `${match.result[2]}-${match.result[3]}`;
-				opts.homeUrl = url;
-				opts.updateUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
-				const suffix = '/view?page=1&limit=500';
+			// Initially try with latest Chibisafe API
+			const chibisafeSuffix = '/view?page=1&limit=500';
+			log(`Fetching chibisafe album: ${downloadUrl + chibisafeSuffix}`);
+			let response = await fetch(downloadUrl + chibisafeSuffix, { cache: 'no-cache' })
+				.catch(response => response); // ignore network errors, mainly CORS
 
-				log(`Fetching chibisafe album: ${opts.updateUrl + suffix}`);
-				let response = await fetch(opts.updateUrl + suffix, { cache: 'no-cache' })
-					.catch(response => response); // ignore network errors, but mainly cors
-
-				if (response && (response.status === 200 || response.status === 304)) {
-					data = await response.json();
-					opts.remoteType = 1;
-				} else {
-					// Fallback to old API for backwards-compatibility,
-					// also to support my lolisafe v3 forks cause im too lazy to update its API
-					const _status = (response && response.status)
-						? `${response.status} ${response.statusText}`.trim()
-						: 'N/A';
-					log(`HTTP error ${_status}, re-trying with: ${opts.updateUrl}`);
-					response = await fetch(opts.updateUrl, { cache: 'no-cache' });
-					data = await response.json();
-					opts.remoteType = 2;
-				}
+			if (response && (response.status === 200 || response.status === 304)) {
+				// Parse as JSON immediately, and assign remote type 1
+				data = await response.json();
+				opts.remoteType = 1;
+			} else {
+				// Fallback to old API for backwards-compatibility,
+				// also to support my lolisafe v3 forks cause im too lazy to update its API.
+				const _status = (response && response.status)
+					? `${response.status} ${response.statusText}`.trim()
+					: 'N/A';
+				log(`HTTP error ${_status}, re-trying with: ${downloadUrl}`);
+				response = await fetch(downloadUrl, { cache: 'no-cache' });
+				data = await response.json();
+				opts.remoteType = 2; // assign remote type 2
 			}
 		}
 
@@ -1779,11 +1797,8 @@
 				toast('Updating pack information\u2026', { nolog: true });
 			}
 
-			const pack = await fetchRemotePack(
-				localPacks[id].updateUrl,
-				typeof (localPacks[id].remoteType) === 'number' ? true : false,
-				localPacks[id].remoteType
-			);
+			// Only pass update URL, the function will determine by itself what to do with it
+			const pack = await fetchRemotePack(localPacks[id].updateUrl);
 			pack.id = id;
 
 			const stored = _appendPack(pack.id, pack, { overwrite: true });
@@ -1841,7 +1856,12 @@
 			'**Home URL:**\n\n' +
 			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
 			'**Update URL:**\n\n' +
-			('```\n' + localPacks[id].updateUrl + '\n```') || 'N/A';
+			('```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```') + '\n\n' +
+			'**Remote Type:**\n\n' +
+			(localPacks[id].remoteType
+				? `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType]}`
+				: 'N/A'
+			);
 		/* eslint-enable prefer-template */
 
 		Helper.Alerts.show(
