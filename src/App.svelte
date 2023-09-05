@@ -216,6 +216,7 @@
 		disableDownscale: false,
 		disableImportedObfuscation: false,
 		alwaysSendAsLink: false,
+		maskStickerLink: false,
 		ctrlInvertSendBehavior: false,
 		ignoreEmbedLinksPermission: false,
 		markAsSpoiler: false,
@@ -1017,8 +1018,9 @@
 				}
 
 				let append = url;
-				if (settings.markAsSpoiler) {
-					append = `||${append}||`;
+
+				if (settings.maskStickerLink) {
+					append = `[sticker](${append})`;
 				}
 
 				Modules.MessageUtils._sendMessage(channelId, {
@@ -2707,7 +2709,7 @@
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
-										Disable downscaling of manually imported LINE Store packs
+										Disable downscaling of imported LINE Store packs using <code>images.weserv.nl</code>
 									</label>
 								</p>
 								<p>
@@ -2726,6 +2728,15 @@
 											type="checkbox"
 											bind:checked={ settings.alwaysSendAsLink } />
 										Always send stickers as links instead of uploads
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="maskStickerLink"
+											type="checkbox"
+											bind:checked={ settings.maskStickerLink } />
+										Mask sticker links with <code>[sticker](url)</code> Markdown
 									</label>
 								</p>
 								<p>
@@ -2752,7 +2763,7 @@
 											name="markAsSpoiler"
 											type="checkbox"
 											bind:checked={ settings.markAsSpoiler } />
-										Mark stickers as spoilers when sending
+										Mark stickers as spoilers when sending (does not work when sending stickers as links)
 									</label>
 								</p>
 								<p>
