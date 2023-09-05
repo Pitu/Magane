@@ -807,13 +807,13 @@
 		} else if (pack.startsWith('startswith-')) {
 			/*
 				LINE Store packs
-				292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png;compress=true
-				219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true
-				146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png;compress=true
+				292p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker@2x.png
+				219p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png
+				146p: https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/iPhone/sticker.png
 				WARNING: Early packs (can confirm with packs that have their sticker IDs at 4 digits),
 				do not have iPhone variants, so we will stick with Android variants, which are always available.
 			*/
-			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
+			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png';
 			url = template.replace(/%id%/g, id.split('.')[0]);
 			let append = sending ? '&h=180p' : '&h=100p';
 			if (localPacks[pack].animated) {
