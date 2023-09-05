@@ -202,6 +202,7 @@
 
 	// For display in info popup only, expandable if required
 	const remotePackTypes = {
+		0: 'Custom JSON',
 		1: 'Chibisafe Albums',
 		2: 'Old Chibisafe / Lolisafe v3 Albums'
 	};
@@ -1751,11 +1752,11 @@
 			if (match.index === 1) {
 				// Basically restores it to its original public album link
 				url = `${match.result[1]}${match.result[2]}/a/${match.result[3]}`;
+				opts.updateUrl = url;
 			}
 
 			opts.id = `${match.result[2]}-${match.result[3]}`;
 			opts.homeUrl = url;
-			opts.updateUrl = url;
 
 			// API will now be always deteremined on-the-fly,
 			// to allow changing this in the future, if required,
@@ -1783,6 +1784,11 @@
 				data = await response.json();
 				opts.remoteType = 2; // assign remote type 2
 			}
+		} else {
+			// Custom JSON
+			const response = await fetch(opts.updateUrl);
+			data = await response.json();
+			opts.remoteType = 0; // assign remote type 0
 		}
 
 		if (!data) {
@@ -1845,6 +1851,17 @@
 	const showPackInfo = id => {
 		if (!localPacks[id]) return;
 
+		let remoteType = 'N/A';
+		if (typeof localPacks[id].remoteType === 'number') {
+			remoteType = `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType] || 'Unknown'}`;
+		} else if (id.startsWith('custom-')) {
+			remoteType = 'Unknown';
+		} else if (id.startsWith('startswith-')) {
+			remoteType = 'LINE';
+		} else if (id.startsWith('emojis-')) {
+			remoteType = 'LINE Emojis';
+		}
+
 		// Formatting is very particular, so we do this the old-fashioned way
 		/* eslint-disable prefer-template */
 		const content = '**ID:**\n\n' +
@@ -1860,10 +1877,7 @@
 			'**Update URL:**\n\n' +
 			('```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```') + '\n\n' +
 			'**Remote Type:**\n\n' +
-			(localPacks[id].remoteType
-				? `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType]}`
-				: 'N/A'
-			);
+			remoteType;
 		/* eslint-enable prefer-template */
 
 		Helper.Alerts.show(
