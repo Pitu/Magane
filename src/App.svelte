@@ -2528,12 +2528,12 @@
 									<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
 									<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
 								</div>
-								<div class="action{ localPacks[pack.id] && (pack.id.startsWith('custom-') || localPacks[pack.id].updateUrl) ? ' is-tight' : '' }">
+								<div class="action{ localPacks[pack.id] && (isLocalPackID(pack.id) || localPacks[pack.id].updateUrl) ? ' is-tight' : '' }">
 									<button class="button is-danger"
 										on:click="{ () => unsubscribeToPack(pack) }"
 										title="Unsubscribe">Del</button>
 									{ #if localPacks[pack.id] }
-									{ #if pack.id.startsWith('custom-') }
+									{ #if isLocalPackID(pack.id) }
 									<button class="button pack-info"
 										on:click="{ () => showPackInfo(pack.id) }"
 										title="Info">i</button>
@@ -2580,7 +2580,7 @@
 											title="Subscribe">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
-										{ #if pack.id.startsWith('custom-') }
+										{ #if isLocalPackID(pack.id) }
 										<button class="button pack-info"
 											on:click="{ () => showPackInfo(pack.id) }"
 											title="Info">i</button>
