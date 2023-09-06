@@ -213,7 +213,7 @@
 		disableToasts: false,
 		closeWindowOnSend: false,
 		useLeftToolbar: false,
-		hidePackAppendix: false,
+		showPackAppendix: false,
 		disableDownscale: false,
 		disableImportedObfuscation: false,
 		alwaysSendAsLink: false,
@@ -2525,8 +2525,8 @@
 								<div class="preview"
 									style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 								<div class="info">
-									<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
-									<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
+									<span title="{ settings.showPackAppendix ? '' : `ID: ${pack.id}`}">{ pack.name }</span>
+									<span>{ pack.count } stickers{ @html settings.showPackAppendix ? formatPackAppendix(pack.id) : '' }</span>
 								</div>
 								<div class="action{ localPacks[pack.id] && (isLocalPackID(pack.id) || localPacks[pack.id].updateUrl) ? ' is-tight' : '' }">
 									<button class="button is-danger"
@@ -2566,8 +2566,8 @@
 									<div class="preview"
 										style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 									<div class="info">
-										<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
-										<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
+										<span title="{ settings.showPackAppendix ? '' : `ID: ${pack.id}`}">{ pack.name }</span>
+										<span>{ pack.count } stickers{ @html settings.showPackAppendix ? formatPackAppendix(pack.id) : '' }</span>
 									</div>
 									<div class="action{ localPacks[pack.id] ? ' is-tight' : '' }">
 										{ #if subscribedPacksSimple.includes(pack.id) }
@@ -2711,10 +2711,10 @@
 								<p>
 									<label>
 										<input
-											name="hidePackAppendix"
+											name="showPackAppendix"
 											type="checkbox"
-											bind:checked={ settings.hidePackAppendix } />
-										Hide pack's appendix in packs list (e.g. its numerical ID)
+											bind:checked={ settings.showPackAppendix } />
+										Show pack's appendix in packs list (e.g. its numerical ID)
 									</label>
 								</p>
 								<p>
