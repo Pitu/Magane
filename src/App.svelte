@@ -1878,7 +1878,7 @@
 			'**Home URL:**\n\n' +
 			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
 			'**Update URL:**\n\n' +
-			('```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```') + '\n\n' +
+			'```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```\n\n' +
 			'**Remote Type:**\n\n' +
 			remoteType;
 		/* eslint-enable prefer-template */
