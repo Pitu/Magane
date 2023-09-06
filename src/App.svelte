@@ -109,7 +109,10 @@
 						type = VENCORD_TOASTS_TYPE[options.type];
 						delete options.type;
 					}
-					if (options.timeout !== undefined) {
+					if (options.timeout === undefined) {
+						// BetterDiscord's default timeout for toasts
+						options.duration = 3000;
+					} else {
 						options.duration = options.timeout;
 						delete options.timeout;
 					}
@@ -1058,7 +1061,7 @@
 			}
 		} catch (error) {
 			console.error(error);
-			toastError(error.toString(), { nolog: true, timeout: 5000 });
+			toastError(error.toString(), { nolog: true, timeout: 6000 });
 		}
 
 		onCooldown = false;
@@ -1802,7 +1805,7 @@
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
 			if (!silent) {
-				toast('Updating pack information\u2026', { nolog: true });
+				toast('Updating pack information\u2026', { nolog: true, timeout: 1500 });
 			}
 
 			// Only pass update URL, the function will determine by itself what to do with it
