@@ -2724,7 +2724,7 @@
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
-										Disable downscaling of imported LINE Store packs using <code>images.weserv.nl</code>
+										Disable downscaling of imported LINE packs using <code>images.weserv.nl</code> (this service is known to be blocked by Discord if sending as links)
 									</label>
 								</p>
 								<p>
