@@ -31,7 +31,6 @@
     "eslint-plugin-svelte3": "^2.7.3",
     "postcss-preset-env": "^6.7.0",
     "rollup": "^1.32.1",
-    "rollup-plugin-command": "^1.1.3",
     "rollup-plugin-license": "^2.8.1",
     "rollup-plugin-livereload": "^1.0.0",
     "rollup-plugin-postcss": "^v2.8.2",

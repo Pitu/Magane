@@ -1,13 +1,13 @@
 import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import command from 'rollup-plugin-command';
 import license from 'rollup-plugin-license';
 import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
 import postcss from 'rollup-plugin-postcss';
 import postcssPresetEnv from 'postcss-preset-env';
 import autoPreprocess from 'svelte-preprocess';
+import fs from 'fs/promises';
 import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
@@ -88,11 +88,12 @@ export default {
 				}
 			}
 		}),
-		Boolean(process.env.BD_PLUGIN_PATH) &&
-			command(`cp --force "${file}" "${process.env.BD_PLUGIN_PATH}"`, {
-				once: false,
-				wait: true
-			})
+		{
+			name: 'copyDistFile',
+			writeBundle: () => Boolean(process.env.BD_PLUGIN_PATH) &&
+				fs.copyFile(file, process.env.BD_PLUGIN_PATH) &&
+				console.log(`Copied dist file to ${process.env.BD_PLUGIN_PATH}`)
+		}
 	],
 	watch: {
 		clearScreen: false
