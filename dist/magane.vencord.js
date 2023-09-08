@@ -673,37 +673,37 @@ var gt_1 = (a, b, loose) => compare_1(a, b, loose) > 0;
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[169] = list[i], child_ctx;
+	return child_ctx[170] = list[i], child_ctx;
 }
 
 function get_each_context_1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[169] = list[i], child_ctx[173] = i, child_ctx;
+	return child_ctx[170] = list[i], child_ctx[174] = i, child_ctx;
 }
 
 function get_each_context_2(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[169] = list[i], child_ctx[173] = i, child_ctx;
+	return child_ctx[170] = list[i], child_ctx[174] = i, child_ctx;
 }
 
 function get_each_context_3(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[169] = list[i], child_ctx[173] = i, child_ctx;
+	return child_ctx[170] = list[i], child_ctx[174] = i, child_ctx;
 }
 
 function get_each_context_4(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[176] = list[i], child_ctx[173] = i, child_ctx;
+	return child_ctx[177] = list[i], child_ctx[174] = i, child_ctx;
 }
 
 function get_each_context_5(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[176] = list[i], child_ctx[173] = i, child_ctx;
+	return child_ctx[177] = list[i], child_ctx[174] = i, child_ctx;
 }
 
 function get_each_context_6(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	return child_ctx[176] = list[i], child_ctx[173] = i, child_ctx;
+	return child_ctx[177] = list[i], child_ctx[174] = i, child_ctx;
 }
 
 function create_if_block_16(ctx) {
@@ -723,7 +723,7 @@ function create_if_block_16(ctx) {
 }
 
 function create_if_block_15(ctx) {
-	let div, span, t0, html_tag, t1, raw_value = ctx[30](ctx[8].length) + "", each_value_6 = ctx[8], each_blocks = [];
+	let div, span, t0, html_tag, t1, raw_value = ctx[31](ctx[8].length) + "", each_value_6 = ctx[8], each_blocks = [];
 	for (let i = 0; i < each_value_6.length; i += 1) each_blocks[i] = create_each_block_6(get_each_context_6(ctx, each_value_6, i));
 	return {
 		c() {
@@ -738,8 +738,8 @@ function create_if_block_15(ctx) {
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div, null);
 		},
 		p(ctx, dirty) {
-			if (256 & dirty[0] && raw_value !== (raw_value = ctx[30](ctx[8].length) + "") && html_tag.p(raw_value), 
-			369107200 & dirty[0]) {
+			if (256 & dirty[0] && raw_value !== (raw_value = ctx[31](ctx[8].length) + "") && html_tag.p(raw_value), 
+			738205952 & dirty[0]) {
 				let i;
 				for (each_value_6 = ctx[8], i = 0; i < each_value_6.length; i += 1) {
 					const child_ctx = get_each_context_6(ctx, each_value_6, i);
@@ -759,17 +759,17 @@ function create_if_block_15(ctx) {
 function create_each_block_6(ctx) {
 	let div1, img, img_src_value, img_alt_value, img_title_value, t0, div0, t1, mounted, dispose;
 	function click_handler(...args) {
-		return ctx[52](ctx[176], ...args);
+		return ctx[53](ctx[177], ...args);
 	}
 	function click_handler_1() {
-		return ctx[53](ctx[176]);
+		return ctx[54](ctx[177]);
 	}
 	return {
 		c() {
 			div1 = element("div"), img = element("img"), t0 = space(), div0 = element("div"), 
 			div0.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>', 
-			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[25](ctx[176].pack, ctx[176].id)) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[176].pack + " - " + ctx[176].id), attr(img, "title", img_title_value = ctx[13][ctx[176].pack] ? ctx[13][ctx[176].pack].name : ""), 
+			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[177].pack + " - " + ctx[177].id), attr(img, "title", img_title_value = ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name : ""), 
 			attr(div0, "class", "deleteFavorite"), attr(div0, "title", "Unfavorite"), attr(div1, "class", "sticker");
 		},
 		m(target, anchor) {
@@ -778,9 +778,9 @@ function create_each_block_6(ctx) {
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 256 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[25](ctx[176].pack, ctx[176].id)) && attr(img, "src", img_src_value), 
-			256 & dirty[0] && img_alt_value !== (img_alt_value = ctx[176].pack + " - " + ctx[176].id) && attr(img, "alt", img_alt_value), 
-			8448 & dirty[0] && img_title_value !== (img_title_value = ctx[13][ctx[176].pack] ? ctx[13][ctx[176].pack].name : "") && attr(img, "title", img_title_value);
+			ctx = new_ctx, 256 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) && attr(img, "src", img_src_value), 
+			256 & dirty[0] && img_alt_value !== (img_alt_value = ctx[177].pack + " - " + ctx[177].id) && attr(img, "alt", img_alt_value), 
+			8448 & dirty[0] && img_title_value !== (img_title_value = ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name : "") && attr(img, "title", img_title_value);
 		},
 		d(detaching) {
 			detaching && detach(div1), mounted = !1, run_all(dispose);
@@ -789,7 +789,7 @@ function create_each_block_6(ctx) {
 }
 
 function create_if_block_13(ctx) {
-	let div, span, t0, html_tag, t1, raw_value = ctx[30](ctx[12].length) + "", each_value_5 = ctx[12], each_blocks = [];
+	let div, span, t0, html_tag, t1, raw_value = ctx[31](ctx[12].length) + "", each_value_5 = ctx[12], each_blocks = [];
 	for (let i = 0; i < each_value_5.length; i += 1) each_blocks[i] = create_each_block_5(get_each_context_5(ctx, each_value_5, i));
 	return {
 		c() {
@@ -804,8 +804,8 @@ function create_if_block_13(ctx) {
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div, null);
 		},
 		p(ctx, dirty) {
-			if (4096 & dirty[0] && raw_value !== (raw_value = ctx[30](ctx[12].length) + "") && html_tag.p(raw_value), 
-			503329024 & dirty[0]) {
+			if (4096 & dirty[0] && raw_value !== (raw_value = ctx[31](ctx[12].length) + "") && html_tag.p(raw_value), 
+			1006645504 & dirty[0]) {
 				let i;
 				for (each_value_5 = ctx[12], i = 0; i < each_value_5.length; i += 1) {
 					const child_ctx = get_each_context_5(ctx, each_value_5, i);
@@ -825,7 +825,7 @@ function create_if_block_13(ctx) {
 function create_else_block_2(ctx) {
 	let div, mounted, dispose;
 	function click_handler_4() {
-		return ctx[56](ctx[176]);
+		return ctx[57](ctx[177]);
 	}
 	return {
 		c() {
@@ -848,7 +848,7 @@ function create_else_block_2(ctx) {
 function create_if_block_14(ctx) {
 	let div, mounted, dispose;
 	function click_handler_3() {
-		return ctx[55](ctx[176]);
+		return ctx[56](ctx[177]);
 	}
 	return {
 		c() {
@@ -871,10 +871,10 @@ function create_if_block_14(ctx) {
 function create_each_block_5(ctx) {
 	let div, img, img_src_value, img_alt_value, img_title_value, t0, show_if, t1, mounted, dispose;
 	function func_1(...args) {
-		return ctx[51](ctx[176], ...args);
+		return ctx[52](ctx[177], ...args);
 	}
 	function click_handler_2(...args) {
-		return ctx[54](ctx[176], ...args);
+		return ctx[55](ctx[177], ...args);
 	}
 	function select_block_type(ctx, dirty) {
 		return 4352 & dirty[0] && (show_if = null), null == show_if && (show_if = !(-1 !== ctx[8].findIndex(func_1))), 
@@ -884,8 +884,8 @@ function create_each_block_5(ctx) {
 	return {
 		c() {
 			div = element("div"), img = element("img"), t0 = space(), if_block.c(), t1 = space(), 
-			attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[25](ctx[176].pack, ctx[176].id)) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[176].pack + " - " + ctx[176].id), attr(img, "title", img_title_value = (ctx[13][ctx[176].pack] ? ctx[13][ctx[176].pack].name + " – " : "") + "Used: " + ctx[176].used), 
+			attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[177].pack + " - " + ctx[177].id), attr(img, "title", img_title_value = (ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name + " – " : "") + "Used: " + ctx[177].used), 
 			attr(div, "class", "sticker");
 		},
 		m(target, anchor) {
@@ -893,9 +893,9 @@ function create_each_block_5(ctx) {
 			append(div, t1), mounted || (dispose = listen(img, "click", click_handler_2), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 4096 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[25](ctx[176].pack, ctx[176].id)) && attr(img, "src", img_src_value), 
-			4096 & dirty[0] && img_alt_value !== (img_alt_value = ctx[176].pack + " - " + ctx[176].id) && attr(img, "alt", img_alt_value), 
-			12288 & dirty[0] && img_title_value !== (img_title_value = (ctx[13][ctx[176].pack] ? ctx[13][ctx[176].pack].name + " – " : "") + "Used: " + ctx[176].used) && attr(img, "title", img_title_value), 
+			ctx = new_ctx, 4096 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) && attr(img, "src", img_src_value), 
+			4096 & dirty[0] && img_alt_value !== (img_alt_value = ctx[177].pack + " - " + ctx[177].id) && attr(img, "alt", img_alt_value), 
+			12288 & dirty[0] && img_title_value !== (img_title_value = (ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name + " – " : "") + "Used: " + ctx[177].used) && attr(img, "title", img_title_value), 
 			current_block_type === (current_block_type = select_block_type(ctx, dirty)) && if_block ? if_block.p(ctx, dirty) : (if_block.d(1), 
 			if_block = current_block_type(ctx), if_block && (if_block.c(), if_block.m(div, t1)));
 		},
@@ -908,7 +908,7 @@ function create_each_block_5(ctx) {
 function create_else_block_1(ctx) {
 	let div, mounted, dispose;
 	function click_handler_7() {
-		return ctx[59](ctx[169], ctx[176]);
+		return ctx[60](ctx[170], ctx[177]);
 	}
 	return {
 		c() {
@@ -931,7 +931,7 @@ function create_else_block_1(ctx) {
 function create_if_block_12(ctx) {
 	let div, mounted, dispose;
 	function click_handler_6() {
-		return ctx[58](ctx[169], ctx[176]);
+		return ctx[59](ctx[170], ctx[177]);
 	}
 	return {
 		c() {
@@ -954,10 +954,10 @@ function create_if_block_12(ctx) {
 function create_each_block_4(ctx) {
 	let div, img, img_src_value, img_alt_value, t, show_if, mounted, dispose;
 	function func(...args) {
-		return ctx[50](ctx[169], ctx[176], ...args);
+		return ctx[51](ctx[170], ctx[177], ...args);
 	}
 	function click_handler_5(...args) {
-		return ctx[57](ctx[169], ctx[176], ...args);
+		return ctx[58](ctx[170], ctx[177], ...args);
 	}
 	function select_block_type_1(ctx, dirty) {
 		return 768 & dirty[0] && (show_if = null), null == show_if && (show_if = !(-1 !== ctx[8].findIndex(func))), 
@@ -967,16 +967,16 @@ function create_each_block_4(ctx) {
 	return {
 		c() {
 			div = element("div"), img = element("img"), t = space(), if_block.c(), attr(img, "class", "image"), 
-			src_url_equal(img.src, img_src_value = "" + ctx[25](ctx[169].id, ctx[176], !1, ctx[173])) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[169].id + " - " + ctx[176]), attr(div, "class", "sticker");
+			src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[170].id, ctx[177], !1, ctx[174])) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[170].id + " - " + ctx[177]), attr(div, "class", "sticker");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor), append(div, img), append(div, t), if_block.m(div, null), 
 			mounted || (dispose = listen(img, "click", click_handler_5), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 512 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[25](ctx[169].id, ctx[176], !1, ctx[173])) && attr(img, "src", img_src_value), 
-			512 & dirty[0] && img_alt_value !== (img_alt_value = ctx[169].id + " - " + ctx[176]) && attr(img, "alt", img_alt_value), 
+			ctx = new_ctx, 512 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[170].id, ctx[177], !1, ctx[174])) && attr(img, "src", img_src_value), 
+			512 & dirty[0] && img_alt_value !== (img_alt_value = ctx[170].id + " - " + ctx[177]) && attr(img, "alt", img_alt_value), 
 			current_block_type === (current_block_type = select_block_type_1(ctx, dirty)) && if_block ? if_block.p(ctx, dirty) : (if_block.d(1), 
 			if_block = current_block_type(ctx), if_block && (if_block.c(), if_block.m(div, null)));
 		},
@@ -987,14 +987,14 @@ function create_each_block_4(ctx) {
 }
 
 function create_each_block_3(ctx) {
-	let div, span, t0, html_tag, span_id_value, t1, t2, t0_value = ctx[169].name + "", raw_value = ctx[30](ctx[169].files.length) + "", each_value_4 = ctx[169].files, each_blocks = [];
+	let div, span, t0, html_tag, span_id_value, t1, t2, t0_value = ctx[170].name + "", raw_value = ctx[31](ctx[170].files.length) + "", each_value_4 = ctx[170].files, each_blocks = [];
 	for (let i = 0; i < each_value_4.length; i += 1) each_blocks[i] = create_each_block_4(get_each_context_4(ctx, each_value_4, i));
 	return {
 		c() {
 			div = element("div"), span = element("span"), t0 = text(t0_value), html_tag = new HtmlTag(!1), 
 			t1 = space();
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].c();
-			t2 = space(), html_tag.a = null, attr(span, "id", span_id_value = "p" + ctx[169].id), 
+			t2 = space(), html_tag.a = null, attr(span, "id", span_id_value = "p" + ctx[170].id), 
 			attr(div, "class", "pack");
 		},
 		m(target, anchor) {
@@ -1004,12 +1004,12 @@ function create_each_block_3(ctx) {
 			append(div, t2);
 		},
 		p(ctx, dirty) {
-			if (512 & dirty[0] && t0_value !== (t0_value = ctx[169].name + "") && set_data(t0, t0_value), 
-			512 & dirty[0] && raw_value !== (raw_value = ctx[30](ctx[169].files.length) + "") && html_tag.p(raw_value), 
-			512 & dirty[0] && span_id_value !== (span_id_value = "p" + ctx[169].id) && attr(span, "id", span_id_value), 
-			503317248 & dirty[0]) {
+			if (512 & dirty[0] && t0_value !== (t0_value = ctx[170].name + "") && set_data(t0, t0_value), 
+			512 & dirty[0] && raw_value !== (raw_value = ctx[31](ctx[170].files.length) + "") && html_tag.p(raw_value), 
+			512 & dirty[0] && span_id_value !== (span_id_value = "p" + ctx[170].id) && attr(span, "id", span_id_value), 
+			1006633728 & dirty[0]) {
 				let i;
-				for (each_value_4 = ctx[169].files, i = 0; i < each_value_4.length; i += 1) {
+				for (each_value_4 = ctx[170].files, i = 0; i < each_value_4.length; i += 1) {
 					const child_ctx = get_each_context_4(ctx, each_value_4, i);
 					each_blocks[i] ? each_blocks[i].p(child_ctx, dirty) : (each_blocks[i] = create_each_block_4(child_ctx), 
 					each_blocks[i].c(), each_blocks[i].m(div, t2));
@@ -1032,7 +1032,7 @@ function create_if_block_10(ctx) {
 			attr(div1, "class", "pack"), attr(div1, "title", "Frequently Used");
 		},
 		m(target, anchor) {
-			insert(target, div1, anchor), mounted || (dispose = listen(div1, "click", ctx[62]), 
+			insert(target, div1, anchor), mounted || (dispose = listen(div1, "click", ctx[63]), 
 			mounted = !0);
 		},
 		p: noop,
@@ -1045,20 +1045,20 @@ function create_if_block_10(ctx) {
 function create_each_block_2(ctx) {
 	let div, div_title_value, mounted, dispose;
 	function click_handler_11() {
-		return ctx[63](ctx[169]);
+		return ctx[64](ctx[170]);
 	}
 	return {
 		c() {
-			div = element("div"), attr(div, "class", "pack"), attr(div, "title", div_title_value = ctx[169].name), 
-			set_style(div, "background-image", `url(${ctx[25](ctx[169].id, ctx[169].files[0], !1, 0)})`);
+			div = element("div"), attr(div, "class", "pack"), attr(div, "title", div_title_value = ctx[170].name), 
+			set_style(div, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`);
 		},
 		m(target, anchor) {
 			insert(target, div, anchor), mounted || (dispose = listen(div, "click", click_handler_11), 
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 512 & dirty[0] && div_title_value !== (div_title_value = ctx[169].name) && attr(div, "title", div_title_value), 
-			512 & dirty[0] && set_style(div, "background-image", `url(${ctx[25](ctx[169].id, ctx[169].files[0], !1, 0)})`);
+			ctx = new_ctx, 512 & dirty[0] && div_title_value !== (div_title_value = ctx[170].name) && attr(div, "title", div_title_value), 
+			512 & dirty[0] && set_style(div, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`);
 		},
 		d(detaching) {
 			detaching && detach(div), mounted = !1, dispose();
@@ -1068,7 +1068,7 @@ function create_each_block_2(ctx) {
 
 function create_if_block_5(ctx) {
 	let div, div_style_value, each_blocks = [], each_1_lookup = new Map, each_value_1 = ctx[9];
-	const get_key = ctx => ctx[169].id;
+	const get_key = ctx => ctx[170].id;
 	for (let i = 0; i < each_value_1.length; i += 1) {
 		let child_ctx = get_each_context_1(ctx, each_value_1, i), key = get_key(child_ctx);
 		each_1_lookup.set(key, each_blocks[i] = create_each_block_1(key, child_ctx));
@@ -1084,7 +1084,7 @@ function create_if_block_5(ctx) {
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div, null);
 		},
 		p(ctx, dirty) {
-			51397120 & dirty[0] | 209 & dirty[1] && (each_value_1 = ctx[9], each_blocks = function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
+			110117376 & dirty[0] | 418 & dirty[1] && (each_value_1 = ctx[9], each_blocks = function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
 				let o = old_blocks.length, n = list.length, i = o;
 				const old_indexes = {};
 				for (;i--; ) old_indexes[old_blocks[i].key] = i;
@@ -1127,16 +1127,16 @@ function create_if_block_9(ctx) {
 	return {
 		c() {
 			div = element("div"), input = element("input"), attr(input, "class", "inputPackIndex"), 
-			attr(input, "type", "text"), attr(input, "data-pack", input_data_pack_value = ctx[169].id), 
-			input.value = input_value_value = ctx[173] + 1, attr(div, "class", "index");
+			attr(input, "type", "text"), attr(input, "data-pack", input_data_pack_value = ctx[170].id), 
+			input.value = input_value_value = ctx[174] + 1, attr(div, "class", "index");
 		},
 		m(target, anchor) {
-			insert(target, div, anchor), append(div, input), mounted || (dispose = [ listen(input, "click", click_handler_17), listen(input, "keypress", ctx[35]) ], 
+			insert(target, div, anchor), append(div, input), mounted || (dispose = [ listen(input, "click", click_handler_17), listen(input, "keypress", ctx[36]) ], 
 			mounted = !0);
 		},
 		p(ctx, dirty) {
-			512 & dirty[0] && input_data_pack_value !== (input_data_pack_value = ctx[169].id) && attr(input, "data-pack", input_data_pack_value), 
-			512 & dirty[0] && input_value_value !== (input_value_value = ctx[173] + 1) && input.value !== input_value_value && (input.value = input_value_value);
+			512 & dirty[0] && input_data_pack_value !== (input_data_pack_value = ctx[170].id) && attr(input, "data-pack", input_data_pack_value), 
+			512 & dirty[0] && input_value_value !== (input_value_value = ctx[174] + 1) && input.value !== input_value_value && (input.value = input_value_value);
 		},
 		d(detaching) {
 			detaching && detach(div), mounted = !1, run_all(dispose);
@@ -1145,7 +1145,7 @@ function create_if_block_9(ctx) {
 }
 
 function create_if_block_6(ctx) {
-	let t, if_block1_anchor, show_if = ctx[169].id.startsWith("custom-"), if_block0 = show_if && create_if_block_8(ctx), if_block1 = ctx[14][ctx[169].id].updateUrl && create_if_block_7(ctx);
+	let t, if_block1_anchor, show_if = ctx[23](ctx[170].id), if_block0 = show_if && create_if_block_8(ctx), if_block1 = ctx[14][ctx[170].id].updateUrl && create_if_block_7(ctx);
 	return {
 		c() {
 			if_block0 && if_block0.c(), t = space(), if_block1 && if_block1.c(), if_block1_anchor = function empty() {
@@ -1157,9 +1157,9 @@ function create_if_block_6(ctx) {
 			insert(target, if_block1_anchor, anchor);
 		},
 		p(ctx, dirty) {
-			512 & dirty[0] && (show_if = ctx[169].id.startsWith("custom-")), show_if ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_8(ctx), 
+			512 & dirty[0] && (show_if = ctx[23](ctx[170].id)), show_if ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_8(ctx), 
 			if_block0.c(), if_block0.m(t.parentNode, t)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-			ctx[14][ctx[169].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_7(ctx), 
+			ctx[14][ctx[170].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_7(ctx), 
 			if_block1.c(), if_block1.m(if_block1_anchor.parentNode, if_block1_anchor)) : if_block1 && (if_block1.d(1), 
 			if_block1 = null);
 		},
@@ -1173,7 +1173,7 @@ function create_if_block_6(ctx) {
 function create_if_block_8(ctx) {
 	let button, mounted, dispose;
 	function click_handler_19() {
-		return ctx[70](ctx[169]);
+		return ctx[71](ctx[170]);
 	}
 	return {
 		c() {
@@ -1196,7 +1196,7 @@ function create_if_block_8(ctx) {
 function create_if_block_7(ctx) {
 	let button, mounted, dispose;
 	function click_handler_20() {
-		return ctx[71](ctx[169]);
+		return ctx[72](ctx[170]);
 	}
 	return {
 		c() {
@@ -1217,11 +1217,11 @@ function create_if_block_7(ctx) {
 }
 
 function create_each_block_1(key_1, ctx) {
-	let div3, t0, div0, t1, div1, span0, t2, span0_title_value, t3, span1, t4, t5, html_tag, t6, div2, button, t8, div2_class_value, t9, mounted, dispose, t2_value = ctx[169].name + "", t4_value = ctx[169].count + "", raw_value = (ctx[20].hidePackAppendix ? "" : ctx[31](ctx[169].id)) + "", if_block0 = ctx[9].length > 1 && create_if_block_9(ctx);
+	let div3, t0, div0, t1, div1, span0, t2, span0_title_value, t3, span1, t4, t5, html_tag, t6, div2, button, t8, div2_class_value, t9, mounted, dispose, t2_value = ctx[170].name + "", t4_value = ctx[170].count + "", raw_value = (ctx[20].showPackAppendix ? ctx[32](ctx[170].id) : "") + "", if_block0 = ctx[9].length > 1 && create_if_block_9(ctx);
 	function click_handler_18() {
-		return ctx[69](ctx[169]);
+		return ctx[70](ctx[170]);
 	}
-	let if_block1 = ctx[14][ctx[169].id] && create_if_block_6(ctx);
+	let if_block1 = ctx[14][ctx[170].id] && create_if_block_6(ctx);
 	return {
 		key: key_1,
 		first: null,
@@ -1231,10 +1231,10 @@ function create_each_block_1(key_1, ctx) {
 			t3 = space(), span1 = element("span"), t4 = text(t4_value), t5 = text(" stickers"), 
 			html_tag = new HtmlTag(!1), t6 = space(), div2 = element("div"), button = element("button"), 
 			button.textContent = "Del", t8 = space(), if_block1 && if_block1.c(), t9 = space(), 
-			attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[25](ctx[169].id, ctx[169].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[169].id : ""), 
+			attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
+			attr(span0, "title", span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id), 
 			html_tag.a = null, attr(div1, "class", "info"), attr(button, "class", "button is-danger"), 
-			attr(button, "title", "Unsubscribe"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[169].id] && (ctx[169].id.startsWith("custom-") || ctx[14][ctx[169].id].updateUrl) ? " is-tight" : "")), 
+			attr(button, "title", "Unsubscribe"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[170].id] && (ctx[23](ctx[170].id) || ctx[14][ctx[170].id].updateUrl) ? " is-tight" : "")), 
 			attr(div3, "class", "pack"), this.first = div3;
 		},
 		m(target, anchor) {
@@ -1248,14 +1248,14 @@ function create_each_block_1(key_1, ctx) {
 		p(new_ctx, dirty) {
 			(ctx = new_ctx)[9].length > 1 ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_9(ctx), 
 			if_block0.c(), if_block0.m(div3, t0)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-			512 & dirty[0] && set_style(div0, "background-image", `url(${ctx[25](ctx[169].id, ctx[169].files[0], !1, 0)})`), 
-			512 & dirty[0] && t2_value !== (t2_value = ctx[169].name + "") && set_data(t2, t2_value), 
-			1049088 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[169].id : "") && attr(span0, "title", span0_title_value), 
-			512 & dirty[0] && t4_value !== (t4_value = ctx[169].count + "") && set_data(t4, t4_value), 
-			1049088 & dirty[0] && raw_value !== (raw_value = (ctx[20].hidePackAppendix ? "" : ctx[31](ctx[169].id)) + "") && html_tag.p(raw_value), 
-			ctx[14][ctx[169].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_6(ctx), 
+			512 & dirty[0] && set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
+			512 & dirty[0] && t2_value !== (t2_value = ctx[170].name + "") && set_data(t2, t2_value), 
+			1049088 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id) && attr(span0, "title", span0_title_value), 
+			512 & dirty[0] && t4_value !== (t4_value = ctx[170].count + "") && set_data(t4, t4_value), 
+			1049088 & dirty[0] && raw_value !== (raw_value = (ctx[20].showPackAppendix ? ctx[32](ctx[170].id) : "") + "") && html_tag.p(raw_value), 
+			ctx[14][ctx[170].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_6(ctx), 
 			if_block1.c(), if_block1.m(div2, null)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-			16896 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[169].id] && (ctx[169].id.startsWith("custom-") || ctx[14][ctx[169].id].updateUrl) ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
+			16896 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[170].id] && (ctx[23](ctx[170].id) || ctx[14][ctx[170].id].updateUrl) ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
 		},
 		d(detaching) {
 			detaching && detach(div3), if_block0 && if_block0.d(), if_block1 && if_block1.d(), 
@@ -1278,7 +1278,7 @@ function create_if_block(ctx) {
 			for (let i = 0; i < each_blocks.length; i += 1) each_blocks[i].m(div, null);
 		},
 		p(ctx, dirty) {
-			if (59788288 & dirty[0] | 225 & dirty[1]) {
+			if (126897152 & dirty[0] | 450 & dirty[1]) {
 				let i;
 				for (each_value = ctx[11], i = 0; i < each_value.length; i += 1) {
 					const child_ctx = get_each_context(ctx, each_value, i);
@@ -1298,7 +1298,7 @@ function create_if_block(ctx) {
 function create_else_block(ctx) {
 	let button, mounted, dispose;
 	function click_handler_22() {
-		return ctx[74](ctx[169]);
+		return ctx[75](ctx[170]);
 	}
 	return {
 		c() {
@@ -1321,7 +1321,7 @@ function create_else_block(ctx) {
 function create_if_block_4(ctx) {
 	let button, mounted, dispose;
 	function click_handler_21() {
-		return ctx[73](ctx[169]);
+		return ctx[74](ctx[170]);
 	}
 	return {
 		c() {
@@ -1342,9 +1342,9 @@ function create_if_block_4(ctx) {
 }
 
 function create_if_block_1(ctx) {
-	let t0, t1, button, mounted, dispose, show_if = ctx[169].id.startsWith("custom-"), if_block0 = show_if && create_if_block_3(ctx), if_block1 = ctx[14][ctx[169].id].updateUrl && create_if_block_2(ctx);
+	let t0, t1, button, mounted, dispose, show_if = ctx[23](ctx[170].id), if_block0 = show_if && create_if_block_3(ctx), if_block1 = ctx[14][ctx[170].id].updateUrl && create_if_block_2(ctx);
 	function click_handler_25() {
-		return ctx[77](ctx[169]);
+		return ctx[78](ctx[170]);
 	}
 	return {
 		c() {
@@ -1358,10 +1358,9 @@ function create_if_block_1(ctx) {
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 2048 & dirty[0] && (show_if = ctx[169].id.startsWith("custom-")), 
-			show_if ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_3(ctx), 
+			ctx = new_ctx, 2048 & dirty[0] && (show_if = ctx[23](ctx[170].id)), show_if ? if_block0 ? if_block0.p(ctx, dirty) : (if_block0 = create_if_block_3(ctx), 
 			if_block0.c(), if_block0.m(t0.parentNode, t0)) : if_block0 && (if_block0.d(1), if_block0 = null), 
-			ctx[14][ctx[169].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_2(ctx), 
+			ctx[14][ctx[170].id].updateUrl ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_2(ctx), 
 			if_block1.c(), if_block1.m(t1.parentNode, t1)) : if_block1 && (if_block1.d(1), if_block1 = null);
 		},
 		d(detaching) {
@@ -1374,7 +1373,7 @@ function create_if_block_1(ctx) {
 function create_if_block_3(ctx) {
 	let button, mounted, dispose;
 	function click_handler_23() {
-		return ctx[75](ctx[169]);
+		return ctx[76](ctx[170]);
 	}
 	return {
 		c() {
@@ -1397,7 +1396,7 @@ function create_if_block_3(ctx) {
 function create_if_block_2(ctx) {
 	let button, mounted, dispose;
 	function click_handler_24() {
-		return ctx[76](ctx[169]);
+		return ctx[77](ctx[170]);
 	}
 	return {
 		c() {
@@ -1418,21 +1417,21 @@ function create_if_block_2(ctx) {
 }
 
 function create_each_block(ctx) {
-	let div3, div0, t0, div1, span0, t1, span0_title_value, t2, span1, t3, t4, html_tag, t5, div2, show_if, t6, div2_class_value, t7, t1_value = ctx[169].name + "", t3_value = ctx[169].count + "", raw_value = (ctx[20].hidePackAppendix ? "" : ctx[31](ctx[169].id)) + "";
+	let div3, div0, t0, div1, span0, t1, span0_title_value, t2, span1, t3, t4, html_tag, t5, div2, show_if, t6, div2_class_value, t7, t1_value = ctx[170].name + "", t3_value = ctx[170].count + "", raw_value = (ctx[20].showPackAppendix ? ctx[32](ctx[170].id) : "") + "";
 	function select_block_type_2(ctx, dirty) {
-		return 3072 & dirty[0] && (show_if = null), null == show_if && (show_if = !!ctx[10].includes(ctx[169].id)), 
+		return 3072 & dirty[0] && (show_if = null), null == show_if && (show_if = !!ctx[10].includes(ctx[170].id)), 
 		show_if ? create_if_block_4 : create_else_block;
 	}
-	let current_block_type = select_block_type_2(ctx, [ -1, -1, -1, -1, -1, -1 ]), if_block0 = current_block_type(ctx), if_block1 = ctx[14][ctx[169].id] && create_if_block_1(ctx);
+	let current_block_type = select_block_type_2(ctx, [ -1, -1, -1, -1, -1, -1 ]), if_block0 = current_block_type(ctx), if_block1 = ctx[14][ctx[170].id] && create_if_block_1(ctx);
 	return {
 		c() {
 			div3 = element("div"), div0 = element("div"), t0 = space(), div1 = element("div"), 
 			span0 = element("span"), t1 = text(t1_value), t2 = space(), span1 = element("span"), 
 			t3 = text(t3_value), t4 = text(" stickers"), html_tag = new HtmlTag(!1), t5 = space(), 
 			div2 = element("div"), if_block0.c(), t6 = space(), if_block1 && if_block1.c(), 
-			t7 = space(), attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[25](ctx[169].id, ctx[169].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[169].id : ""), 
-			html_tag.a = null, attr(div1, "class", "info"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[169].id] ? " is-tight" : "")), 
+			t7 = space(), attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
+			attr(span0, "title", span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id), 
+			html_tag.a = null, attr(div1, "class", "info"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[170].id] ? " is-tight" : "")), 
 			attr(div3, "class", "pack");
 		},
 		m(target, anchor) {
@@ -1443,16 +1442,16 @@ function create_each_block(ctx) {
 			append(div3, t7);
 		},
 		p(ctx, dirty) {
-			2048 & dirty[0] && set_style(div0, "background-image", `url(${ctx[25](ctx[169].id, ctx[169].files[0], !1, 0)})`), 
-			2048 & dirty[0] && t1_value !== (t1_value = ctx[169].name + "") && set_data(t1, t1_value), 
-			1050624 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].hidePackAppendix ? "ID: " + ctx[169].id : "") && attr(span0, "title", span0_title_value), 
-			2048 & dirty[0] && t3_value !== (t3_value = ctx[169].count + "") && set_data(t3, t3_value), 
-			1050624 & dirty[0] && raw_value !== (raw_value = (ctx[20].hidePackAppendix ? "" : ctx[31](ctx[169].id)) + "") && html_tag.p(raw_value), 
+			2048 & dirty[0] && set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
+			2048 & dirty[0] && t1_value !== (t1_value = ctx[170].name + "") && set_data(t1, t1_value), 
+			1050624 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id) && attr(span0, "title", span0_title_value), 
+			2048 & dirty[0] && t3_value !== (t3_value = ctx[170].count + "") && set_data(t3, t3_value), 
+			1050624 & dirty[0] && raw_value !== (raw_value = (ctx[20].showPackAppendix ? ctx[32](ctx[170].id) : "") + "") && html_tag.p(raw_value), 
 			current_block_type === (current_block_type = select_block_type_2(ctx, dirty)) && if_block0 ? if_block0.p(ctx, dirty) : (if_block0.d(1), 
 			if_block0 = current_block_type(ctx), if_block0 && (if_block0.c(), if_block0.m(div2, t6))), 
-			ctx[14][ctx[169].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
+			ctx[14][ctx[170].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_1(ctx), 
 			if_block1.c(), if_block1.m(div2, null)) : if_block1 && (if_block1.d(1), if_block1 = null), 
-			18432 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[169].id] ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
+			18432 & dirty[0] && div2_class_value !== (div2_class_value = "action" + (ctx[14][ctx[170].id] ? " is-tight" : "")) && attr(div2, "class", div2_class_value);
 		},
 		d(detaching) {
 			detaching && detach(div3), if_block0.d(), if_block1 && if_block1.d();
@@ -1461,9 +1460,9 @@ function create_each_block(ctx) {
 }
 
 function create_fragment$1(ctx) {
-	let main_1, div28, div27, div0, t0, t1, t2, div0_class_value, t3, div7, div4, div3, div2, t4, t5, t6, div6, div5, div7_class_value, t7, div26, div8, t8, div25, div24, div13, div9, t10, div10, t12, div11, t14, div12, t16, t17, div14, input0, t18, div14_style_value, t19, div17, div15, p0, t21, p1, t25, p2, t27, p3, textarea0, t28, button0, t30, div16, p4, t32, p5, t37, p6, t40, p7, textarea1, t41, button1, t43, p8, input1, t44, button2, t46, p9, button3, div17_style_value, t48, div23, div18, p10, button4, t50, div19, p11, t52, p12, label0, input2, t53, t54, p13, label1, input3, t55, code0, t57, t58, p14, label2, input4, t59, t60, p15, label3, input5, t61, t62, p16, label4, input6, t63, t64, p17, label5, input7, t65, t66, p18, label6, input8, t67, t68, p19, label7, input9, t69, t70, p20, label8, input10, t71, t72, p21, label9, input11, t73, t74, p22, label10, input12, t75, t76, p23, label11, input13, t77, t78, p24, label12, input14, t79, t80, p25, label13, input15, t81, t82, div20, p26, t84, p27, t86, p28, t90, p29, input16, t91, button5, t93, div21, p30, t95, p31, t97, p32, t103, p33, t110, p34, input17, t111, button6, t113, div22, p35, t115, p36, input18, t116, button7, t118, p37, button8, div23_style_value, div26_style_value, div27_style_value, div28_style_value, mounted, dispose, if_block0 = !ctx[8].length && !ctx[9].length && create_if_block_16(), if_block1 = ctx[8].length && create_if_block_15(ctx), if_block2 = ctx[12].length && create_if_block_13(ctx), each_value_3 = ctx[9], each_blocks_1 = [];
+	let main_1, div28, div27, div0, t0, t1, t2, div0_class_value, t3, div7, div4, div3, div2, t4, t5, t6, div6, div5, div7_class_value, t7, div26, div8, t8, div25, div24, div13, div9, t10, div10, t12, div11, t14, div12, t16, t17, div14, input0, t18, div14_style_value, t19, div17, div15, p0, t21, p1, t25, p2, t27, p3, textarea0, t28, button0, t30, div16, p4, t32, p5, t37, p6, t40, p7, textarea1, t41, button1, t43, p8, input1, t44, button2, t46, p9, button3, div17_style_value, t48, div23, div18, p10, button4, t50, div19, p11, t52, p12, label0, input2, t53, t54, p13, label1, input3, t55, code0, t57, t58, p14, label2, input4, t59, t60, p15, label3, input5, t61, t62, p16, label4, input6, t63, t64, p17, label5, input7, t65, t66, p18, label6, input8, t67, code1, t69, t70, p19, label7, input9, t71, t72, p20, label8, input10, t73, t74, p21, label9, input11, t75, code2, t77, t78, p22, label10, input12, t79, t80, p23, label11, input13, t81, t82, p24, label12, input14, t83, t84, p25, label13, input15, t85, t86, p26, label14, input16, t87, t88, div20, p27, t90, p28, t92, p29, t96, p30, input17, t97, button5, t99, div21, p31, t101, p32, t103, p33, t109, p34, t116, p35, input18, t117, button6, t119, div22, p36, t121, p37, input19, t122, button7, t124, p38, button8, div23_style_value, div26_style_value, div27_style_value, div28_style_value, mounted, dispose, if_block0 = !ctx[8].length && !ctx[9].length && create_if_block_16(), if_block1 = ctx[8].length && create_if_block_15(ctx), if_block2 = ctx[12].length && create_if_block_13(ctx), each_value_3 = ctx[9], each_blocks_1 = [];
 	for (let i = 0; i < each_value_3.length; i += 1) each_blocks_1[i] = create_each_block_3(get_each_context_3(ctx, each_value_3, i));
-	let if_block3 = ctx[27].length && function create_if_block_11(ctx) {
+	let if_block3 = ctx[28].length && function create_if_block_11(ctx) {
 		let div1, mounted, dispose;
 		return {
 			c() {
@@ -1471,7 +1470,7 @@ function create_fragment$1(ctx) {
 				attr(div1, "title", "Favorites");
 			},
 			m(target, anchor) {
-				insert(target, div1, anchor), mounted || (dispose = listen(div1, "click", ctx[61]), 
+				insert(target, div1, anchor), mounted || (dispose = listen(div1, "click", ctx[62]), 
 				mounted = !0);
 			},
 			p: noop,
@@ -1523,35 +1522,38 @@ function create_fragment$1(ctx) {
 			t62 = space(), p16 = element("p"), label4 = element("label"), input6 = element("input"), 
 			t63 = text("\n\t\t\t\t\t\t\t\t\t\tUse left toolbar instead of bottom toolbar on main window"), 
 			t64 = space(), p17 = element("p"), label5 = element("label"), input7 = element("input"), 
-			t65 = text("\n\t\t\t\t\t\t\t\t\t\tHide pack's appendix in packs list (e.g. its numerical ID)"), 
+			t65 = text("\n\t\t\t\t\t\t\t\t\t\tShow pack's appendix in packs list (e.g. its numerical ID)"), 
 			t66 = space(), p18 = element("p"), label6 = element("label"), input8 = element("input"), 
-			t67 = text("\n\t\t\t\t\t\t\t\t\t\tDisable downscaling of manually imported LINE Store packs"), 
-			t68 = space(), p19 = element("p"), label7 = element("label"), input9 = element("input"), 
-			t69 = text("\n\t\t\t\t\t\t\t\t\t\tDisable obfuscation of files names for imported custom packs (obfuscation happens only for uploads)"), 
-			t70 = space(), p20 = element("p"), label8 = element("label"), input10 = element("input"), 
-			t71 = text("\n\t\t\t\t\t\t\t\t\t\tAlways send stickers as links instead of uploads"), 
-			t72 = space(), p21 = element("p"), label9 = element("label"), input11 = element("input"), 
-			t73 = text("\n\t\t\t\t\t\t\t\t\t\tAllow inverting send behavior if holding Ctrl when sending stickers (if always send as links is enabled, holding Ctrl when sending will instead send as uploads, and vice versa)"), 
-			t74 = space(), p22 = element("p"), label10 = element("label"), input12 = element("input"), 
-			t75 = text("\n\t\t\t\t\t\t\t\t\t\tIgnore missing embed links permission"), t76 = space(), 
-			p23 = element("p"), label11 = element("label"), input13 = element("input"), t77 = text("\n\t\t\t\t\t\t\t\t\t\tMark stickers as spoilers when sending"), 
-			t78 = space(), p24 = element("p"), label12 = element("label"), input14 = element("input"), 
-			t79 = text("\n\t\t\t\t\t\t\t\t\t\tDo not warn if viewport height is insufficient"), 
-			t80 = space(), p25 = element("p"), label13 = element("label"), input15 = element("input"), 
-			t81 = text("\n\t\t\t\t\t\t\t\t\t\tDo not send text chat input alongside sticker"), 
-			t82 = space(), div20 = element("div"), p26 = element("p"), p26.textContent = "Frequently Used", 
-			t84 = space(), p27 = element("p"), p27.textContent = "Maximum amount of the most frequently used stickers to list on Frequently Used section.", 
-			t86 = space(), p28 = element("p"), p28.innerHTML = "Set to <code>0</code> to completely disable the section and stickers usage counter.", 
-			t90 = space(), p29 = element("p"), input16 = element("input"), t91 = space(), button5 = element("button"), 
-			button5.textContent = "Set", t93 = space(), div21 = element("div"), p30 = element("p"), 
-			p30.textContent = "Hotkey", t95 = space(), p31 = element("p"), p31.innerHTML = '<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>', 
-			t97 = space(), p32 = element("p"), p32.innerHTML = "Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (<code>Ctrl</code>, <code>Alt</code>, etc.) + other keys.", 
-			t103 = space(), p33 = element("p"), p33.innerHTML = "e.g. <code>M</code>, <code>Ctrl+Q</code>, <code>Alt+Shift+Y</code>", 
-			t110 = space(), p34 = element("p"), input17 = element("input"), t111 = space(), 
-			button6 = element("button"), button6.textContent = "Set", t113 = space(), div22 = element("div"), 
-			p35 = element("p"), p35.textContent = "Database", t115 = space(), p36 = element("p"), 
-			input18 = element("input"), t116 = space(), button7 = element("button"), button7.textContent = "Replace Database", 
-			t118 = space(), p37 = element("p"), button8 = element("button"), button8.textContent = "Export Database", 
+			t67 = text("\n\t\t\t\t\t\t\t\t\t\tDisable downscaling of imported LINE packs using "), 
+			code1 = element("code"), code1.textContent = "images.weserv.nl", t69 = text(" (this service is known to be blocked by Discord if sending as links)"), 
+			t70 = space(), p19 = element("p"), label7 = element("label"), input9 = element("input"), 
+			t71 = text("\n\t\t\t\t\t\t\t\t\t\tDisable obfuscation of files names for imported custom packs (obfuscation happens only for uploads)"), 
+			t72 = space(), p20 = element("p"), label8 = element("label"), input10 = element("input"), 
+			t73 = text("\n\t\t\t\t\t\t\t\t\t\tAlways send stickers as links instead of uploads"), 
+			t74 = space(), p21 = element("p"), label9 = element("label"), input11 = element("input"), 
+			t75 = text("\n\t\t\t\t\t\t\t\t\t\tMask sticker links with "), code2 = element("code"), 
+			code2.textContent = "[sticker](url)", t77 = text(" Markdown"), t78 = space(), p22 = element("p"), 
+			label10 = element("label"), input12 = element("input"), t79 = text("\n\t\t\t\t\t\t\t\t\t\tAllow inverting send behavior if holding Ctrl when sending stickers (if always send as links is enabled, holding Ctrl when sending will instead send as uploads, and vice versa)"), 
+			t80 = space(), p23 = element("p"), label11 = element("label"), input13 = element("input"), 
+			t81 = text("\n\t\t\t\t\t\t\t\t\t\tIgnore missing embed links permission"), t82 = space(), 
+			p24 = element("p"), label12 = element("label"), input14 = element("input"), t83 = text("\n\t\t\t\t\t\t\t\t\t\tMark stickers as spoilers when sending (does not work when sending stickers as links)"), 
+			t84 = space(), p25 = element("p"), label13 = element("label"), input15 = element("input"), 
+			t85 = text("\n\t\t\t\t\t\t\t\t\t\tDo not warn if viewport height is insufficient"), 
+			t86 = space(), p26 = element("p"), label14 = element("label"), input16 = element("input"), 
+			t87 = text("\n\t\t\t\t\t\t\t\t\t\tDo not send text chat input alongside sticker"), 
+			t88 = space(), div20 = element("div"), p27 = element("p"), p27.textContent = "Frequently Used", 
+			t90 = space(), p28 = element("p"), p28.textContent = "Maximum amount of the most frequently used stickers to list on Frequently Used section.", 
+			t92 = space(), p29 = element("p"), p29.innerHTML = "Set to <code>0</code> to completely disable the section and stickers usage counter.", 
+			t96 = space(), p30 = element("p"), input17 = element("input"), t97 = space(), button5 = element("button"), 
+			button5.textContent = "Set", t99 = space(), div21 = element("div"), p31 = element("p"), 
+			p31.textContent = "Hotkey", t101 = space(), p32 = element("p"), p32.innerHTML = '<a href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values" target="_blank">See a full list of key values.</a>', 
+			t103 = space(), p33 = element("p"), p33.innerHTML = "Ignore notes that will not affect Chromium. Additionally, this may not have full support for everything in the documentation above, but this does support some degree of combinations of modifier keys (<code>Ctrl</code>, <code>Alt</code>, etc.) + other keys.", 
+			t109 = space(), p34 = element("p"), p34.innerHTML = "e.g. <code>M</code>, <code>Ctrl+Q</code>, <code>Alt+Shift+Y</code>", 
+			t116 = space(), p35 = element("p"), input18 = element("input"), t117 = space(), 
+			button6 = element("button"), button6.textContent = "Set", t119 = space(), div22 = element("div"), 
+			p36 = element("p"), p36.textContent = "Database", t121 = space(), p37 = element("p"), 
+			input19 = element("input"), t122 = space(), button7 = element("button"), button7.textContent = "Replace Database", 
+			t124 = space(), p38 = element("p"), button8 = element("button"), button8.textContent = "Export Database", 
 			attr(div0, "class", div0_class_value = "stickers has-scroll-y " + (ctx[20].useLeftToolbar ? "has-left-toolbar" : "")), 
 			attr(div0, "style", ""), attr(div2, "class", "pack"), attr(div2, "title", "Manage subscribed packs"), 
 			attr(div3, "class", "packs-wrapper"), attr(div4, "class", "packs packs-controls"), 
@@ -1578,21 +1580,21 @@ function create_fragment$1(ctx) {
 			attr(input2, "type", "checkbox"), attr(input3, "name", "enableWindowMagane"), attr(input3, "type", "checkbox"), 
 			attr(input4, "name", "disableToasts"), attr(input4, "type", "checkbox"), attr(input5, "name", "closeWindowOnSend"), 
 			attr(input5, "type", "checkbox"), attr(input6, "name", "useLeftToolbar"), attr(input6, "type", "checkbox"), 
-			attr(input7, "name", "hidePackAppendix"), attr(input7, "type", "checkbox"), attr(input8, "name", "disableDownscale"), 
+			attr(input7, "name", "showPackAppendix"), attr(input7, "type", "checkbox"), attr(input8, "name", "disableDownscale"), 
 			attr(input8, "type", "checkbox"), attr(input9, "name", "disableImportedObfuscation"), 
 			attr(input9, "type", "checkbox"), attr(input10, "name", "alwaysSendAsLink"), attr(input10, "type", "checkbox"), 
-			attr(input11, "name", "ctrlInvertSendBehavior"), attr(input11, "type", "checkbox"), 
-			attr(input12, "name", "ignoreEmbedLinksPermission"), attr(input12, "type", "checkbox"), 
-			attr(input13, "name", "markAsSpoiler"), attr(input13, "type", "checkbox"), attr(input14, "name", "ignoreViewportSize"), 
-			attr(input14, "type", "checkbox"), attr(input15, "name", "disableSendingWithChatInput"), 
-			attr(input15, "type", "checkbox"), attr(div19, "class", "section settings"), attr(p26, "class", "section-title"), 
-			attr(input16, "class", "inputQuery supress-magane-hotkey"), attr(input16, "type", "text"), 
-			attr(button5, "class", "button is-primary"), attr(p29, "class", "input-grouped"), 
-			attr(div20, "class", "section frequently-used"), attr(p30, "class", "section-title"), 
-			attr(input17, "class", "inputQuery supress-magane-hotkey"), attr(input17, "type", "text"), 
-			attr(button6, "class", "button is-primary"), attr(p34, "class", "input-grouped"), 
-			attr(div21, "class", "section hotkey"), attr(p35, "class", "section-title"), attr(input18, "id", "replaceDatabaseInput"), 
-			attr(input18, "type", "file"), set_style(input18, "display", "none"), attr(input18, "accept", "application/JSON"), 
+			attr(input11, "name", "maskStickerLink"), attr(input11, "type", "checkbox"), attr(input12, "name", "ctrlInvertSendBehavior"), 
+			attr(input12, "type", "checkbox"), attr(input13, "name", "ignoreEmbedLinksPermission"), 
+			attr(input13, "type", "checkbox"), attr(input14, "name", "markAsSpoiler"), attr(input14, "type", "checkbox"), 
+			attr(input15, "name", "ignoreViewportSize"), attr(input15, "type", "checkbox"), 
+			attr(input16, "name", "disableSendingWithChatInput"), attr(input16, "type", "checkbox"), 
+			attr(div19, "class", "section settings"), attr(p27, "class", "section-title"), attr(input17, "class", "inputQuery supress-magane-hotkey"), 
+			attr(input17, "type", "text"), attr(button5, "class", "button is-primary"), attr(p30, "class", "input-grouped"), 
+			attr(div20, "class", "section frequently-used"), attr(p31, "class", "section-title"), 
+			attr(input18, "class", "inputQuery supress-magane-hotkey"), attr(input18, "type", "text"), 
+			attr(button6, "class", "button is-primary"), attr(p35, "class", "input-grouped"), 
+			attr(div21, "class", "section hotkey"), attr(p36, "class", "section-title"), attr(input19, "id", "replaceDatabaseInput"), 
+			attr(input19, "type", "file"), set_style(input19, "display", "none"), attr(input19, "accept", "application/JSON"), 
 			attr(button7, "class", "button is-danger has-width-full"), attr(button8, "class", "button is-primary has-width-full"), 
 			attr(div22, "class", "section database"), attr(div23, "class", "tab-content has-scroll-y misc"), 
 			attr(div23, "style", div23_style_value = 3 === ctx[7] ? "" : "display: none;"), 
@@ -1635,31 +1637,34 @@ function create_fragment$1(ctx) {
 			append(label3, input5), input5.checked = ctx[20].closeWindowOnSend, append(label3, t61), 
 			append(div19, t62), append(div19, p16), append(p16, label4), append(label4, input6), 
 			input6.checked = ctx[20].useLeftToolbar, append(label4, t63), append(div19, t64), 
-			append(div19, p17), append(p17, label5), append(label5, input7), input7.checked = ctx[20].hidePackAppendix, 
+			append(div19, p17), append(p17, label5), append(label5, input7), input7.checked = ctx[20].showPackAppendix, 
 			append(label5, t65), append(div19, t66), append(div19, p18), append(p18, label6), 
 			append(label6, input8), input8.checked = ctx[20].disableDownscale, append(label6, t67), 
-			append(div19, t68), append(div19, p19), append(p19, label7), append(label7, input9), 
-			input9.checked = ctx[20].disableImportedObfuscation, append(label7, t69), append(div19, t70), 
-			append(div19, p20), append(p20, label8), append(label8, input10), input10.checked = ctx[20].alwaysSendAsLink, 
-			append(label8, t71), append(div19, t72), append(div19, p21), append(p21, label9), 
-			append(label9, input11), input11.checked = ctx[20].ctrlInvertSendBehavior, append(label9, t73), 
-			append(div19, t74), append(div19, p22), append(p22, label10), append(label10, input12), 
-			input12.checked = ctx[20].ignoreEmbedLinksPermission, append(label10, t75), append(div19, t76), 
-			append(div19, p23), append(p23, label11), append(label11, input13), input13.checked = ctx[20].markAsSpoiler, 
-			append(label11, t77), append(div19, t78), append(div19, p24), append(p24, label12), 
-			append(label12, input14), input14.checked = ctx[20].ignoreViewportSize, append(label12, t79), 
-			append(div19, t80), append(div19, p25), append(p25, label13), append(label13, input15), 
-			input15.checked = ctx[20].disableSendingWithChatInput, append(label13, t81), append(div23, t82), 
-			append(div23, div20), append(div20, p26), append(div20, t84), append(div20, p27), 
-			append(div20, t86), append(div20, p28), append(div20, t90), append(div20, p29), 
-			append(p29, input16), set_input_value(input16, ctx[17]), append(p29, t91), append(p29, button5), 
-			append(div23, t93), append(div23, div21), append(div21, p30), append(div21, t95), 
-			append(div21, p31), append(div21, t97), append(div21, p32), append(div21, t103), 
-			append(div21, p33), append(div21, t110), append(div21, p34), append(p34, input17), 
-			set_input_value(input17, ctx[18]), append(p34, t111), append(p34, button6), append(div23, t113), 
-			append(div23, div22), append(div22, p35), append(div22, t115), append(div22, p36), 
-			append(p36, input18), append(p36, t116), append(p36, button7), append(div22, t118), 
-			append(div22, p37), append(p37, button8), ctx[105](main_1), mounted || (dispose = [ listen(div2, "click", ctx[60]), listen(div8, "click", ctx[64]), listen(div9, "click", ctx[65]), listen(div10, "click", ctx[66]), listen(div11, "click", ctx[67]), listen(div12, "click", ctx[68]), listen(input0, "keyup", ctx[29]), listen(input0, "input", ctx[72]), listen(textarea0, "input", ctx[78]), listen(button0, "click", ctx[79]), listen(textarea1, "input", ctx[80]), listen(button1, "click", ctx[81]), listen(input1, "click", click_handler_28), listen(input1, "change", ctx[41]), listen(button2, "click", ctx[82]), listen(button3, "click", ctx[83]), listen(button4, "click", ctx[84]), listen(input2, "change", ctx[85]), listen(input3, "change", ctx[86]), listen(input4, "change", ctx[87]), listen(input5, "change", ctx[88]), listen(input6, "change", ctx[89]), listen(input7, "change", ctx[90]), listen(input8, "change", ctx[91]), listen(input9, "change", ctx[92]), listen(input10, "change", ctx[93]), listen(input11, "change", ctx[94]), listen(input12, "change", ctx[95]), listen(input13, "change", ctx[96]), listen(input14, "change", ctx[97]), listen(input15, "change", ctx[98]), listen(div19, "change", ctx[44]), listen(input16, "input", ctx[99]), listen(button5, "click", ctx[100]), listen(input17, "input", ctx[101]), listen(button6, "click", ctx[102]), listen(input18, "click", click_handler_34), listen(input18, "change", ctx[47]), listen(button7, "click", ctx[103]), listen(button8, "click", ctx[104]) ], 
+			append(label6, code1), append(label6, t69), append(div19, t70), append(div19, p19), 
+			append(p19, label7), append(label7, input9), input9.checked = ctx[20].disableImportedObfuscation, 
+			append(label7, t71), append(div19, t72), append(div19, p20), append(p20, label8), 
+			append(label8, input10), input10.checked = ctx[20].alwaysSendAsLink, append(label8, t73), 
+			append(div19, t74), append(div19, p21), append(p21, label9), append(label9, input11), 
+			input11.checked = ctx[20].maskStickerLink, append(label9, t75), append(label9, code2), 
+			append(label9, t77), append(div19, t78), append(div19, p22), append(p22, label10), 
+			append(label10, input12), input12.checked = ctx[20].ctrlInvertSendBehavior, append(label10, t79), 
+			append(div19, t80), append(div19, p23), append(p23, label11), append(label11, input13), 
+			input13.checked = ctx[20].ignoreEmbedLinksPermission, append(label11, t81), append(div19, t82), 
+			append(div19, p24), append(p24, label12), append(label12, input14), input14.checked = ctx[20].markAsSpoiler, 
+			append(label12, t83), append(div19, t84), append(div19, p25), append(p25, label13), 
+			append(label13, input15), input15.checked = ctx[20].ignoreViewportSize, append(label13, t85), 
+			append(div19, t86), append(div19, p26), append(p26, label14), append(label14, input16), 
+			input16.checked = ctx[20].disableSendingWithChatInput, append(label14, t87), append(div23, t88), 
+			append(div23, div20), append(div20, p27), append(div20, t90), append(div20, p28), 
+			append(div20, t92), append(div20, p29), append(div20, t96), append(div20, p30), 
+			append(p30, input17), set_input_value(input17, ctx[17]), append(p30, t97), append(p30, button5), 
+			append(div23, t99), append(div23, div21), append(div21, p31), append(div21, t101), 
+			append(div21, p32), append(div21, t103), append(div21, p33), append(div21, t109), 
+			append(div21, p34), append(div21, t116), append(div21, p35), append(p35, input18), 
+			set_input_value(input18, ctx[18]), append(p35, t117), append(p35, button6), append(div23, t119), 
+			append(div23, div22), append(div22, p36), append(div22, t121), append(div22, p37), 
+			append(p37, input19), append(p37, t122), append(p37, button7), append(div22, t124), 
+			append(div22, p38), append(p38, button8), ctx[107](main_1), mounted || (dispose = [ listen(div2, "click", ctx[61]), listen(div8, "click", ctx[65]), listen(div9, "click", ctx[66]), listen(div10, "click", ctx[67]), listen(div11, "click", ctx[68]), listen(div12, "click", ctx[69]), listen(input0, "keyup", ctx[30]), listen(input0, "input", ctx[73]), listen(textarea0, "input", ctx[79]), listen(button0, "click", ctx[80]), listen(textarea1, "input", ctx[81]), listen(button1, "click", ctx[82]), listen(input1, "click", click_handler_28), listen(input1, "change", ctx[42]), listen(button2, "click", ctx[83]), listen(button3, "click", ctx[84]), listen(button4, "click", ctx[85]), listen(input2, "change", ctx[86]), listen(input3, "change", ctx[87]), listen(input4, "change", ctx[88]), listen(input5, "change", ctx[89]), listen(input6, "change", ctx[90]), listen(input7, "change", ctx[91]), listen(input8, "change", ctx[92]), listen(input9, "change", ctx[93]), listen(input10, "change", ctx[94]), listen(input11, "change", ctx[95]), listen(input12, "change", ctx[96]), listen(input13, "change", ctx[97]), listen(input14, "change", ctx[98]), listen(input15, "change", ctx[99]), listen(input16, "change", ctx[100]), listen(div19, "change", ctx[45]), listen(input17, "input", ctx[101]), listen(button5, "click", ctx[102]), listen(input18, "input", ctx[103]), listen(button6, "click", ctx[104]), listen(input19, "click", click_handler_34), listen(input19, "change", ctx[48]), listen(button7, "click", ctx[105]), listen(button8, "click", ctx[106]) ], 
 			mounted = !0);
 		},
 		p(ctx, dirty) {
@@ -1668,7 +1673,7 @@ function create_fragment$1(ctx) {
 			if_block1.c(), if_block1.m(div0, t1)) : if_block1 && (if_block1.d(1), if_block1 = null), 
 			ctx[12].length ? if_block2 ? if_block2.p(ctx, dirty) : (if_block2 = create_if_block_13(ctx), 
 			if_block2.c(), if_block2.m(div0, t2)) : if_block2 && (if_block2.d(1), if_block2 = null), 
-			1577059072 & dirty[0]) {
+			1006633728 & dirty[0] | 1 & dirty[1]) {
 				let i;
 				for (each_value_3 = ctx[9], i = 0; i < each_value_3.length; i += 1) {
 					const child_ctx = get_each_context_3(ctx, each_value_3, i);
@@ -1679,9 +1684,9 @@ function create_fragment$1(ctx) {
 				each_blocks_1.length = each_value_3.length;
 			}
 			if (1048576 & dirty[0] && div0_class_value !== (div0_class_value = "stickers has-scroll-y " + (ctx[20].useLeftToolbar ? "has-left-toolbar" : "")) && attr(div0, "class", div0_class_value), 
-			ctx[27].length && if_block3.p(ctx, dirty), ctx[12].length ? if_block4 ? if_block4.p(ctx, dirty) : (if_block4 = create_if_block_10(ctx), 
+			ctx[28].length && if_block3.p(ctx, dirty), ctx[12].length ? if_block4 ? if_block4.p(ctx, dirty) : (if_block4 = create_if_block_10(ctx), 
 			if_block4.c(), if_block4.m(div3, null)) : if_block4 && (if_block4.d(1), if_block4 = null), 
-			33554944 & dirty[0] | 8 & dirty[1]) {
+			67109376 & dirty[0] | 16 & dirty[1]) {
 				let i;
 				for (each_value_2 = ctx[9], i = 0; i < each_value_2.length; i += 1) {
 					const child_ctx = get_each_context_2(ctx, each_value_2, i);
@@ -1704,13 +1709,13 @@ function create_fragment$1(ctx) {
 			128 & dirty[0] && div17_style_value !== (div17_style_value = 2 === ctx[7] ? "" : "display: none;") && attr(div17, "style", div17_style_value), 
 			1048576 & dirty[0] && (input2.checked = ctx[20].disableUpdateCheck), 1048576 & dirty[0] && (input3.checked = ctx[20].enableWindowMagane), 
 			1048576 & dirty[0] && (input4.checked = ctx[20].disableToasts), 1048576 & dirty[0] && (input5.checked = ctx[20].closeWindowOnSend), 
-			1048576 & dirty[0] && (input6.checked = ctx[20].useLeftToolbar), 1048576 & dirty[0] && (input7.checked = ctx[20].hidePackAppendix), 
+			1048576 & dirty[0] && (input6.checked = ctx[20].useLeftToolbar), 1048576 & dirty[0] && (input7.checked = ctx[20].showPackAppendix), 
 			1048576 & dirty[0] && (input8.checked = ctx[20].disableDownscale), 1048576 & dirty[0] && (input9.checked = ctx[20].disableImportedObfuscation), 
-			1048576 & dirty[0] && (input10.checked = ctx[20].alwaysSendAsLink), 1048576 & dirty[0] && (input11.checked = ctx[20].ctrlInvertSendBehavior), 
-			1048576 & dirty[0] && (input12.checked = ctx[20].ignoreEmbedLinksPermission), 1048576 & dirty[0] && (input13.checked = ctx[20].markAsSpoiler), 
-			1048576 & dirty[0] && (input14.checked = ctx[20].ignoreViewportSize), 1048576 & dirty[0] && (input15.checked = ctx[20].disableSendingWithChatInput), 
-			131072 & dirty[0] && input16.value !== ctx[17] && set_input_value(input16, ctx[17]), 
-			262144 & dirty[0] && input17.value !== ctx[18] && set_input_value(input17, ctx[18]), 
+			1048576 & dirty[0] && (input10.checked = ctx[20].alwaysSendAsLink), 1048576 & dirty[0] && (input11.checked = ctx[20].maskStickerLink), 
+			1048576 & dirty[0] && (input12.checked = ctx[20].ctrlInvertSendBehavior), 1048576 & dirty[0] && (input13.checked = ctx[20].ignoreEmbedLinksPermission), 
+			1048576 & dirty[0] && (input14.checked = ctx[20].markAsSpoiler), 1048576 & dirty[0] && (input15.checked = ctx[20].ignoreViewportSize), 
+			1048576 & dirty[0] && (input16.checked = ctx[20].disableSendingWithChatInput), 131072 & dirty[0] && input17.value !== ctx[17] && set_input_value(input17, ctx[17]), 
+			262144 & dirty[0] && input18.value !== ctx[18] && set_input_value(input18, ctx[18]), 
 			128 & dirty[0] && div23_style_value !== (div23_style_value = 3 === ctx[7] ? "" : "display: none;") && attr(div23, "style", div23_style_value), 
 			32 & dirty[0] && div26_style_value !== (div26_style_value = ctx[5] ? "" : "display: none;") && attr(div26, "style", div26_style_value), 
 			18 & dirty[0] && div27_style_value !== (div27_style_value = "bottom: " + ctx[1].wbottom + "px; right: " + ctx[1].wright + "px; " + (ctx[4] ? "" : "display: none;")) && attr(div27, "style", div27_style_value), 
@@ -1722,7 +1727,7 @@ function create_fragment$1(ctx) {
 			detaching && detach(main_1), if_block0 && if_block0.d(), if_block1 && if_block1.d(), 
 			if_block2 && if_block2.d(), destroy_each(each_blocks_1, detaching), if_block3 && if_block3.d(), 
 			if_block4 && if_block4.d(), destroy_each(each_blocks, detaching), if_block5 && if_block5.d(), 
-			if_block6 && if_block6.d(), ctx[105](null), mounted = !1, run_all(dispose);
+			if_block6 && if_block6.d(), ctx[107](null), mounted = !1, run_all(dispose);
 		}
 	};
 }
@@ -1796,8 +1801,8 @@ function instance$1($$self, $$props, $$invalidate) {
 					const message = args[0], options = Object.assign({}, ...args.slice(1));
 					let type = 0;
 					return options.type && (type = VENCORD_TOASTS_TYPE[options.type], delete options.type), 
-					void 0 !== options.timeout && (options.duration = options.timeout, delete options.timeout), 
-					options.position = 1, Toasts.show({
+					void 0 === options.timeout ? options.duration = 3000 : (options.duration = options.timeout, 
+					delete options.timeout), options.position = 1, Toasts.show({
 						message,
 						type,
 						options
@@ -1858,6 +1863,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	const resizeObserverQueue = [];
 	let resizeObserverQueueWorking = !1, isWarnedAboutViewportHeight = !1;
 	const waitForTimeouts = {}, remotePackTypes = {
+		0: "Custom JSON",
 		1: "Chibisafe Albums",
 		2: "Old Chibisafe / Lolisafe v3 Albums"
 	}, settings = {
@@ -1866,10 +1872,11 @@ function instance$1($$self, $$props, $$invalidate) {
 		disableToasts: !1,
 		closeWindowOnSend: !1,
 		useLeftToolbar: !1,
-		hidePackAppendix: !1,
+		showPackAppendix: !1,
 		disableDownscale: !1,
 		disableImportedObfuscation: !1,
 		alwaysSendAsLink: !1,
+		maskStickerLink: !1,
 		ctrlInvertSendBehavior: !1,
 		ignoreEmbedLinksPermission: !1,
 		markAsSpoiler: !1,
@@ -2159,7 +2166,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			} else if (settings.ignoreEmbedLinksPermission || hasPermission("EMBED_LINKS", channelId)) {
 				sendAsLink || toastWarn("You do not have permission to attach files, sending sticker as link…");
 				let append = url;
-				settings.markAsSpoiler && (append = `||${append}||`), Modules.MessageUtils._sendMessage(channelId, {
+				settings.maskStickerLink && (append = `[sticker](${append})`), Modules.MessageUtils._sendMessage(channelId, {
 					content: `${messageContent} ${append}`.trim()
 				}, messageOptions || {});
 			} else toastError("You do not have permissions to attach files nor embed links.");
@@ -2186,7 +2193,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		} catch (error) {
 			console.error(error), toastError(error.toString(), {
 				nolog: !0,
-				timeout: 5000
+				timeout: 6000
 			});
 		}
 		onCooldown = !1;
@@ -2489,8 +2496,8 @@ function instance$1($$self, $$props, $$invalidate) {
 			});
 		}
 		if (0 === match.index || 1 === match.index) {
-			1 === match.index && (url = `${match.result[1]}${match.result[2]}/a/${match.result[3]}`), 
-			opts.id = `${match.result[2]}-${match.result[3]}`, opts.homeUrl = url, opts.updateUrl = url;
+			1 === match.index && (url = `${match.result[1]}${match.result[2]}/a/${match.result[3]}`, 
+			opts.updateUrl = url), opts.id = `${match.result[2]}-${match.result[3]}`, opts.homeUrl = url;
 			const downloadUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`, chibisafeSuffix = "/view?page=1&limit=500";
 			log("Fetching chibisafe album: " + (downloadUrl + chibisafeSuffix));
 			let response = await fetch(downloadUrl + chibisafeSuffix, {
@@ -2502,6 +2509,9 @@ function instance$1($$self, $$props, $$invalidate) {
 					cache: "no-cache"
 				}), data = await response.json(), opts.remoteType = 2;
 			} else data = await response.json(), opts.remoteType = 1;
+		} else {
+			const response = await fetch(opts.updateUrl);
+			data = await response.json(), opts.remoteType = 0;
 		}
 		if (!data) throw new Error("Unable to parse data. Check your console for details.");
 		return processRemotePack(data, opts);
@@ -2509,7 +2519,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
 			silent || toast("Updating pack information…", {
-				nolog: !0
+				nolog: !0,
+				timeout: 1500
 			});
 			const pack = await fetchRemotePack(localPacks[id].updateUrl);
 			pack.id = id;
@@ -2534,7 +2545,9 @@ function instance$1($$self, $$props, $$invalidate) {
 		}
 	}, showPackInfo = id => {
 		if (!localPacks[id]) return;
-		const content = "**ID:**\n\n```\n" + id + "\n```\n\n**Name:**\n\n" + localPacks[id].name + "\n\n**Count:**\n\n" + localPacks[id].count + "\n\n**Description:**\n\n" + (localPacks[id].description || "N/A") + "\n\n**Home URL:**\n\n" + (localPacks[id].homeUrl || "N/A") + "\n\n**Update URL:**\n\n```\n" + (localPacks[id].updateUrl || "N/A") + "\n```\n\n**Remote Type:**\n\n" + (localPacks[id].remoteType ? `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType]}` : "N/A");
+		let remoteType = "N/A";
+		"number" == typeof localPacks[id].remoteType ? remoteType = `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType] || "N/A"}` : id.startsWith("startswith-") ? remoteType = "LINE" : id.startsWith("emojis-") && (remoteType = "LINE Emojis");
+		const content = "**ID:**\n\n```\n" + id + "\n```\n\n**Name:**\n\n" + localPacks[id].name + "\n\n**Count:**\n\n" + localPacks[id].count + "\n\n**Description:**\n\n" + (localPacks[id].description || "N/A") + "\n\n**Home URL:**\n\n" + (localPacks[id].homeUrl || "N/A") + "\n\n**Update URL:**\n\n```\n" + (localPacks[id].updateUrl || "N/A") + "\n```\n\n**Remote Type:**\n\n" + remoteType;
 		Helper.Alerts.show(localPacks[id].name, content);
 	}, parseLinePack = async () => {
 		if (linePackSearch) try {
@@ -2703,7 +2716,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		}
 		element.remove(), hrefUrl && window.URL.revokeObjectURL(hrefUrl);
 	};
-	return [ mountType, coords, main, forceHideMagane, stickerWindowActive, stickerAddModalActive, stickerAddModalTabsInit, activeTab, favoriteStickers, subscribedPacks, subscribedPacksSimple, filteredPacks, frequentlyUsedSorted, simplePacksData, localPacks, linePackSearch, remotePackUrl, frequentlyUsedInput, hotkeyInput, packsSearch, settings, MountType, checkUpdate, subscribeToPack, unsubscribeToPack, formatUrl, sendSticker, favoriteSticker, unfavoriteSticker, filterPacks, count => `<span class="counts"><span>–</span>${count} sticker${1 === count ? "" : "s"}</span>`, id => {
+	return [ mountType, coords, main, forceHideMagane, stickerWindowActive, stickerAddModalActive, stickerAddModalTabsInit, activeTab, favoriteStickers, subscribedPacks, subscribedPacksSimple, filteredPacks, frequentlyUsedSorted, simplePacksData, localPacks, linePackSearch, remotePackUrl, frequentlyUsedInput, hotkeyInput, packsSearch, settings, MountType, checkUpdate, isLocalPackID, subscribeToPack, unsubscribeToPack, formatUrl, sendSticker, favoriteSticker, unfavoriteSticker, filterPacks, count => `<span class="counts"><span>–</span>${count} sticker${1 === count ? "" : "s"}</span>`, id => {
 		let tmp = "" + id;
 		return "string" == typeof id && (id.startsWith("startswith-") ? tmp = "LINE " + id.replace("startswith-", "") : id.startsWith("emojis-") ? tmp = "LINE Emojis " + id.replace("emojis-", "") : id.startsWith("custom-") && (tmp = id.replace("custom-", ""))), 
 		`<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
@@ -2825,7 +2838,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	}, function input6_change_handler() {
 		settings.useLeftToolbar = this.checked, $$invalidate(20, settings);
 	}, function input7_change_handler() {
-		settings.hidePackAppendix = this.checked, $$invalidate(20, settings);
+		settings.showPackAppendix = this.checked, $$invalidate(20, settings);
 	}, function input8_change_handler() {
 		settings.disableDownscale = this.checked, $$invalidate(20, settings);
 	}, function input9_change_handler() {
@@ -2833,18 +2846,20 @@ function instance$1($$self, $$props, $$invalidate) {
 	}, function input10_change_handler() {
 		settings.alwaysSendAsLink = this.checked, $$invalidate(20, settings);
 	}, function input11_change_handler() {
-		settings.ctrlInvertSendBehavior = this.checked, $$invalidate(20, settings);
+		settings.maskStickerLink = this.checked, $$invalidate(20, settings);
 	}, function input12_change_handler() {
-		settings.ignoreEmbedLinksPermission = this.checked, $$invalidate(20, settings);
+		settings.ctrlInvertSendBehavior = this.checked, $$invalidate(20, settings);
 	}, function input13_change_handler() {
-		settings.markAsSpoiler = this.checked, $$invalidate(20, settings);
+		settings.ignoreEmbedLinksPermission = this.checked, $$invalidate(20, settings);
 	}, function input14_change_handler() {
-		settings.ignoreViewportSize = this.checked, $$invalidate(20, settings);
+		settings.markAsSpoiler = this.checked, $$invalidate(20, settings);
 	}, function input15_change_handler() {
+		settings.ignoreViewportSize = this.checked, $$invalidate(20, settings);
+	}, function input16_change_handler() {
 		settings.disableSendingWithChatInput = this.checked, $$invalidate(20, settings);
-	}, function input16_input_handler() {
+	}, function input17_input_handler() {
 		frequentlyUsedInput = this.value, $$invalidate(17, frequentlyUsedInput);
-	}, () => parseFrequentlyUsedInput(), function input17_input_handler() {
+	}, () => parseFrequentlyUsedInput(), function input18_input_handler() {
 		hotkeyInput = this.value, $$invalidate(18, hotkeyInput);
 	}, () => parseThenInitHotkey(!0), () => replaceDatabase(), () => exportDatabase(), function main_1_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
