@@ -102,9 +102,11 @@ export default {
 		}),
 		{
 			name: 'copyDistFile',
-			writeBundle: () => Boolean(process.env.VENCORD_PLUGIN_PATH) &&
-				fs.copyFile(file, process.env.VENCORD_PLUGIN_PATH) &&
-				console.log(`Copied dist file to ${process.env.VENCORD_PLUGIN_PATH}`)
+			writeBundle: async () => {
+				if (!Boolean(process.env.VENCORD_PLUGIN_PATH)) return;
+				await fs.copyFile(file, process.env.VENCORD_PLUGIN_PATH);
+				console.log(`Copied dist file to ${process.env.VENCORD_PLUGIN_PATH}`);
+			}
 		}
 	],
 	watch: {

@@ -15,8 +15,6 @@
     }
   ],
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
     "build-bd": "rollup -c rollup-bd.config.js",
     "dev-bd": "rollup -c rollup-bd.config.js -w",
     "build-vc": "rollup -c rollup-vencord.config.js",
