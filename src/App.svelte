@@ -109,7 +109,10 @@
 						type = VENCORD_TOASTS_TYPE[options.type];
 						delete options.type;
 					}
-					if (options.timeout !== undefined) {
+					if (options.timeout === undefined) {
+						// BetterDiscord's default timeout for toasts
+						options.duration = 3000;
+					} else {
 						options.duration = options.timeout;
 						delete options.timeout;
 					}
@@ -202,6 +205,7 @@
 
 	// For display in info popup only, expandable if required
 	const remotePackTypes = {
+		0: 'Custom JSON',
 		1: 'Chibisafe Albums',
 		2: 'Old Chibisafe / Lolisafe v3 Albums'
 	};
@@ -212,10 +216,11 @@
 		disableToasts: false,
 		closeWindowOnSend: false,
 		useLeftToolbar: false,
-		hidePackAppendix: false,
+		showPackAppendix: false,
 		disableDownscale: false,
 		disableImportedObfuscation: false,
 		alwaysSendAsLink: false,
+		maskStickerLink: false,
 		ctrlInvertSendBehavior: false,
 		ignoreEmbedLinksPermission: false,
 		markAsSpoiler: false,
@@ -1017,8 +1022,9 @@
 				}
 
 				let append = url;
-				if (settings.markAsSpoiler) {
-					append = `||${append}||`;
+
+				if (settings.maskStickerLink) {
+					append = `[sticker](${append})`;
 				}
 
 				Modules.MessageUtils._sendMessage(channelId, {
@@ -1055,7 +1061,7 @@
 			}
 		} catch (error) {
 			console.error(error);
-			toastError(error.toString(), { nolog: true, timeout: 5000 });
+			toastError(error.toString(), { nolog: true, timeout: 6000 });
 		}
 
 		onCooldown = false;
@@ -1749,11 +1755,11 @@
 			if (match.index === 1) {
 				// Basically restores it to its original public album link
 				url = `${match.result[1]}${match.result[2]}/a/${match.result[3]}`;
+				opts.updateUrl = url;
 			}
 
 			opts.id = `${match.result[2]}-${match.result[3]}`;
 			opts.homeUrl = url;
-			opts.updateUrl = url;
 
 			// API will now be always deteremined on-the-fly,
 			// to allow changing this in the future, if required,
@@ -1781,6 +1787,11 @@
 				data = await response.json();
 				opts.remoteType = 2; // assign remote type 2
 			}
+		} else {
+			// Custom JSON
+			const response = await fetch(opts.updateUrl);
+			data = await response.json();
+			opts.remoteType = 0; // assign remote type 0
 		}
 
 		if (!data) {
@@ -1794,7 +1805,7 @@
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
 			if (!silent) {
-				toast('Updating pack information\u2026', { nolog: true });
+				toast('Updating pack information\u2026', { nolog: true, timeout: 1500 });
 			}
 
 			// Only pass update URL, the function will determine by itself what to do with it
@@ -1843,6 +1854,15 @@
 	const showPackInfo = id => {
 		if (!localPacks[id]) return;
 
+		let remoteType = 'N/A';
+		if (typeof localPacks[id].remoteType === 'number') {
+			remoteType = `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType] || 'N/A'}`;
+		} else if (id.startsWith('startswith-')) {
+			remoteType = 'LINE';
+		} else if (id.startsWith('emojis-')) {
+			remoteType = 'LINE Emojis';
+		}
+
 		// Formatting is very particular, so we do this the old-fashioned way
 		/* eslint-disable prefer-template */
 		const content = '**ID:**\n\n' +
@@ -1856,12 +1876,9 @@
 			'**Home URL:**\n\n' +
 			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
 			'**Update URL:**\n\n' +
-			('```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```') + '\n\n' +
+			'```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```\n\n' +
 			'**Remote Type:**\n\n' +
-			(localPacks[id].remoteType
-				? `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType]}`
-				: 'N/A'
-			);
+			remoteType;
 		/* eslint-enable prefer-template */
 
 		Helper.Alerts.show(
@@ -2509,15 +2526,15 @@
 								<div class="preview"
 									style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 								<div class="info">
-									<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
-									<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
+									<span title="{ settings.showPackAppendix ? '' : `ID: ${pack.id}`}">{ pack.name }</span>
+									<span>{ pack.count } stickers{ @html settings.showPackAppendix ? formatPackAppendix(pack.id) : '' }</span>
 								</div>
-								<div class="action{ localPacks[pack.id] && (pack.id.startsWith('custom-') || localPacks[pack.id].updateUrl) ? ' is-tight' : '' }">
+								<div class="action{ localPacks[pack.id] && (isLocalPackID(pack.id) || localPacks[pack.id].updateUrl) ? ' is-tight' : '' }">
 									<button class="button is-danger"
 										on:click="{ () => unsubscribeToPack(pack) }"
 										title="Unsubscribe">Del</button>
 									{ #if localPacks[pack.id] }
-									{ #if pack.id.startsWith('custom-') }
+									{ #if isLocalPackID(pack.id) }
 									<button class="button pack-info"
 										on:click="{ () => showPackInfo(pack.id) }"
 										title="Info">i</button>
@@ -2550,8 +2567,8 @@
 									<div class="preview"
 										style="background-image: { `url(${formatUrl(pack.id, pack.files[0], false, 0)})` }" />
 									<div class="info">
-										<span title="{ settings.hidePackAppendix ? `ID: ${pack.id}` : ''}">{ pack.name }</span>
-										<span>{ pack.count } stickers{ @html settings.hidePackAppendix ? '' : formatPackAppendix(pack.id) }</span>
+										<span title="{ settings.showPackAppendix ? '' : `ID: ${pack.id}`}">{ pack.name }</span>
+										<span>{ pack.count } stickers{ @html settings.showPackAppendix ? formatPackAppendix(pack.id) : '' }</span>
 									</div>
 									<div class="action{ localPacks[pack.id] ? ' is-tight' : '' }">
 										{ #if subscribedPacksSimple.includes(pack.id) }
@@ -2564,7 +2581,7 @@
 											title="Subscribe">Add</button>
 										{ /if }
 										{ #if localPacks[pack.id] }
-										{ #if pack.id.startsWith('custom-') }
+										{ #if isLocalPackID(pack.id) }
 										<button class="button pack-info"
 											on:click="{ () => showPackInfo(pack.id) }"
 											title="Info">i</button>
@@ -2695,10 +2712,10 @@
 								<p>
 									<label>
 										<input
-											name="hidePackAppendix"
+											name="showPackAppendix"
 											type="checkbox"
-											bind:checked={ settings.hidePackAppendix } />
-										Hide pack's appendix in packs list (e.g. its numerical ID)
+											bind:checked={ settings.showPackAppendix } />
+										Show pack's appendix in packs list (e.g. its numerical ID)
 									</label>
 								</p>
 								<p>
@@ -2707,7 +2724,7 @@
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
-										Disable downscaling of manually imported LINE Store packs
+										Disable downscaling of imported LINE packs using <code>images.weserv.nl</code> (this service is known to be blocked by Discord if sending as links)
 									</label>
 								</p>
 								<p>
@@ -2726,6 +2743,15 @@
 											type="checkbox"
 											bind:checked={ settings.alwaysSendAsLink } />
 										Always send stickers as links instead of uploads
+									</label>
+								</p>
+								<p>
+									<label>
+										<input
+											name="maskStickerLink"
+											type="checkbox"
+											bind:checked={ settings.maskStickerLink } />
+										Mask sticker links with <code>[sticker](url)</code> Markdown
 									</label>
 								</p>
 								<p>
@@ -2752,7 +2778,7 @@
 											name="markAsSpoiler"
 											type="checkbox"
 											bind:checked={ settings.markAsSpoiler } />
-										Mark stickers as spoilers when sending
+										Mark stickers as spoilers when sending (does not work when sending stickers as links)
 									</label>
 								</p>
 								<p>
