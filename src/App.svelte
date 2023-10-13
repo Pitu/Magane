@@ -823,12 +823,12 @@
 			let append = sending ? '&h=180p' : '&h=100p';
 			if (localPacks[pack].animated) {
 				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
-				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
+				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
 			}
 			if (!settings.disableDownscale) {
-				// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
-				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+				// Downsizing with wsrv.nl to stay consistent with Magane's built-in packs
+				url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('emojis-')) {
 			/*
@@ -845,12 +845,12 @@
 			let append = sending ? '' : '&h=100p';
 			if (localPacks[pack].animated) {
 				url = url.replace(/\.png/, '_animation.png');
-				// In case one day images.weserv.nl starts properly supporting APNGs -> GIFs
+				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
 			}
 			if (!settings.disableDownscale) {
-				// Downsizing with images.weserv.nl to stay consistent with Magane's built-in packs
-				url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`;
+				// Downsizing with wsrv.nl to stay consistent with Magane's built-in packs
+				url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
 			}
 		} else if (pack.startsWith('custom-')) {
 			// Unified imported custom packs
@@ -2724,7 +2724,7 @@
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
-										Disable downscaling of imported LINE packs using <code>images.weserv.nl</code> (this service is known to be blocked by Discord if sending as links)
+										Disable downscaling of imported LINE packs using <code>wsrv.nl</code> (this service is known to be blocked by Discord if sending as links)
 									</label>
 								</p>
 								<p>
