@@ -497,6 +497,12 @@
 		// Permissions
 		Modules.DiscordConstants = Helper.findByProps('Permissions', 'ActivityTypes', 'StatusTypes');
 		Modules.DiscordPermissions = Helper.find(m => m.ADD_REACTIONS, { searchExports: true });
+		try {
+			const module = Helper.find(m => m.Permissions && m.Permissions.ADMINISTRATOR, { searchExports: true });
+			Modules.PermissionsBits = module.Permissions;
+		} catch {
+			Modules.PermissionsBits = Helper.find(m => typeof m.ADMINISTRATOR === 'bigint', { searchExports: true });
+		}
 		Modules.Permissions = Helper.findByProps('computePermissions');
 		Modules.UserStore = Helper.findByProps('getCurrentUser', 'getUser');
 
@@ -507,7 +513,7 @@
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
 		// TODO Broken...
 		Modules.UploadObject = Helper.find(
-			m => m.prototype && m.prototype.upload && m.prototype.getSize,
+			m => m.prototype && m.prototype.upload && m.prototype.cancel,
 			{ searchExports: true }
 		);
 		Modules.React = Helper.findByProps('createElement', 'version');
@@ -906,14 +912,7 @@
 		// Always true in non-guild channels (e.g. DMs)
 		if (!permission || !context.guild_id) return true;
 
-		/* // TODO Broken...
-		return Modules.Permissions.can({
-			permission: Modules.DiscordPermissions[permission],
-			user,
-			context
-		});
-		*/
-		return true;
+		return Modules.Permissions.can(Modules.PermissionsBits[permission], context);
 	};
 
 	const sendSticker = async (pack, id, event) => {
@@ -1005,6 +1004,7 @@
 				const file = new File([blob], filename);
 				log(`Sending sticker as ${filename}\u2026`);
 
+				// TODO Broken...
 				Modules.MessageUpload.uploadFiles({
 					channelId,
 					draftType: 0,
