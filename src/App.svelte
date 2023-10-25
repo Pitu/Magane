@@ -167,8 +167,8 @@
 	};
 
 	const coords = { top: 0, left: 0 };
-	const selectorVoiceChatWrapper = '[class^="channelChatWrapper-"]';
-	const selectorTextArea = '[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled-"])';
+	const selectorVoiceChatWrapper = '[class^="chatLayerWrapper_"]';
+	const selectorTextArea = '[class^="channelTextArea_"]:not([class*="channelTextAreaDisabled_"])';
 	let main = null;
 	let base = null;
 	let forceHideMagane = false;
@@ -505,6 +505,7 @@
 		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
+		// TODO Broken...
 		Modules.UploadObject = Helper.find(
 			m => m.prototype && m.prototype.upload && m.prototype.getSize,
 			{ searchExports: true }
@@ -905,11 +906,14 @@
 		// Always true in non-guild channels (e.g. DMs)
 		if (!permission || !context.guild_id) return true;
 
+		/* // TODO Broken...
 		return Modules.Permissions.can({
 			permission: Modules.DiscordPermissions[permission],
 			user,
 			context
 		});
+		*/
+		return true;
 	};
 
 	const sendSticker = async (pack, id, event) => {
@@ -1398,6 +1402,7 @@
 				editPack,
 				deletePack,
 				searchPacks,
+				Helper,
 				Modules,
 				hasPermission
 			};
