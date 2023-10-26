@@ -218,7 +218,7 @@
 		useLeftToolbar: false,
 		showPackAppendix: false,
 		disableDownscale: false,
-		disableImportedObfuscation: false,
+		disableUploadObfuscation: false,
 		alwaysSendAsLink: false,
 		maskStickerLink: false,
 		ctrlInvertSendBehavior: false,
@@ -511,11 +511,7 @@
 		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
-		// TODO Broken...
-		Modules.UploadObject = Helper.find(
-			m => m.prototype && m.prototype.upload && m.prototype.cancel,
-			{ searchExports: true }
-		);
+		Modules.UploadUI = Helper.findByProps('showUploadFileSizeExceededError', 'promptToUpload');
 		Modules.React = Helper.findByProps('createElement', 'version');
 	};
 
@@ -899,18 +895,19 @@
 		}
 	};
 
-	const hasPermission = (permission, channelId) => {
+	const hasPermission = (permission, context) => {
 		// Always true if could not fetch the necessary modules
-		if (!Modules.DiscordPermissions || !Modules.Permissions || !Modules.UserStore || !Modules.ChannelStore) {
+		if (!Modules.DiscordPermissions || !Modules.Permissions || !Modules.UserStore) {
 			return true;
 		}
 
 		const user = Modules.UserStore.getCurrentUser();
-		const context = Modules.ChannelStore.getChannel(channelId);
 		if (!user) return false;
 
 		// Always true in non-guild channels (e.g. DMs)
-		if (!permission || !context.guild_id) return true;
+		if (!permission || !context.guild_id || context.isDM() || context.isGroupDM()) {
+			return true;
+		}
 
 		return Modules.Permissions.can(Modules.PermissionsBits[permission], context);
 	};
@@ -925,10 +922,6 @@
 		onCooldown = true;
 
 		try {
-			// const channelId = Modules.SelectedChannelStore.getChannelId();
-			// Good ol' reliable
-			// const channelId = window.location.href.split('/').slice(-1)[0];
-
 			// If multiple active channels (i.e. split-view), SelectedChannelStore will only return the main channel,
 			// so determining through active component's textArea instance is more reliable, if available.
 			let channelId;
@@ -938,6 +931,11 @@
 				channelId = textAreaInstance.stateNode.props.channel.id;
 			} else if (Modules.SelectedChannelStore) {
 				channelId = Modules.SelectedChannelStore.getChannelId();
+			}
+
+			let channel;
+			if (Modules.ChannelStore) {
+				channel = Modules.ChannelStore.getChannel(channelId);
 			}
 
 			// Magane will also appear in Create Thread screen,
@@ -952,7 +950,6 @@
 				return toastError('You do not have permission to send message in this channel.');
 			}
 
-			toast('Sending\u2026', { nolog: true });
 			if (settings.closeWindowOnSend) {
 				// eslint-disable-next-line no-use-before-define
 				toggleStickerWindow(false, activeComponent);
@@ -978,8 +975,11 @@
 				sendAsLink = !sendAsLink;
 			}
 
-			if (!sendAsLink && hasPermission('ATTACH_FILES', channelId)) {
-				log(`Fetching sticker from remote: ${url}`);
+			// Always send as link if channel instance is not available (due to missing module)
+			if (!sendAsLink && channel && hasPermission('ATTACH_FILES', channel)) {
+				toast('Fetching sticker from remote\u2026', { timeout: 1500 });
+
+				log(`Fetching: ${url}`);
 				const response = await fetch(url, { cache: 'force-cache' });
 				const blob = await response.blob();
 
@@ -987,15 +987,12 @@
 				if (typeof pack === 'string') {
 					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 						filename = filename.replace(/\.png$/i, '.gif');
-						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
-					} else if (pack.startsWith('custom-')) {
-						if (settings.disableImportedObfuscation) {
-							filename = id;
-						} else {
-							const ext = id.match(/(\.\w+)$/);
-							filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
-						}
 					}
+				}
+
+				if (!settings.disableUploadObfuscation) {
+					const ext = id.match(/(\.\w+)$/);
+					filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
 				}
 
 				if (settings.markAsSpoiler) {
@@ -1004,25 +1001,16 @@
 				const file = new File([blob], filename);
 				log(`Sending sticker as ${filename}\u2026`);
 
-				// TODO Broken...
-				Modules.MessageUpload.uploadFiles({
-					channelId,
-					draftType: 0,
-					hasSpoiler: false,
-					options: messageOptions || {},
-					parsedMessage: {
-						content: messageContent
-					},
-					uploads: [
-						new Modules.UploadObject({
-							file,
-							platform: 1
-						}, channelId, false, 0)
-					]
-				});
-			} else if (settings.ignoreEmbedLinksPermission || hasPermission('EMBED_LINKS', channelId)) {
+				// Immediately after the command finishes, Discord clears all input, including pending attachments.
+				// Thus, setTimeout is needed to make this execute after Discord cleared the input
+				setTimeout(() => Modules.UploadUI.promptToUpload([file], channel, 0), 10);
+			} else if (settings.ignoreEmbedLinksPermission || (channel && hasPermission('EMBED_LINKS', channel))) {
 				if (!sendAsLink) {
-					toastWarn('You do not have permission to attach files, sending sticker as link\u2026');
+					if (channel) {
+						toastWarn('You do not have permission to attach files, sending sticker as link\u2026');
+					} else {
+						toastWarn('Unable to fetch ChannelStore module, sending sticker as link\u2026');
+					}
 				}
 
 				let append = url;
@@ -1034,6 +1022,16 @@
 				Modules.MessageUtils._sendMessage(channelId, {
 					content: `${messageContent} ${append}`.trim()
 				}, messageOptions || {});
+
+				// Clear chat input if required
+				if (!settings.disableSendingWithChatInput && textAreaInstance) {
+					log('Clearing chat input\u2026');
+					textAreaInstance.stateNode.setState({
+						textValue: '',
+						// richValue: modules.richUtils.toRichValue('')
+						richValue: [{ type: 'line', children: [{ text: '' }] }]
+					});
+				}
 			} else {
 				toastError('You do not have permissions to attach files nor embed links.');
 			}
@@ -1052,16 +1050,6 @@
 				// Refresh UI
 				// eslint-disable-next-line no-use-before-define
 				updateFrequentlyUsed();
-			}
-
-			// Clear chat input if required
-			if (!settings.disableSendingWithChatInput && textAreaInstance) {
-				log('Clearing chat input\u2026');
-				textAreaInstance.stateNode.setState({
-					textValue: '',
-					// richValue: modules.richUtils.toRichValue('')
-					richValue: [{ type: 'line', children: [{ text: '' }] }]
-				});
 			}
 		} catch (error) {
 			console.error(error);
@@ -2735,10 +2723,10 @@
 								<p>
 									<label>
 										<input
-											name="disableImportedObfuscation"
+											name="disableUploadObfuscation"
 											type="checkbox"
-											bind:checked={ settings.disableImportedObfuscation } />
-										Disable obfuscation of files names for imported custom packs (obfuscation happens only for uploads)
+											bind:checked={ settings.disableUploadObfuscation } />
+										Disable obfuscation of files names for uploaded stickers
 									</label>
 								</p>
 								<p>
@@ -2783,7 +2771,7 @@
 											name="markAsSpoiler"
 											type="checkbox"
 											bind:checked={ settings.markAsSpoiler } />
-										Mark stickers as spoilers when sending (does not work when sending stickers as links)
+										Mark as spoiler when sending stickers as uploads
 									</label>
 								</p>
 								<p>
@@ -2801,7 +2789,7 @@
 											name="disableSendingWithChatInput"
 											type="checkbox"
 											bind:checked={ settings.disableSendingWithChatInput } />
-										Do not send text chat input alongside sticker
+										Do not include chat input when sending stickers as links
 									</label>
 								</p>
 							</div>
