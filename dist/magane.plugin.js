@@ -1539,9 +1539,9 @@ function create_fragment$1(ctx) {
 			t65 = text("\n\t\t\t\t\t\t\t\t\t\tShow pack's appendix in packs list (e.g. its numerical ID)"), 
 			t66 = space(), p18 = element("p"), label6 = element("label"), input8 = element("input"), 
 			t67 = text("\n\t\t\t\t\t\t\t\t\t\tDisable downscaling of imported LINE packs using "), 
-			code1 = element("code"), code1.textContent = "images.weserv.nl", t69 = text(" (this service is known to be blocked by Discord if sending as links)"), 
+			code1 = element("code"), code1.textContent = "wsrv.nl", t69 = text(" (this service is known to be blocked by Discord if sending as links)"), 
 			t70 = space(), p19 = element("p"), label7 = element("label"), input9 = element("input"), 
-			t71 = text("\n\t\t\t\t\t\t\t\t\t\tDisable obfuscation of files names for imported custom packs (obfuscation happens only for uploads)"), 
+			t71 = text("\n\t\t\t\t\t\t\t\t\t\tDisable obfuscation of files names for uploaded stickers"), 
 			t72 = space(), p20 = element("p"), label8 = element("label"), input10 = element("input"), 
 			t73 = text("\n\t\t\t\t\t\t\t\t\t\tAlways send stickers as links instead of uploads"), 
 			t74 = space(), p21 = element("p"), label9 = element("label"), input11 = element("input"), 
@@ -1550,11 +1550,11 @@ function create_fragment$1(ctx) {
 			label10 = element("label"), input12 = element("input"), t79 = text("\n\t\t\t\t\t\t\t\t\t\tAllow inverting send behavior if holding Ctrl when sending stickers (if always send as links is enabled, holding Ctrl when sending will instead send as uploads, and vice versa)"), 
 			t80 = space(), p23 = element("p"), label11 = element("label"), input13 = element("input"), 
 			t81 = text("\n\t\t\t\t\t\t\t\t\t\tIgnore missing embed links permission"), t82 = space(), 
-			p24 = element("p"), label12 = element("label"), input14 = element("input"), t83 = text("\n\t\t\t\t\t\t\t\t\t\tMark stickers as spoilers when sending (does not work when sending stickers as links)"), 
+			p24 = element("p"), label12 = element("label"), input14 = element("input"), t83 = text("\n\t\t\t\t\t\t\t\t\t\tMark as spoiler when sending stickers as uploads"), 
 			t84 = space(), p25 = element("p"), label13 = element("label"), input15 = element("input"), 
 			t85 = text("\n\t\t\t\t\t\t\t\t\t\tDo not warn if viewport height is insufficient"), 
 			t86 = space(), p26 = element("p"), label14 = element("label"), input16 = element("input"), 
-			t87 = text("\n\t\t\t\t\t\t\t\t\t\tDo not send text chat input alongside sticker"), 
+			t87 = text("\n\t\t\t\t\t\t\t\t\t\tDo not include chat input when sending stickers as links"), 
 			t88 = space(), div20 = element("div"), p27 = element("p"), p27.textContent = "Frequently Used", 
 			t90 = space(), p28 = element("p"), p28.textContent = "Maximum amount of the most frequently used stickers to list on Frequently Used section.", 
 			t92 = space(), p29 = element("p"), p29.innerHTML = "Set to <code>0</code> to completely disable the section and stickers usage counter.", 
@@ -1595,7 +1595,7 @@ function create_fragment$1(ctx) {
 			attr(input4, "name", "disableToasts"), attr(input4, "type", "checkbox"), attr(input5, "name", "closeWindowOnSend"), 
 			attr(input5, "type", "checkbox"), attr(input6, "name", "useLeftToolbar"), attr(input6, "type", "checkbox"), 
 			attr(input7, "name", "showPackAppendix"), attr(input7, "type", "checkbox"), attr(input8, "name", "disableDownscale"), 
-			attr(input8, "type", "checkbox"), attr(input9, "name", "disableImportedObfuscation"), 
+			attr(input8, "type", "checkbox"), attr(input9, "name", "disableUploadObfuscation"), 
 			attr(input9, "type", "checkbox"), attr(input10, "name", "alwaysSendAsLink"), attr(input10, "type", "checkbox"), 
 			attr(input11, "name", "maskStickerLink"), attr(input11, "type", "checkbox"), attr(input12, "name", "ctrlInvertSendBehavior"), 
 			attr(input12, "type", "checkbox"), attr(input13, "name", "ignoreEmbedLinksPermission"), 
@@ -1655,7 +1655,7 @@ function create_fragment$1(ctx) {
 			append(label5, t65), append(div19, t66), append(div19, p18), append(p18, label6), 
 			append(label6, input8), input8.checked = ctx[20].disableDownscale, append(label6, t67), 
 			append(label6, code1), append(label6, t69), append(div19, t70), append(div19, p19), 
-			append(p19, label7), append(label7, input9), input9.checked = ctx[20].disableImportedObfuscation, 
+			append(p19, label7), append(label7, input9), input9.checked = ctx[20].disableUploadObfuscation, 
 			append(label7, t71), append(div19, t72), append(div19, p20), append(p20, label8), 
 			append(label8, input10), input10.checked = ctx[20].alwaysSendAsLink, append(label8, t73), 
 			append(div19, t74), append(div19, p21), append(p21, label9), append(label9, input11), 
@@ -1724,7 +1724,7 @@ function create_fragment$1(ctx) {
 			1048576 & dirty[0] && (input2.checked = ctx[20].disableUpdateCheck), 1048576 & dirty[0] && (input3.checked = ctx[20].enableWindowMagane), 
 			1048576 & dirty[0] && (input4.checked = ctx[20].disableToasts), 1048576 & dirty[0] && (input5.checked = ctx[20].closeWindowOnSend), 
 			1048576 & dirty[0] && (input6.checked = ctx[20].useLeftToolbar), 1048576 & dirty[0] && (input7.checked = ctx[20].showPackAppendix), 
-			1048576 & dirty[0] && (input8.checked = ctx[20].disableDownscale), 1048576 & dirty[0] && (input9.checked = ctx[20].disableImportedObfuscation), 
+			1048576 & dirty[0] && (input8.checked = ctx[20].disableDownscale), 1048576 & dirty[0] && (input9.checked = ctx[20].disableUploadObfuscation), 
 			1048576 & dirty[0] && (input10.checked = ctx[20].alwaysSendAsLink), 1048576 & dirty[0] && (input11.checked = ctx[20].maskStickerLink), 
 			1048576 & dirty[0] && (input12.checked = ctx[20].ctrlInvertSendBehavior), 1048576 & dirty[0] && (input13.checked = ctx[20].ignoreEmbedLinksPermission), 
 			1048576 & dirty[0] && (input14.checked = ctx[20].markAsSpoiler), 1048576 & dirty[0] && (input15.checked = ctx[20].ignoreViewportSize), 
@@ -1888,7 +1888,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		useLeftToolbar: !1,
 		showPackAppendix: !1,
 		disableDownscale: !1,
-		disableImportedObfuscation: !1,
+		disableUploadObfuscation: !1,
 		alwaysSendAsLink: !1,
 		maskStickerLink: !1,
 		ctrlInvertSendBehavior: !1,
@@ -1938,12 +1938,12 @@ function instance$1($$self, $$props, $$invalidate) {
 					waitForTimeouts[selector] = setTimeout(poll, 500);
 				})();
 			});
-		})('[class^="channelTextArea-"]:not([class*="channelTextAreaDisabled-"])', {
+		})('[class^="channelTextArea_"]:not([class*="channelTextAreaDisabled_"])', {
 			logname: "textarea",
 			assert: element => {
 				let valid = Boolean(element.querySelector('[class^="buttons"]'));
 				if (valid) {
-					const voiceChatWrapper = document.querySelector('[class^="channelChatWrapper-"]');
+					const voiceChatWrapper = document.querySelector('[class^="chatLayerWrapper_"]');
 					voiceChatWrapper && (valid = voiceChatWrapper.contains(element));
 				}
 				return valid;
@@ -2099,12 +2099,12 @@ function instance$1($$self, $$props, $$invalidate) {
 			url = "https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true".replace(/%id%/g, id.split(".")[0]);
 			let append = sending ? "&h=180p" : "&h=100p";
 			localPacks[pack].animated && (url = url.replace(/sticker(@2x)?\.png/, "sticker_animation$1.png"), 
-			append += "&output=gif"), settings.disableDownscale || (url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`);
+			append += "&output=gif"), settings.disableDownscale || (url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`);
 		} else if (pack.startsWith("emojis-")) {
 			url = "https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png".replace(/%pack%/g, pack.split("-")[1]).replace(/%id%/g, id.split(".")[0]);
 			let append = sending ? "" : "&h=100p";
 			localPacks[pack].animated && (url = url.replace(/\.png/, "_animation.png"), append += "&output=gif"), 
-			settings.disableDownscale || (url = `https://images.weserv.nl/?url=${encodeURIComponent(url)}${append}`);
+			settings.disableDownscale || (url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`);
 		} else if (pack.startsWith("custom-")) {
 			if (!sending && Array.isArray(localPacks[pack].thumbs)) {
 				if (localPacks[pack].thumbs.length && ("number" != typeof thumbIndex && (thumbIndex = localPacks[pack].files.findIndex(file => file === id)), 
@@ -2113,14 +2113,9 @@ function instance$1($$self, $$props, $$invalidate) {
 			"string" == typeof localPacks[pack].template && (url = localPacks[pack].template.replace(/%pack%/g, pack.replace("custom-", "")).replace(/%id%/g, url));
 		}
 		return url;
-	}, hasPermission = (permission, channelId) => {
-		if (!(Modules.DiscordPermissions && Modules.Permissions && Modules.UserStore && Modules.ChannelStore)) return !0;
-		const user = Modules.UserStore.getCurrentUser(), context = Modules.ChannelStore.getChannel(channelId);
-		return !!user && (!permission || !context.guild_id || Modules.Permissions.can({
-			permission: Modules.DiscordPermissions[permission],
-			user,
-			context
-		}));
+	}, hasPermission = (permission, context) => {
+		if (!Modules.DiscordPermissions || !Modules.Permissions || !Modules.UserStore) return !0;
+		return !!Modules.UserStore.getCurrentUser() && (!(permission && context.guild_id && !context.isDM() && !context.isGroupDM()) || Modules.Permissions.can(Modules.PermissionsBits[permission], context));
 	}, sendSticker = async (pack, id, event) => {
 		if (onCooldown) return toastWarn("Sending sticker is still on cooldown…", {
 			timeout: 1500
@@ -2136,12 +2131,12 @@ function instance$1($$self, $$props, $$invalidate) {
 					cursor = cursor.return;
 				}
 			})(activeComponent.textArea);
+			let channel;
 			if (textAreaInstance ? channelId = textAreaInstance.stateNode.props.channel.id : Modules.SelectedChannelStore && (channelId = Modules.SelectedChannelStore.getChannelId()), 
+			Modules.ChannelStore && (channel = Modules.ChannelStore.getChannel(channelId)), 
 			!channelId) return onCooldown = !1, toastError("Unable to determine channel ID. Is this a pending Thread creation?");
 			if (!hasPermission("SEND_MESSAGES", channelId)) return onCooldown = !1, toastError("You do not have permission to send message in this channel.");
-			toast("Sending…", {
-				nolog: !0
-			}), settings.closeWindowOnSend && toggleStickerWindow(!1, activeComponent);
+			settings.closeWindowOnSend && toggleStickerWindow(!1, activeComponent);
 			const url = formatUrl(pack, id, !0);
 			let messageOptions, messageContent = "";
 			if (!settings.disableSendingWithChatInput && Modules.DraftStore && (messageContent = Modules.DraftStore.getDraft(channelId, 0)), 
@@ -2151,38 +2146,38 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 			let sendAsLink = settings.alwaysSendAsLink;
 			if (event && event.ctrlKey && settings.ctrlInvertSendBehavior && (sendAsLink = !sendAsLink), 
-			!sendAsLink && hasPermission("ATTACH_FILES", channelId)) {
-				log("Fetching sticker from remote: " + url);
+			!sendAsLink && channel && hasPermission("ATTACH_FILES", channel)) {
+				toast("Fetching sticker from remote…", {
+					timeout: 1000
+				}), log("Fetching: " + url);
 				const response = await fetch(url, {
 					cache: "force-cache"
 				}), blob = await response.blob();
 				let filename = id;
-				if ("string" == typeof pack) if (localPacks[pack].animated && (pack.startsWith("startswith-") || pack.startsWith("emojis-"))) filename = filename.replace(/\.png$/i, ".gif"), 
-				toastWarn("Animated stickers/emojis from LINE Store currently cannot be animated."); else if (pack.startsWith("custom-")) if (settings.disableImportedObfuscation) filename = id; else {
+				if ("string" == typeof pack && localPacks[pack].animated && (pack.startsWith("startswith-") || pack.startsWith("emojis-")) && (filename = filename.replace(/\.png$/i, ".gif"), 
+				toastWarn("Animated stickers/emojis from LINE Store currently cannot be animated.")), 
+				!settings.disableUploadObfuscation) {
 					const ext = id.match(/(\.\w+)$/);
 					filename = `${Date.now().toString()}${ext ? ext[1] : ""}`;
 				}
 				settings.markAsSpoiler && (filename = "SPOILER_" + filename);
 				const file = new File([ blob ], filename);
-				log(`Sending sticker as ${filename}…`), Modules.MessageUpload.uploadFiles({
-					channelId,
-					draftType: 0,
-					hasSpoiler: !1,
-					options: messageOptions || {},
-					parsedMessage: {
-						content: messageContent
-					},
-					uploads: [ new Modules.UploadObject({
-						file,
-						platform: 1
-					}, channelId, !1, 0) ]
-				});
-			} else if (settings.ignoreEmbedLinksPermission || hasPermission("EMBED_LINKS", channelId)) {
-				sendAsLink || toastWarn("You do not have permission to attach files, sending sticker as link…");
+				log(`Sending sticker as ${filename}…`), setTimeout(() => Modules.UploadUI.promptToUpload([ file ], channel, 0), 10);
+			} else if (settings.ignoreEmbedLinksPermission || channel && hasPermission("EMBED_LINKS", channel)) {
+				sendAsLink || toastWarn(channel ? "You do not have permission to attach files, sending sticker as link…" : "Unable to fetch ChannelStore module, sending sticker as link…");
 				let append = url;
 				settings.maskStickerLink && (append = `[sticker](${append})`), Modules.MessageUtils._sendMessage(channelId, {
 					content: `${messageContent} ${append}`.trim()
-				}, messageOptions || {});
+				}, messageOptions || {}), !settings.disableSendingWithChatInput && textAreaInstance && (log("Clearing chat input…"), 
+				textAreaInstance.stateNode.setState({
+					textValue: "",
+					richValue: [ {
+						type: "line",
+						children: [ {
+							text: ""
+						} ]
+					} ]
+				}));
 			} else toastError("You do not have permissions to attach files nor embed links.");
 			if (0 !== settings.frequentlyUsed) {
 				const last = stickersStats.findIndex(sticker => sticker.pack === pack && sticker.id === id);
@@ -2194,16 +2189,6 @@ function instance$1($$self, $$props, $$invalidate) {
 				}) : (stickersStats[last].used++, stickersStats[last].lastUsed = Date.now()), saveToLocalStorage("magane.stats", stickersStats), 
 				updateFrequentlyUsed();
 			}
-			!settings.disableSendingWithChatInput && textAreaInstance && (log("Clearing chat input…"), 
-			textAreaInstance.stateNode.setState({
-				textValue: "",
-				richValue: [ {
-					type: "line",
-					children: [ {
-						text: ""
-					} ]
-				} ]
-			}));
 		} catch (error) {
 			console.error(error), toastError(error.toString(), {
 				nolog: !0,
@@ -2352,6 +2337,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			editPack,
 			deletePack,
 			searchPacks,
+			Helper,
 			Modules,
 			hasPermission
 		} : window.magane instanceof Node || delete window.magane;
@@ -2372,16 +2358,28 @@ function instance$1($$self, $$props, $$invalidate) {
 		}
 		const startTime = Date.now();
 		try {
-			toast("Loading Magane…"), Modules.ChannelStore = Helper.findByProps("getChannel", "getDMFromUserId"), 
-			Modules.SelectedChannelStore = Helper.findByProps("getLastSelectedChannelId"), Modules.DiscordConstants = Helper.findByProps("Permissions", "ActivityTypes", "StatusTypes"), 
-			Modules.DiscordPermissions = Helper.find(m => m.ADD_REACTIONS, {
-				searchExports: !0
-			}), Modules.Permissions = Helper.findByProps("computePermissions"), Modules.UserStore = Helper.findByProps("getCurrentUser", "getUser"), 
-			Modules.DraftStore = Helper.findByProps("getDraft", "getState"), Modules.MessageUpload = Helper.findByProps("instantBatchUpload"), 
-			Modules.MessageUtils = Helper.findByProps("sendMessage"), Modules.PendingReplyStore = Helper.findByProps("getPendingReply"), 
-			Modules.UploadObject = Helper.find(m => m.prototype && m.prototype.upload && m.prototype.getSize, {
-				searchExports: !0
-			}), Modules.React = Helper.findByProps("createElement", "version"), (() => {
+			toast("Loading Magane…"), (() => {
+				Modules.ChannelStore = Helper.findByProps("getChannel", "getDMFromUserId"), Modules.SelectedChannelStore = Helper.findByProps("getLastSelectedChannelId"), 
+				Modules.DiscordConstants = Helper.findByProps("Permissions", "ActivityTypes", "StatusTypes"), 
+				Modules.DiscordPermissions = Helper.find(m => m.ADD_REACTIONS, {
+					searchExports: !0
+				});
+				try {
+					const module = Helper.find(m => m.Permissions && m.Permissions.ADMINISTRATOR, {
+						searchExports: !0
+					});
+					Modules.PermissionsBits = module.Permissions;
+				} catch {
+					Modules.PermissionsBits = Helper.find(m => "bigint" == typeof m.ADMINISTRATOR, {
+						searchExports: !0
+					});
+				}
+				Modules.Permissions = Helper.findByProps("computePermissions"), Modules.UserStore = Helper.findByProps("getCurrentUser", "getUser"), 
+				Modules.DraftStore = Helper.findByProps("getDraft", "getState"), Modules.MessageUpload = Helper.findByProps("instantBatchUpload"), 
+				Modules.MessageUtils = Helper.findByProps("sendMessage"), Modules.PendingReplyStore = Helper.findByProps("getPendingReply"), 
+				Modules.UploadUI = Helper.findByProps("showUploadFileSizeExceededError", "promptToUpload"), 
+				Modules.React = Helper.findByProps("createElement", "version");
+			})(), (() => {
 				const iframe = document.createElement("iframe");
 				document.head.append(iframe), storage = Object.getOwnPropertyDescriptor(iframe.contentWindow.frames, "localStorage").get.call(window), 
 				iframe.remove();
@@ -2856,7 +2854,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	}, function input8_change_handler() {
 		settings.disableDownscale = this.checked, $$invalidate(20, settings);
 	}, function input9_change_handler() {
-		settings.disableImportedObfuscation = this.checked, $$invalidate(20, settings);
+		settings.disableUploadObfuscation = this.checked, $$invalidate(20, settings);
 	}, function input10_change_handler() {
 		settings.alwaysSendAsLink = this.checked, $$invalidate(20, settings);
 	}, function input11_change_handler() {
