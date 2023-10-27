@@ -977,7 +977,7 @@
 
 			// Always send as link if channel instance is not available (due to missing module)
 			if (!sendAsLink && channel && hasPermission('ATTACH_FILES', channel)) {
-				toast('Fetching sticker from remote\u2026', { timeout: 1500 });
+				toast('Fetching sticker from remote\u2026', { timeout: 1000 });
 
 				log(`Fetching: ${url}`);
 				const response = await fetch(url, { cache: 'force-cache' });
@@ -987,6 +987,7 @@
 				if (typeof pack === 'string') {
 					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 						filename = filename.replace(/\.png$/i, '.gif');
+						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
 					}
 				}
 
