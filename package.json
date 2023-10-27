@@ -1,69 +1,35 @@
 {
-  "name": "magane",
-  "version": "3.2.16",
-  "description": "A lie about a lie... It turns inside-out on itself.",
-  "author": "Pitu <heyitspitu@gmail.com>",
-  "license": "MIT",
-  "contributors": [
-    {
-      "name": "iCrawl",
-      "email": "icrawltogo@gmail.com"
-    },
-    {
-      "name": "BobbyWibowo",
-      "email": "bobby@fiery.me"
-    }
-  ],
-  "scripts": {
-    "build-bd": "rollup -c rollup-bd.config.js",
-    "dev-bd": "rollup -c rollup-bd.config.js -w",
-    "build-vc": "rollup -c rollup-vencord.config.js",
-    "dev-vc": "rollup -c rollup-vencord.config.js -w"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^11.1.0",
-    "@rollup/plugin-node-resolve": "^11.2.1",
-    "@rollup/plugin-replace": "^5.0.2",
-    "eslint": "^6.8.0",
-    "eslint-config-aqua": "^7.2.0",
-    "eslint-plugin-svelte3": "^2.7.3",
-    "postcss-preset-env": "^6.7.0",
-    "rollup": "^1.32.1",
-    "rollup-plugin-license": "^2.8.1",
-    "rollup-plugin-livereload": "^1.0.0",
-    "rollup-plugin-postcss": "^v2.8.2",
-    "rollup-plugin-serve": "^1.1.0",
-    "rollup-plugin-svelte": "^6.1.1",
-    "rollup-plugin-terser": "^5.3.0",
-    "sass": "^1.52.3",
-    "semver": "^7.5.3",
-    "svelte": "^3.48.0",
-    "svelte-preprocess": "^4.10.7",
-    "svelte-scrollto": "^0.2.0"
-  },
-  "eslintConfig": {
-    "extends": "aqua/svelte",
-    "env": {
-      "browser": true,
-      "node": true
-    },
-    "rules": {
-      "semi": "error"
-    },
-    "overrides": [
-      {
-        "files": [
-          "*.config.js"
-        ],
-        "env": {
-          "node": true
-        }
-      }
-    ],
-    "ignorePatterns": [
-      "dist/",
-      "dist-dev/"
-    ]
-  },
-  "dependencies": {}
+	"name": "magane",
+	"version": "4.0.0",
+	"description": "A lie about a lie... It turns inside-out on itself.",
+	"author": "Pitu <heyitspitu@gmail.com>",
+	"license": "MIT",
+	"contributors": [
+		{
+			"name": "iCrawl",
+			"email": "icrawltogo@gmail.com"
+		},
+		{
+			"name": "BobbyWibowo",
+			"email": "bobby@fiery.me"
+		}
+	],
+	"scripts": {
+		"build": "webpack --progress --color",
+		"build-bd": "rollup -c rollup-bd.config.js",
+		"dev-bd": "rollup -c rollup-bd.config.js -w",
+		"build-vc": "rollup -c rollup-vencord.config.js",
+		"dev-vc": "rollup -c rollup-vencord.config.js -w"
+	},
+	"devDependencies": {
+		"eslint": "^6.8.0",
+		"eslint-config-neon": "^0.1.57",
+		"prettier": "^3.0.3",
+		"raw-loader": "^4.0.2",
+		"semver": "^7.5.3",
+		"ts-loader": "^9.5.0",
+		"typescript": "^5.2.2",
+		"webpack": "^5.89.0",
+		"webpack-cli": "^5.1.4"
+	}
 }
