@@ -674,3 +674,13 @@ div#maganeButton {
 		margin-right: 2px;
 	}
 }
+
+/* Visually hide Magane button in certain scenarios */
+
+div[class^="submitContainer_"] div#maganeButton { /* create thread */
+	display: none;
+}
+
+div[data-list-item-id^="forum-channel-list-"] div#maganeButton { /* create forum post */
+	display: none;
+}

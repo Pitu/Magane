@@ -167,7 +167,6 @@
 	};
 
 	const coords = { top: 0, left: 0 };
-	const selectorVoiceChatWrapper = '[class^="chatLayerWrapper_"]';
 	const selectorTextArea = '[class^="channelTextArea_"]:not([class*="channelTextAreaDisabled_"])';
 	let main = null;
 	let base = null;
@@ -349,25 +348,8 @@
 		// Wait for new valid textArea(s)
 		const textAreas = await waitFor(selectorTextArea, {
 			logname: 'textarea',
-			assert: element => {
-				// Ensure that the textArea element has a buttons container
-				let valid = Boolean(element.querySelector('[class^="buttons"]'));
-
-				/*
-					If voice channel's chat wrapper is currently active,
-					assert that found element is a child of it, otherwise let waitFor() to continue to poll.
-					This is necesary because Discord does not immediately destroy the old element
-					as it is building a chat wrapper when in a voice channel.
-				*/
-				if (valid) {
-					const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
-					if (voiceChatWrapper) {
-						valid = voiceChatWrapper.contains(element);
-					}
-				}
-
-				return valid;
-			},
+			// Ensure that the textArea element has a buttons container
+			assert: element => Boolean(element.querySelector('[class^="buttons"]')),
 			multiple: true
 		});
 
@@ -921,22 +903,14 @@
 		onCooldown = true;
 
 		try {
-			// If multiple active channels (i.e. split-view), SelectedChannelStore will only return the main channel,
-			// so determining through active component's textArea instance is more reliable, if available.
-			let channelId;
-
 			const textAreaInstance = getTextAreaInstance(activeComponent.textArea);
-			if (textAreaInstance) {
-				channelId = textAreaInstance.stateNode.props.channel.id;
-			} else if (Modules.SelectedChannelStore) {
-				channelId = Modules.SelectedChannelStore.getChannelId();
+			if (!textAreaInstance) {
+				throw new Error('Unable to determine textarea instance.');
 			}
 
-			// Magane will also appear in Create Thread screen,
-			// but at that point the thread has not yet been made, and thus will not have ID.
+			const channelId = textAreaInstance.stateNode.props.channel.id;
 			if (!channelId) {
-				onCooldown = false;
-				return toastError('Unable to determine channel ID. Is this a pending Thread creation?');
+				throw new Error('Unable to determine channel ID associated with the textarea.');
 			}
 
 			let channel;
@@ -945,8 +919,7 @@
 			}
 
 			if (!hasPermission('SEND_MESSAGES', channelId)) {
-				onCooldown = false;
-				return toastError('You do not have permission to send message in this channel.');
+				throw new Error('No permission to send message in this channel.');
 			}
 
 			if (settings.closeWindowOnSend) {
@@ -1039,7 +1012,7 @@
 					content: `${messageContent} ${append}`.trim()
 				}, messageOptions || {});
 			} else {
-				toastError('You do not have permissions to attach files nor embed links.');
+				throw new Error('No permission to attach files nor embed links.');
 			}
 
 			// Clear chat input if required
