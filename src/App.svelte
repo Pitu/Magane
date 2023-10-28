@@ -497,12 +497,9 @@
 		// Permissions
 		Modules.DiscordConstants = Helper.findByProps('Permissions', 'ActivityTypes', 'StatusTypes');
 		Modules.DiscordPermissions = Helper.find(m => m.ADD_REACTIONS, { searchExports: true });
-		try {
-			const module = Helper.find(m => m.Permissions && m.Permissions.ADMINISTRATOR, { searchExports: true });
-			Modules.PermissionsBits = module.Permissions;
-		} catch {
-			Modules.PermissionsBits = Helper.find(m => typeof m.ADMINISTRATOR === 'bigint', { searchExports: true });
-		}
+		const module = Helper.find(m => m.Permissions && typeof m.Permissions.ADMINISTRATOR === 'bigint',
+			{ searchExports: true });
+		Modules.PermissionsBits = module.Permissions;
 		Modules.Permissions = Helper.findByProps('computePermissions');
 		Modules.UserStore = Helper.findByProps('getCurrentUser', 'getUser');
 
