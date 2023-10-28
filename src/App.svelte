@@ -490,25 +490,27 @@
 	};
 
 	const initModules = () => {
-		// Channel store & actions
+		// Stores
 		Modules.ChannelStore = Helper.findByProps('getChannel', 'getDMFromUserId');
 		Modules.SelectedChannelStore = Helper.findByProps('getLastSelectedChannelId');
-
-		// Permissions
-		Modules.DiscordConstants = Helper.findByProps('Permissions', 'ActivityTypes', 'StatusTypes');
-		Modules.DiscordPermissions = Helper.find(m => m.ADD_REACTIONS, { searchExports: true });
-		const module = Helper.find(m => m.Permissions && typeof m.Permissions.ADMINISTRATOR === 'bigint',
-			{ searchExports: true });
-		Modules.PermissionsBits = module.Permissions;
-		Modules.Permissions = Helper.findByProps('computePermissions');
 		Modules.UserStore = Helper.findByProps('getCurrentUser', 'getUser');
 
-		// Misc
+		// Permissions
+		try {
+			const module = Helper.find(m => m.Permissions && typeof m.Permissions.ADMINISTRATOR === 'bigint',
+				{ searchExports: true });
+			Modules.PermissionsBits = module.Permissions;
+		} catch {} // do nothing
+		Modules.Permissions = Helper.findByProps('computePermissions');
+
+		// Messages & Uploads
+		Modules.CloudUtils = Helper.findByProps('CloudUpload');
 		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
 		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
-		Modules.UploadUI = Helper.findByProps('showUploadFileSizeExceededError', 'promptToUpload');
+
+		// Misc
 		Modules.React = Helper.findByProps('createElement', 'version');
 	};
 
@@ -894,7 +896,7 @@
 
 	const hasPermission = (permission, context) => {
 		// Always true if could not fetch the necessary modules
-		if (!Modules.DiscordPermissions || !Modules.Permissions || !Modules.UserStore) {
+		if (!Modules.PermissionsBits || !Modules.Permissions || !Modules.UserStore) {
 			return true;
 		}
 
@@ -974,7 +976,7 @@
 
 			// Always send as link if channel instance is not available (due to missing module)
 			if (!sendAsLink && channel && hasPermission('ATTACH_FILES', channel)) {
-				toast('Fetching sticker from remote\u2026', { timeout: 1000 });
+				toast('Fetching sticker\u2026', { timeout: 1000 });
 
 				log(`Fetching: ${url}`);
 				const response = await fetch(url, { cache: 'force-cache' });
@@ -999,9 +1001,24 @@
 				const file = new File([blob], filename);
 				log(`Sending sticker as ${filename}\u2026`);
 
-				// Immediately after the command finishes, Discord clears all input, including pending attachments.
-				// Thus, setTimeout is needed to make this execute after Discord cleared the input
-				setTimeout(() => Modules.UploadUI.promptToUpload([file], channel, 0), 10);
+				toast('Sending\u2026', { timeout: 1000 });
+				Modules.MessageUpload.uploadFiles({
+					channelId,
+					draftType: 0,
+					hasSpoiler: false,
+					options: messageOptions || {},
+					parsedMessage: {
+						content: messageContent
+					},
+					uploads: [
+						new Modules.CloudUtils.CloudUpload({
+							file,
+							isClip: false,
+							// isThumbnail: false,
+							platform: 1
+						}, channelId, false, 0)
+					]
+				});
 			} else if (settings.ignoreEmbedLinksPermission || (channel && hasPermission('EMBED_LINKS', channel))) {
 				if (!sendAsLink) {
 					if (channel) {
@@ -1017,21 +1034,22 @@
 					append = `[sticker](${append})`;
 				}
 
+				toast('Sending\u2026', { timeout: 1000 });
 				Modules.MessageUtils._sendMessage(channelId, {
 					content: `${messageContent} ${append}`.trim()
 				}, messageOptions || {});
-
-				// Clear chat input if required
-				if (!settings.disableSendingWithChatInput && textAreaInstance) {
-					log('Clearing chat input\u2026');
-					textAreaInstance.stateNode.setState({
-						textValue: '',
-						// richValue: modules.richUtils.toRichValue('')
-						richValue: [{ type: 'line', children: [{ text: '' }] }]
-					});
-				}
 			} else {
 				toastError('You do not have permissions to attach files nor embed links.');
+			}
+
+			// Clear chat input if required
+			if (!settings.disableSendingWithChatInput && textAreaInstance) {
+				log('Clearing chat input\u2026');
+				textAreaInstance.stateNode.setState({
+					textValue: '',
+					// richValue: modules.richUtils.toRichValue('')
+					richValue: [{ type: 'line', children: [{ text: '' }] }]
+				});
 			}
 
 			// Update sticker's usage stats if using Frequently Used
