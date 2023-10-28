@@ -12,7 +12,13 @@ import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
 const file = path.resolve(__dirname, production ? 'dist' : 'dist-dev', 'magane.plugin.js');
-const meta = path.resolve(__dirname, 'src/bd-meta.txt');
+const meta = path.resolve(__dirname, 'src/meta.txt');
+const metadata = {
+	name: 'MaganeBD',
+	displayName: 'MaganeBD',
+	description: 'Bringing LINE stickers to Discord in a chaotic way. BetterDiscord edition.',
+	updateUrl: 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js'
+};
 
 export default {
 	input: 'src/bd-main.js',
@@ -85,7 +91,8 @@ export default {
 				content: {
 					file: meta,
 					encoding: 'utf-8'
-				}
+				},
+				data() { return metadata; }
 			}
 		}),
 		{
