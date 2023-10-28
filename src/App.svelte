@@ -932,16 +932,16 @@
 				channelId = Modules.SelectedChannelStore.getChannelId();
 			}
 
-			let channel;
-			if (Modules.ChannelStore) {
-				channel = Modules.ChannelStore.getChannel(channelId);
-			}
-
 			// Magane will also appear in Create Thread screen,
 			// but at that point the thread has not yet been made, and thus will not have ID.
 			if (!channelId) {
 				onCooldown = false;
 				return toastError('Unable to determine channel ID. Is this a pending Thread creation?');
+			}
+
+			let channel;
+			if (Modules.ChannelStore) {
+				channel = Modules.ChannelStore.getChannel(channelId);
 			}
 
 			if (!hasPermission('SEND_MESSAGES', channelId)) {
