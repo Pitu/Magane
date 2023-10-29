@@ -167,7 +167,6 @@
 	};
 
 	const coords = { top: 0, left: 0 };
-	const selectorVoiceChatWrapper = '[class^="chatLayerWrapper_"]';
 	const selectorTextArea = '[class^="channelTextArea_"]:not([class*="channelTextAreaDisabled_"])';
 	let main = null;
 	let base = null;
@@ -349,25 +348,8 @@
 		// Wait for new valid textArea(s)
 		const textAreas = await waitFor(selectorTextArea, {
 			logname: 'textarea',
-			assert: element => {
-				// Ensure that the textArea element has a buttons container
-				let valid = Boolean(element.querySelector('[class^="buttons"]'));
-
-				/*
-					If voice channel's chat wrapper is currently active,
-					assert that found element is a child of it, otherwise let waitFor() to continue to poll.
-					This is necesary because Discord does not immediately destroy the old element
-					as it is building a chat wrapper when in a voice channel.
-				*/
-				if (valid) {
-					const voiceChatWrapper = document.querySelector(selectorVoiceChatWrapper);
-					if (voiceChatWrapper) {
-						valid = voiceChatWrapper.contains(element);
-					}
-				}
-
-				return valid;
-			},
+			// Ensure that the textArea element has a buttons container
+			assert: element => Boolean(element.querySelector('[class^="buttons"]')),
 			multiple: true
 		});
 
@@ -490,28 +472,27 @@
 	};
 
 	const initModules = () => {
-		// Channel store & actions
+		// Stores
 		Modules.ChannelStore = Helper.findByProps('getChannel', 'getDMFromUserId');
 		Modules.SelectedChannelStore = Helper.findByProps('getLastSelectedChannelId');
-
-		// Permissions
-		Modules.DiscordConstants = Helper.findByProps('Permissions', 'ActivityTypes', 'StatusTypes');
-		Modules.DiscordPermissions = Helper.find(m => m.ADD_REACTIONS, { searchExports: true });
-		try {
-			const module = Helper.find(m => m.Permissions && m.Permissions.ADMINISTRATOR, { searchExports: true });
-			Modules.PermissionsBits = module.Permissions;
-		} catch {
-			Modules.PermissionsBits = Helper.find(m => typeof m.ADMINISTRATOR === 'bigint', { searchExports: true });
-		}
-		Modules.Permissions = Helper.findByProps('computePermissions');
 		Modules.UserStore = Helper.findByProps('getCurrentUser', 'getUser');
 
-		// Misc
+		// Permissions
+		try {
+			const module = Helper.find(m => m.Permissions && typeof m.Permissions.ADMINISTRATOR === 'bigint',
+				{ searchExports: true });
+			Modules.PermissionsBits = module.Permissions;
+		} catch {} // do nothing
+		Modules.Permissions = Helper.findByProps('computePermissions');
+
+		// Messages & Uploads
+		Modules.CloudUtils = Helper.findByProps('CloudUpload');
 		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
 		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
-		Modules.UploadUI = Helper.findByProps('showUploadFileSizeExceededError', 'promptToUpload');
+
+		// Misc
 		Modules.React = Helper.findByProps('createElement', 'version');
 	};
 
@@ -897,7 +878,7 @@
 
 	const hasPermission = (permission, context) => {
 		// Always true if could not fetch the necessary modules
-		if (!Modules.DiscordPermissions || !Modules.Permissions || !Modules.UserStore) {
+		if (!Modules.PermissionsBits || !Modules.Permissions || !Modules.UserStore) {
 			return true;
 		}
 
@@ -922,15 +903,14 @@
 		onCooldown = true;
 
 		try {
-			// If multiple active channels (i.e. split-view), SelectedChannelStore will only return the main channel,
-			// so determining through active component's textArea instance is more reliable, if available.
-			let channelId;
-
 			const textAreaInstance = getTextAreaInstance(activeComponent.textArea);
-			if (textAreaInstance) {
-				channelId = textAreaInstance.stateNode.props.channel.id;
-			} else if (Modules.SelectedChannelStore) {
-				channelId = Modules.SelectedChannelStore.getChannelId();
+			if (!textAreaInstance) {
+				throw new Error('Unable to determine textarea instance.');
+			}
+
+			const channelId = textAreaInstance.stateNode.props.channel.id;
+			if (!channelId) {
+				throw new Error('Unable to determine channel ID associated with the textarea.');
 			}
 
 			let channel;
@@ -938,16 +918,8 @@
 				channel = Modules.ChannelStore.getChannel(channelId);
 			}
 
-			// Magane will also appear in Create Thread screen,
-			// but at that point the thread has not yet been made, and thus will not have ID.
-			if (!channelId) {
-				onCooldown = false;
-				return toastError('Unable to determine channel ID. Is this a pending Thread creation?');
-			}
-
 			if (!hasPermission('SEND_MESSAGES', channelId)) {
-				onCooldown = false;
-				return toastError('You do not have permission to send message in this channel.');
+				throw new Error('No permission to send message in this channel.');
 			}
 
 			if (settings.closeWindowOnSend) {
@@ -977,7 +949,7 @@
 
 			// Always send as link if channel instance is not available (due to missing module)
 			if (!sendAsLink && channel && hasPermission('ATTACH_FILES', channel)) {
-				toast('Fetching sticker from remote\u2026', { timeout: 1000 });
+				toast('Fetching sticker\u2026', { timeout: 1000 });
 
 				log(`Fetching: ${url}`);
 				const response = await fetch(url, { cache: 'force-cache' });
@@ -1002,9 +974,24 @@
 				const file = new File([blob], filename);
 				log(`Sending sticker as ${filename}\u2026`);
 
-				// Immediately after the command finishes, Discord clears all input, including pending attachments.
-				// Thus, setTimeout is needed to make this execute after Discord cleared the input
-				setTimeout(() => Modules.UploadUI.promptToUpload([file], channel, 0), 10);
+				toast('Sending\u2026', { timeout: 1000 });
+				Modules.MessageUpload.uploadFiles({
+					channelId,
+					draftType: 0,
+					hasSpoiler: false,
+					options: messageOptions || {},
+					parsedMessage: {
+						content: messageContent
+					},
+					uploads: [
+						new Modules.CloudUtils.CloudUpload({
+							file,
+							isClip: false,
+							// isThumbnail: false,
+							platform: 1
+						}, channelId, false, 0)
+					]
+				});
 			} else if (settings.ignoreEmbedLinksPermission || (channel && hasPermission('EMBED_LINKS', channel))) {
 				if (!sendAsLink) {
 					if (channel) {
@@ -1020,21 +1007,22 @@
 					append = `[sticker](${append})`;
 				}
 
+				toast('Sending\u2026', { timeout: 1000 });
 				Modules.MessageUtils._sendMessage(channelId, {
 					content: `${messageContent} ${append}`.trim()
 				}, messageOptions || {});
-
-				// Clear chat input if required
-				if (!settings.disableSendingWithChatInput && textAreaInstance) {
-					log('Clearing chat input\u2026');
-					textAreaInstance.stateNode.setState({
-						textValue: '',
-						// richValue: modules.richUtils.toRichValue('')
-						richValue: [{ type: 'line', children: [{ text: '' }] }]
-					});
-				}
 			} else {
-				toastError('You do not have permissions to attach files nor embed links.');
+				throw new Error('No permission to attach files nor embed links.');
+			}
+
+			// Clear chat input if required
+			if (!settings.disableSendingWithChatInput && textAreaInstance) {
+				log('Clearing chat input\u2026');
+				textAreaInstance.stateNode.setState({
+					textValue: '',
+					// richValue: modules.richUtils.toRichValue('')
+					richValue: [{ type: 'line', children: [{ text: '' }] }]
+				});
 			}
 
 			// Update sticker's usage stats if using Frequently Used

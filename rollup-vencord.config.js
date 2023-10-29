@@ -1,6 +1,7 @@
 import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import license from 'rollup-plugin-license';
 import { terser } from 'rollup-plugin-terser';
 import replace from '@rollup/plugin-replace';
 import postcss from 'rollup-plugin-postcss';
@@ -11,6 +12,13 @@ import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
 const file = path.resolve(__dirname, production ? 'dist' : 'dist-dev', 'magane.vencord.js');
+const meta = path.resolve(__dirname, 'src/meta.txt');
+const metadata = {
+	name: 'MaganeVencord',
+	displayName: 'MaganeVencord',
+	description: 'Bringing LINE stickers to Discord in a chaotic way. Vencord edition.',
+	updateUrl: 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.vencord.js'
+};
 
 export default {
 	input: 'src/vencord-main.js',
@@ -98,6 +106,16 @@ export default {
 				// This is so hacky, lmao
 				'var vencordMain = definePlugin({': 'export default definePlugin({',
 				'module.exports = vencordMain;': ''
+			}
+		}),
+		license({
+			banner: {
+				commentStyle: 'regular',
+				content: {
+					file: meta,
+					encoding: 'utf-8'
+				},
+				data() { return metadata; }
 			}
 		}),
 		{
