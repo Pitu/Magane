@@ -26,7 +26,7 @@ Currently the best way to get this up and running is by using [BetterDiscord](ht
 
 #### BetterDiscord
 
-- Grab the pre-built plugin file from [https://magane.moe/api/dist/betterdiscord](https://magane.moe/api/dist/.etterdiscord).
+- Grab the pre-built plugin file from [https://magane.moe/api/dist/betterdiscord](https://magane.moe/api/dist/betterdiscord).
 - Place the plugin file into your BetterDiscord's **plugins** directory.
 - Activate Magane from Discord's **User Settings > BetterDiscord > Plugins**.
 
