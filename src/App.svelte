@@ -955,7 +955,8 @@
 				const response = await fetch(url, { cache: 'force-cache' });
 				const blob = await response.blob();
 
-				let filename = id;
+				let filename = id.substring(id.lastIndexOf('/') + 1).split('?')[0];
+
 				if (typeof pack === 'string') {
 					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 						filename = filename.replace(/\.png$/i, '.gif');
@@ -964,7 +965,7 @@
 				}
 
 				if (!settings.disableUploadObfuscation) {
-					const ext = id.match(/(\.\w+)$/);
+					const ext = filename.match(/(\.\w+)$/);
 					filename = `${Date.now().toString()}${ext ? ext[1] : ''}`;
 				}
 
