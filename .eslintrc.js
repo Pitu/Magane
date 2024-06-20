@@ -3,28 +3,28 @@ module.exports = {
 	'env': {
 		browser: true,
 		node: true,
-		es2021: true,
+		es2021: true
 	},
 	'rules': {
-		'comma-dangle': 'off',
+		'comma-dangle': ['error', 'never'],
 		'import/order': 'off',
 		'semi': 'error'
 	},
 	'overrides': [
 		{
 			files: [
-				'*.config.js',
+				'*.config.js'
 			],
 			env: {
-				browser: false,
-			},
-		},
+				browser: false
+			}
+		}
 	],
 	'ignorePatterns': [
 		'dist/',
-		'dist-dev/',
+		'dist-dev/'
 	],
 	'settings': {
-		'svelte3/ignore-warnings': ({ code }) => code === 'a11y-click-events-have-key-events',
+		'svelte3/ignore-warnings': ({ code }) => code === 'a11y-click-events-have-key-events'
 	}
 };
