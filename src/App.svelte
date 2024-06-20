@@ -78,7 +78,7 @@
 							__html: args[1]
 								.replace(/\*\*(.*?)\*\*/gm, '<b>$1</b>')
 								.replace(/__(.*?)__/gm, '<u>$1</u>')
-								.replace(/```\n(.*?)\n```/gsm, '<code>$1</code>')
+								.replace(/```\n(.*?)\n```/gms, '<code>$1</code>')
 								.replace(/\n\n/gm, '<br>')
 						},
 						style: {

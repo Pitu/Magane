@@ -35,7 +35,11 @@ export default {
 		svelte({
 			dev: !production,
 			emitCss: true,
-			preprocess: autoPreprocess()
+			preprocess: autoPreprocess(),
+			onwarn: (warning, handler) => {
+				if (warning.code === 'a11y-click-events-have-key-events') return;
+				handler(warning);
+			}
 		}),
 		postcss({
 			extensions: ['.css', '.scss'],
