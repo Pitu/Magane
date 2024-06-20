@@ -641,7 +641,7 @@
 			baseURL = packs.baseURL;
 		} catch (error) {
 			// Toast and log to console, but allow to continue as-is
-			toastError('Unable to fetch Magane\'s API. Magane will load as-is, but built-in remote packs will temporarily be unavailable.', { timeout: 10000 });
+			toastError('Unable to fetch Magane\'s API. Magane will load as-is, but built-in remote packs will temporarily be unavailable.', { timeout: 12000 });
 			console.error(error);
 		}
 
@@ -891,7 +891,7 @@
 
 	const sendSticker = async (pack, id, event) => {
 		if (onCooldown) {
-			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1500 });
+			return toastWarn('Sending sticker is still on cooldown\u2026', { timeout: 1000 });
 		} else if (!activeComponent) {
 			return toastWarn('Selected text area is not found, please re-open Magane window.');
 		}
@@ -1616,7 +1616,7 @@
 			const _name = localPacks[id].name;
 			const deleted = deletePack(id);
 			if (deleted) {
-				toastSuccess(`Removed pack ${_name}.`, { nolog: true, timeout: 6000 });
+				toastSuccess(`Removed pack ${_name}.`, { nolog: true });
 			}
 		} catch (error) {
 			console.error(error);
@@ -1784,7 +1784,7 @@
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
 			if (!silent) {
-				toast('Updating pack information\u2026', { nolog: true, timeout: 1500 });
+				toast('Updating pack information\u2026', { nolog: true, timeout: 1000 });
 			}
 
 			// Only pass update URL, the function will determine by itself what to do with it
@@ -1821,7 +1821,7 @@
 			}
 
 			if (!silent) {
-				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true });
 			}
 			return stored;
 		} catch (error) {
@@ -1866,50 +1866,11 @@
 		);
 	};
 
-	const parseLinePack = async () => {
-		if (!linePackSearch) return;
-		try {
-			const match = linePackSearch.match(/^(https?:\/\/store\.line\.me\/((sticker|emoji)shop)\/product\/)?([a-z0-9]+)/);
-			if (!match) return toastError('Unsupported LINE Store URL or ID.');
-			toast('Loading pack information\u2026', { nolog: true });
-			let stored;
-			if (match[3] === 'emoji') {
-				// LINE Emojis will only work when using its full URL
-				const id = match[4];
-				const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
-				const props = await response.json();
-				stored = appendEmojisPack({
-					name: props.title,
-					id: props.id,
-					count: props.len,
-					animated: props.hasAnimation || null
-				});
-			} else {
-				// LINE Stickers work with either its full URL or just its ID
-				const id = Number(match[4]);
-				if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
-				const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
-				const props = await response.json();
-				stored = appendPack({
-					name: props.title,
-					firstid: props.first,
-					count: props.len,
-					animated: props.hasAnimation
-				});
-			}
-			toastSuccess(`Added a new pack ${stored.pack.name}. You can now subscribe to it from Packs tab.`, { nolog: true, timeout: 6000 });
-			linePackSearch = null;
-		} catch (error) {
-			console.error(error);
-			toastError(error.toString(), { nolog: true });
-		}
-	};
-
-	const assertRemotePackConsent = (context, onConfirm) => {
+	const assertImportPacksConsent = (context, onConfirm) => {
 		// Markdown, so we do double \n for new line
-		const content = `**Please continue only if you trust the remote packs.**\n\n${context}`;
+		const content = `**Please continue only if you trust these packs.**\n\n${context}`;
 		Helper.Alerts.show(
-			'Import Remote Packs',
+			'Import Packs',
 			content,
 			{
 				confirmText: 'Import',
@@ -1918,6 +1879,66 @@
 				onConfirm
 			}
 		);
+	};
+
+	const parseLinePack = () => {
+		if (!linePackSearch) return;
+
+		const linePackUrls = linePackSearch.split('\n')
+			.map(url => url.trim())
+			.filter(url => url.length);
+
+		if (!linePackUrls.length) return;
+
+		/* eslint-disable-next-line prefer-template */
+		assertImportPacksConsent('URLs:\n\n```\n' + linePackUrls.join('\n') + '\n```', async () => {
+			toast('Importing packs\u2026', { nolog: true, timeout: 1000 });
+			const failed = [];
+			for (const url of linePackUrls) {
+				try {
+					const match = url.match(/^(https?:\/\/store\.line\.me\/((sticker|emoji)shop)\/product\/)?([a-z0-9]+)/);
+					if (!match) throw new Error('Unsupported LINE Store URL or ID.');
+
+					let stored;
+					if (match[3] === 'emoji') {
+						// LINE Emojis will only work when using its full URL
+						const id = match[4];
+						const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
+						const props = await response.json();
+						stored = appendEmojisPack({
+							name: props.title,
+							id: props.id,
+							count: props.len,
+							animated: props.hasAnimation || null
+						});
+					} else {
+						// LINE Stickers work with either its full URL or just its ID
+						const id = Number(match[4]);
+						if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
+						const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
+						const props = await response.json();
+						stored = appendPack({
+							name: props.title,
+							firstid: props.first,
+							count: props.len,
+							animated: props.hasAnimation
+						});
+					}
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
+				} catch (error) {
+					console.error(error);
+					toastError(error.toString(), { nolog: true });
+					failed.push(url);
+				}
+			}
+
+			if (failed.length) {
+				toastError('Failed to add some remote packs. Their URLs have been kept in the input box.');
+				linePackSearch = failed.join('\n');
+			} else {
+				linePackSearch = '';
+			}
+		});
 	};
 
 	const parseRemotePackUrl = () => {
@@ -1930,15 +1951,15 @@
 		if (!remotePackUrls.length) return;
 
 		/* eslint-disable-next-line prefer-template */
-		assertRemotePackConsent('URLs:\n\n```\n' + remotePackUrls.join('\n') + '\n```', async () => {
+		assertImportPacksConsent('URLs:\n\n```\n' + remotePackUrls.join('\n') + '\n```', async () => {
+			toast('Importing packs\u2026', { nolog: true, timeout: 1000 });
 			const failed = [];
 			for (const url of remotePackUrls) {
 				try {
-					toast('Loading pack information\u2026', { nolog: true });
 					const pack = await fetchRemotePack(url);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
@@ -1988,14 +2009,14 @@
 		const fileNames = results.map(result => result.name);
 
 		/* eslint-disable-next-line prefer-template */
-		assertRemotePackConsent('Files:\n\n```\n' + fileNames.join('\n') + '\n```', async () => {
+		assertImportPacksConsent('Files:\n\n```\n' + fileNames.join('\n') + '\n```', async () => {
 			const failedResults = [];
 			for (const result of results) {
 				try {
 					const pack = await processRemotePack(result.data);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 6000 });
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
