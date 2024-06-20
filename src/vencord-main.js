@@ -8,7 +8,7 @@ export default definePlugin({
 	authors: [
 		{
 			id: 176200089226706944n,
-            name: 'Pitu',
+			name: 'Pitu',
 		},
 		{
 			id: 530445553562025984n,
