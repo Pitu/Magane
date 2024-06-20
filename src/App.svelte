@@ -482,7 +482,7 @@
 		Modules.Permissions = Helper.findByProps('computePermissions');
 
 		// Messages & Uploads
-		Modules.CloudUpload = Helper.find(m => m.prototype?.trackUploadFinished, { searchExports: true });
+		Modules.CloudUpload = Helper.find(m => m.prototype && m.prototype.trackUploadFinished, { searchExports: true });
 		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
 		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
