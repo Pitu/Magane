@@ -2458,9 +2458,6 @@
 			</div>
 
 			<div class="stickersModal" style="{ stickerAddModalActive ? '' : 'display: none;' }">
-				<div class="modal-close"
-					on:click="{ () => toggleStickerModal() }"></div>
-
 				<div class="modal-content">
 					<div class="stickersConfig">
 						<div class="tabs">
@@ -2838,6 +2835,9 @@
 						<!-- /tab: Misc -->
 					</div>
 				</div>
+
+				<div class="modal-close"
+					on:click="{ () => toggleStickerModal() }"></div>
 			</div>
 		</div>
 
