@@ -478,15 +478,11 @@
 		Modules.UserStore = Helper.findByProps('getCurrentUser', 'getUser');
 
 		// Permissions
-		try {
-			const module = Helper.find(m => m.Permissions && typeof m.Permissions.ADMINISTRATOR === 'bigint',
-				{ searchExports: true });
-			Modules.PermissionsBits = module.Permissions;
-		} catch {} // do nothing
+		Modules.PermissionsBits = Helper.find(m => typeof m.ADMINISTRATOR === 'bigint', { searchExports: true });
 		Modules.Permissions = Helper.findByProps('computePermissions');
 
 		// Messages & Uploads
-		Modules.CloudUtils = Helper.findByProps('CloudUpload');
+		Modules.CloudUpload = Helper.find(m => m.prototype?.trackUploadFinished, { searchExports: true });
 		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
 		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
@@ -985,10 +981,10 @@
 						content: messageContent
 					},
 					uploads: [
-						new Modules.CloudUtils.CloudUpload({
+						new Modules.CloudUpload({
 							file,
 							isClip: false,
-							// isThumbnail: false,
+							isThumbnail: false,
 							platform: 1
 						}, channelId, false, 0)
 					]
