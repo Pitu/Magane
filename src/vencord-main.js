@@ -5,8 +5,17 @@ const pluginName = 'MaganeVencord';
 
 export default definePlugin({
 	name: pluginName,
-	authors: [], // blank, authors for Vencord plugins must be hard-coded in their repo's Constants
-	description: 'Bringing LINE stickers to Discord in a chaotic way. Vencord-plugin edition.',
+	authors: [
+		{
+			id: 176200089226706944n,
+			name: 'Pitu'
+		},
+		{
+			id: 530445553562025984n,
+			name: 'Bobby'
+		}
+	],
+	description: 'Bringing LINE stickers to Discord in a chaotic way. Vencord edition.',
 
 	log(message, type = 'log') {
 		return console[type]('%c[MaganeVencord]%c', 'color: #3a71c1; font-weight: 700', '', message);

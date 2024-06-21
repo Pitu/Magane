@@ -10,7 +10,7 @@ div#magane {
 	flex-direction: row;
 	height: 44px;
 	position: absolute;
-	z-index: 100;
+	z-index: 1001;
 
 	button, input, select, label, span, p, a, li, ul, div, textarea {
 		font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
@@ -23,7 +23,6 @@ div#magane {
 	}
 
 	div.stickerWindow {
-		z-index: 2000;
 		width: 600px;
 		min-height: 200px;
 		position: fixed;
@@ -96,7 +95,6 @@ div#magane {
 						right: 0;
 						transition: all 0.2s ease;
 						display: none;
-						z-index: 2;
 						&:hover {
 							transform: scale(1.25);
 							svg path {
@@ -227,7 +225,6 @@ div#magane {
 	}
 
 	.stickersModal {
-		z-index: 2001;
 		bottom: 0;
 		left: 0;
 		position: absolute;
@@ -531,7 +528,6 @@ div#magane {
 			min-height: 32px;
 			min-width: 32px;
 			width: 32px;
-			z-index: 1;
 
 			&:before,
 			&:after {
