@@ -11,7 +11,7 @@
 
 You know how LINE and Telegram have this beautiful sticker system where you can send different reactions with just one click? This is a new approach at doing exactly that but on Discord!
 
-[It looks like this](https://chibisafe.moe/owdxQF9m.mp4)
+[It looks like this!](https://chibisafe.moe/owdxQF9m.mp4)
 
 ### How even?
 
@@ -26,23 +26,34 @@ Currently the best way to get this up and running is by using [BetterDiscord](ht
 
 #### BetterDiscord
 
-- Grab the pre-built plugin file from [https://magane.moe/api/dist/betterdiscord](https://magane.moe/api/dist/betterdiscord).
+- Grab Magane's BetterDiscord plugin file from [https://magane.moe/api/dist/betterdiscord](https://magane.moe/api/dist/betterdiscord).
 - Place the plugin file into your BetterDiscord's **plugins** directory.
 - Activate Magane from Discord's **User Settings > BetterDiscord > Plugins**.
 
 #### Vencord
 
 > This is for the more advanced users.  
-> Be advised that Magane's update checker is not available on Vencord.
+> Be advised that Magane's **update checker is not available** on Vencord.  
+> You must manually consult this repo to check for updates! Or just check back whenever it breaks due to Discord's updates...
 
-- Grab the pre-built plugin file, `magane.vencord.js`, from this repo's dist directory, [https://github.com/Pitu/Magane/tree/master/dist](https://github.com/Pitu/Magane/tree/master/dist).
-- Download Vencord git from `https://github.com/Vendicated/Vencord`.
-- Follow its advanced user's installation guide at `https://github.com/Vendicated/Vencord/blob/main/docs/1_INSTALLING.md`.
-- In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
-- Drop Magane plugin into it.
-- Rebuild Vencord (`pnpm build`), then restart your Discord.
-- Optionally, if you had not done it before, you must inject Vencord into your Discord installation (`pnpm inject`).
-- Activate Magane from Discord's **User Settings > Vencord > Plugins**.
+1. Grab Magane's Vencord plugin file from [https://magane.moe/api/dist/vencord](https://magane.moe/api/dist/vencord).
+2. Download Vencord git from `https://github.com/Vendicated/Vencord`.
+3. Follow its advanced user's installation guide at `https://github.com/Vendicated/Vencord/blob/main/docs/1_INSTALLING.md`.
+4. In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
+5. Place Magane's plugin file into it.
+6. Rebuild Vencord (`pnpm build`).
+7. Restart your Discord.
+8. (optional) If you had not done it before, you must inject Vencord into your Discord installation (`pnpm inject`).  
+For those that use **Vesktop**, please see below.
+9. Activate Magane from Discord's **User Settings > Vencord > Plugins**.
+
+#### Vesktop
+
+Follow the same steps as above, until step 6.
+
+Then in your Vesktop, navigate to Discord's **User Settings > Vencord > Vesktop Settings > Vencord Location**. Change its directory to the **dist** sub-directory of your local copy of Vencord git [(preview)](https://chibisafe.moe/In9jAlxF.png). Then just restart Vesktop.
+
+You should now be able to activate Magane from Vesktop's **Plugins** settings.
 
 ### So how exactly do I use it after adding the script?
 
