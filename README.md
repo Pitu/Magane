@@ -38,7 +38,7 @@ Currently the best way to get this up and running is by using [BetterDiscord](ht
 
 1. Grab Magane's Vencord plugin file from [https://magane.moe/api/dist/vencord](https://magane.moe/api/dist/vencord).
 2. Download Vencord git from `https://github.com/Vendicated/Vencord`.
-3. Follow its advanced user's installation guide at `https://github.com/Vendicated/Vencord/blob/main/docs/1_INSTALLING.md`.
+3. Follow its advanced user's installation guide at `https://docs.vencord.dev/installing/custom-plugins/`.
 4. In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
 5. Place Magane's plugin file into it.
 6. Rebuild Vencord (`pnpm build`).
