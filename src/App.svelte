@@ -335,7 +335,7 @@
 
 	const resizeObserverWorker = async entry => {
 		// Check against recorded textArea's size if entry's new size is still valid
-		if (entry && entry.contentRect.width !== 0 && entry.contentRect.height !== 0) {
+		if (entry?.contentRect.width !== 0 && entry?.contentRect.height !== 0) {
 			for (const component of components) {
 				if (component.textArea === entry.target) {
 					// Skip worker only if entry's new width still matches recorded width (ignore height)
@@ -482,9 +482,9 @@
 		Modules.Permissions = Helper.findByProps('computePermissions');
 
 		// Messages & Uploads
-		Modules.CloudUpload = Helper.find(m => m.prototype && m.prototype.trackUploadFinished, { searchExports: true });
+		Modules.CloudUpload = Helper.find(m => m.prototype?.trackUploadFinished, { searchExports: true });
 		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
-		Modules.MessageUpload = Helper.findByProps('instantBatchUpload');
+		Modules.MessageUpload = Helper.findByProps('uploadFiles');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
 
@@ -568,7 +568,7 @@
 
 			const data = await response.text();
 			const match = data.match(/^ \* @version ([a-zA-Z0-9.-]+)$/m);
-			const remoteVersion = match && match[1];
+			const remoteVersion = match?.[1];
 
 			if (remoteVersion) {
 				if (SemverGt(remoteVersion, currentVersion)) {
@@ -865,7 +865,7 @@
 		let cursor = textArea[reactInstanceKey];
 		for (let i = 0; i < MAX_LOOKUP_DEPTH; i++) {
 			if (!cursor) break;
-			if (cursor.stateNode && cursor.stateNode.handleTextareaChange) {
+			if (cursor.stateNode?.handleTextareaChange) {
 				return cursor;
 			}
 			cursor = cursor.return;
@@ -939,7 +939,7 @@
 			}
 
 			let sendAsLink = settings.alwaysSendAsLink;
-			if (event && event.ctrlKey && settings.ctrlInvertSendBehavior) {
+			if (event?.ctrlKey && settings.ctrlInvertSendBehavior) {
 				sendAsLink = !sendAsLink;
 			}
 
@@ -1491,7 +1491,7 @@
 		if (stickerWindow) {
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
 			if (e.target) {
-				if (activeComponent && activeComponent.element.contains(e.target)) return;
+				if (activeComponent?.element.contains(e.target)) return;
 				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
 			}
@@ -1751,14 +1751,14 @@
 			let response = await fetch(downloadUrl + chibisafeSuffix, { cache: 'no-cache' })
 				.catch(response => response); // ignore network errors, mainly CORS
 
-			if (response && (response.status === 200 || response.status === 304)) {
+			if (response?.status === 200 || response?.status === 304) {
 				// Parse as JSON immediately, and assign remote type 1
 				data = await response.json();
 				opts.remoteType = 1;
 			} else {
 				// Fallback to old API for backwards-compatibility,
 				// also to support my lolisafe v3 forks cause im too lazy to update its API.
-				const _status = (response && response.status)
+				const _status = response?.status
 					? `${response.status} ${response.statusText}`.trim()
 					: 'N/A';
 				log(`HTTP error ${_status}, re-trying with: ${downloadUrl}`);
@@ -2141,7 +2141,7 @@
 			}
 		}
 
-		if (event.target && event.target.classList.contains('supress-magane-hotkey')) return;
+		if (event.target?.classList.contains('supress-magane-hotkey')) return;
 		if (components.length) {
 			event.preventDefault();
 			toggleStickerWindow();

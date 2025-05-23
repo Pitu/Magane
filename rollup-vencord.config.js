@@ -2,7 +2,7 @@ import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import license from 'rollup-plugin-license';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import replace from '@rollup/plugin-replace';
 import postcss from 'rollup-plugin-postcss';
 import postcssPresetEnv from 'postcss-preset-env';
@@ -63,7 +63,7 @@ export default {
 		}),
 		commonjs(),
 		production && terser({
-			ecma: 2017,
+			ecma: 2021,
 			compress: {
 				keep_classnames: true,
 				keep_fnames: true,

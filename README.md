@@ -37,21 +37,20 @@ Currently the best way to get this up and running is by using [BetterDiscord](ht
 > You must manually consult this repo to check for updates! Or just check back whenever it breaks due to Discord's updates...
 
 1. Grab Magane's Vencord plugin file from [https://magane.moe/api/dist/vencord](https://magane.moe/api/dist/vencord).
-2. Download Vencord git from `https://github.com/Vendicated/Vencord`.
-3. Follow its advanced user's installation guide at `https://docs.vencord.dev/installing/custom-plugins/`.
-4. In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
-5. Place Magane's plugin file into it.
-6. Rebuild Vencord (`pnpm build`).
-7. Restart your Discord.
-8. (optional) If you had not done it before, you must inject Vencord into your Discord installation (`pnpm inject`).  
+2. Install Vencord from source. Follow its installation guide at [https://docs.vencord.dev/installing/](https://docs.vencord.dev/installing/).
+3. In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
+4. Place Magane's plugin file into it.
+5. Rebuild Vencord (`pnpm build`).
+6. (optional) If you had not done it before, you must inject Vencord into your Discord installation (`pnpm inject`).  
 For those that use **Vesktop**, please see below.
-9. Activate Magane from Discord's **User Settings > Vencord > Plugins**.
+7. Restart your Discord/Vesktop.
+8. Activate Magane from Discord's **User Settings > Vencord > Plugins**.
 
 #### Vesktop
 
 Follow the same steps as above, until step 6.
 
-Then in your Vesktop, navigate to Discord's **User Settings > Vencord > Vesktop Settings > Vencord Location**. Change its directory to the **dist** sub-directory of your local copy of Vencord git [(preview)](https://chibisafe.moe/In9jAlxF.png). Then just restart Vesktop.
+Then in your Vesktop, navigate to Discord's **User Settings > Vencord > Vesktop Settings > Open Developer Settings > Vencord Location**. Change its directory to the **dist** sub-directory of your local copy of Vencord git [(preview)](https://chibisafe.moe/pCX4Qa82.png). Then restart Vesktop.
 
 You should now be able to activate Magane from Vesktop's **Plugins** settings.
 
@@ -60,4 +59,4 @@ You should now be able to activate Magane from Vesktop's **Plugins** settings.
 It's very easy.
 After opening the sticker popup click on the little tool icon and you'll see a list of available sticker packs. Clicking on a sticker pack will subscribe you to it, making every sticker on that pack available on the main window. You can also right click any sticker in the list and add them to your favorites for easy access! To remove one, right click on it again.
 
-Or just watch [the preview](https://chibisafe.moe/owdxQF9m.mp4) again.
+Or watch [the preview](https://chibisafe.moe/owdxQF9m.mp4) again.
