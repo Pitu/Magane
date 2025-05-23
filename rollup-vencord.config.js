@@ -63,7 +63,7 @@ export default {
 		}),
 		commonjs(),
 		production && terser({
-			ecma: 8,
+			ecma: 2021,
 			compress: {
 				keep_classnames: true,
 				keep_fnames: true,
