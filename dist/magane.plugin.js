@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.19
+ * @version 3.2.20
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -95,7 +95,7 @@ function set_data(text, data) {
 }
 
 function set_input_value(input, value) {
-	input.value = null == value ? "" : value;
+	input.value = value ?? "";
 }
 
 function set_style(node, key, value, important) {
@@ -161,9 +161,9 @@ function createEventDispatcher() {
 			}(type, detail, {
 				cancelable
 			});
-			return callbacks.slice().forEach(fn => {
+			return callbacks.slice().forEach((fn => {
 				fn.call(component, event);
-			}), !event.defaultPrevented;
+			})), !event.defaultPrevented;
 		}
 		return !0;
 	};
@@ -246,11 +246,11 @@ function init(component, options, instance, create_fragment, not_equal, props, a
 	};
 	append_styles && append_styles($$.root);
 	let ready = !1;
-	if ($$.ctx = instance ? instance(component, options.props || {}, (i, ret, ...rest) => {
+	if ($$.ctx = instance ? instance(component, options.props || {}, ((i, ret, ...rest) => {
 		const value = rest.length ? rest[0] : ret;
 		return $$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value) && (!$$.skip_bound && $$.bound[i] && $$.bound[i](value), 
 		ready && make_dirty(component, i)), ret;
-	}) : [], $$.update(), ready = !0, run_all($$.before_update), $$.fragment = !!create_fragment && create_fragment($$.ctx), 
+	})) : [], $$.update(), ready = !0, run_all($$.before_update), $$.fragment = !!create_fragment && create_fragment($$.ctx), 
 	options.target) {
 		if (options.hydrate) {
 			const nodes = function children(element) {
@@ -260,10 +260,10 @@ function init(component, options, instance, create_fragment, not_equal, props, a
 		} else $$.fragment && $$.fragment.c();
 		options.intro && transition_in(component.$$.fragment), function mount_component(component, target, anchor, customElement) {
 			const {fragment, on_mount, on_destroy, after_update} = component.$$;
-			fragment && fragment.m(target, anchor), customElement || add_render_callback(() => {
+			fragment && fragment.m(target, anchor), customElement || add_render_callback((() => {
 				const new_on_destroy = on_mount.map(run).filter(is_function);
 				on_destroy ? on_destroy.push(...new_on_destroy) : run_all(new_on_destroy), component.$$.on_mount = [];
-			}), after_update.forEach(add_render_callback);
+			})), after_update.forEach(add_render_callback);
 		}(component, options.target, options.anchor, options.customElement), flush();
 	}
 	set_current_component(parent_component);
@@ -320,14 +320,14 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let {element} = $$props, {active = !1} = $$props, {textArea} = $$props, {lastTextAreaSize = {}} = $$props;
 	const dispatch = createEventDispatcher(), log = message => console.log("%c[MaganeButton]%c", "color: #3a71c1; font-weight: 700", "", message);
-	onMount(() => log("Mounted.")), onDestroy(() => log("Destroyed."));
+	onMount((() => log("Mounted."))), onDestroy((() => log("Destroyed.")));
 	return $$self.$$set = $$props => {
 		"element" in $$props && $$invalidate(0, element = $$props.element), "active" in $$props && $$invalidate(1, active = $$props.active), 
 		"textArea" in $$props && $$invalidate(3, textArea = $$props.textArea), "lastTextAreaSize" in $$props && $$invalidate(4, lastTextAreaSize = $$props.lastTextAreaSize);
 	}, [ element, active, dispatch, textArea, lastTextAreaSize, function div_binding($$value) {
-		binding_callbacks[$$value ? "unshift" : "push"](() => {
+		binding_callbacks[$$value ? "unshift" : "push"]((() => {
 			element = $$value, $$invalidate(0, element);
-		});
+		}));
 	}, e => dispatch("click", e), e => dispatch("grabPacks", e) ];
 }
 
@@ -383,9 +383,9 @@ let now = is_client ? () => window.performance.now() : () => Date.now(), raf = i
 const tasks = new Set;
 
 function run_tasks(now) {
-	tasks.forEach(task => {
+	tasks.forEach((task => {
 		task.c(now) || (tasks.delete(task), task.f());
-	}), 0 !== tasks.size && raf(run_tasks);
+	})), 0 !== tasks.size && raf(run_tasks);
 }
 
 var _ = {
@@ -450,17 +450,17 @@ const defaultOptions = {
 	return function loop(callback) {
 		let task;
 		return 0 === tasks.size && raf(run_tasks), {
-			promise: new Promise(fulfill => {
+			promise: new Promise((fulfill => {
 				tasks.add(task = {
 					c: callback,
 					f: fulfill
 				});
-			}),
+			})),
 			abort() {
 				tasks.delete(task);
 			}
 		};
-	}(now => {
+	}((now => {
 		if (!started && now >= start_time && start(!1), started && now >= end_time && (tick(1), 
 		stop(), onDone(element, {
 			x,
@@ -473,7 +473,7 @@ const defaultOptions = {
 			tick(0 + 1 * easing((now - start_time) / duration));
 		}
 		return !0;
-	}), start(delay), tick(0), stop;
+	})), start(delay), tick(0), stop;
 }, scrollTo = options => _scrollTo((options => {
 	let opts = _.extend({}, defaultOptions, options);
 	return opts.container = _.$(opts.container), opts.element = _.$(opts.element), opts;
@@ -499,7 +499,7 @@ var constants = {
 	let R = 0;
 	const safeRegexReplacements = [ [ "\\s", 1 ], [ "\\d", MAX_SAFE_COMPONENT_LENGTH ], [ "[a-zA-Z0-9-]", MAX_SAFE_BUILD_LENGTH ] ], createToken = (name, value, isGlobal) => {
 		const safe = (value => {
-			for (const [token, max] of safeRegexReplacements) value = value.split(token + "*").join(`${token}{0,${max}}`).split(token + "+").join(`${token}{1,${max}}`);
+			for (const [token, max] of safeRegexReplacements) value = value.split(`${token}*`).join(`${token}{0,${max}}`).split(`${token}+`).join(`${token}{1,${max}}`);
 			return value;
 		})(value), index = R++;
 		debug_1(name, index, value), t[name] = index, src[index] = value, re[index] = new RegExp(value, isGlobal ? "g" : void 0), 
@@ -516,8 +516,8 @@ var constants = {
 	createToken("FULLPLAIN", `v?${src[t.MAINVERSION]}${src[t.PRERELEASE]}?${src[t.BUILD]}?`), 
 	createToken("FULL", `^${src[t.FULLPLAIN]}$`), createToken("LOOSEPLAIN", `[v=\\s]*${src[t.MAINVERSIONLOOSE]}${src[t.PRERELEASELOOSE]}?${src[t.BUILD]}?`), 
 	createToken("LOOSE", `^${src[t.LOOSEPLAIN]}$`), createToken("GTLT", "((?:<|>)?=?)"), 
-	createToken("XRANGEIDENTIFIERLOOSE", src[t.NUMERICIDENTIFIERLOOSE] + "|x|X|\\*"), 
-	createToken("XRANGEIDENTIFIER", src[t.NUMERICIDENTIFIER] + "|x|X|\\*"), createToken("XRANGEPLAIN", `[v=\\s]*(${src[t.XRANGEIDENTIFIER]})(?:\\.(${src[t.XRANGEIDENTIFIER]})(?:\\.(${src[t.XRANGEIDENTIFIER]})(?:${src[t.PRERELEASE]})?${src[t.BUILD]}?)?)?`), 
+	createToken("XRANGEIDENTIFIERLOOSE", `${src[t.NUMERICIDENTIFIERLOOSE]}|x|X|\\*`), 
+	createToken("XRANGEIDENTIFIER", `${src[t.NUMERICIDENTIFIER]}|x|X|\\*`), createToken("XRANGEPLAIN", `[v=\\s]*(${src[t.XRANGEIDENTIFIER]})(?:\\.(${src[t.XRANGEIDENTIFIER]})(?:\\.(${src[t.XRANGEIDENTIFIER]})(?:${src[t.PRERELEASE]})?${src[t.BUILD]}?)?)?`), 
 	createToken("XRANGEPLAINLOOSE", `[v=\\s]*(${src[t.XRANGEIDENTIFIERLOOSE]})(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})(?:${src[t.PRERELEASELOOSE]})?${src[t.BUILD]}?)?)?`), 
 	createToken("XRANGE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAIN]}$`), createToken("XRANGELOOSE", `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`), 
 	createToken("COERCE", `(^|[^\\d])(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}})(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?(?:$|[^\\d])`), 
@@ -565,21 +565,21 @@ class SemVer {
 		debug_1("SemVer", version, options), this.options = options, this.loose = !!options.loose, 
 		this.includePrerelease = !!options.includePrerelease;
 		const m = version.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
-		if (!m) throw new TypeError("Invalid Version: " + version);
+		if (!m) throw new TypeError(`Invalid Version: ${version}`);
 		if (this.raw = version, this.major = +m[1], this.minor = +m[2], this.patch = +m[3], 
 		this.major > MAX_SAFE_INTEGER$1 || this.major < 0) throw new TypeError("Invalid major version");
 		if (this.minor > MAX_SAFE_INTEGER$1 || this.minor < 0) throw new TypeError("Invalid minor version");
 		if (this.patch > MAX_SAFE_INTEGER$1 || this.patch < 0) throw new TypeError("Invalid patch version");
-		m[4] ? this.prerelease = m[4].split(".").map(id => {
+		m[4] ? this.prerelease = m[4].split(".").map((id => {
 			if (/^[0-9]+$/.test(id)) {
 				const num = +id;
 				if (num >= 0 && num < MAX_SAFE_INTEGER$1) return num;
 			}
 			return id;
-		}) : this.prerelease = [], this.build = m[5] ? m[5].split(".") : [], this.format();
+		})) : this.prerelease = [], this.build = m[5] ? m[5].split(".") : [], this.format();
 	}
 	format() {
-		return this.version = `${this.major}.${this.minor}.${this.patch}`, this.prerelease.length && (this.version += "-" + this.prerelease.join(".")), 
+		return this.version = `${this.major}.${this.minor}.${this.patch}`, this.prerelease.length && (this.version += `-${this.prerelease.join(".")}`), 
 		this.version;
 	}
 	toString() {
@@ -672,9 +672,9 @@ class SemVer {
 			}
 
 		  default:
-			throw new Error("invalid increment argument: " + release);
+			throw new Error(`invalid increment argument: ${release}`);
 		}
-		return this.raw = this.format(), this.build.length && (this.raw += "+" + this.build.join(".")), 
+		return this.raw = this.format(), this.build.length && (this.raw += `+${this.build.join(".")}`), 
 		this;
 	}
 }
@@ -782,7 +782,7 @@ function create_each_block_6(ctx) {
 		c() {
 			div1 = element("div"), img = element("img"), t0 = space(), div0 = element("div"), 
 			div0.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="grey" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path></svg>', 
-			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) || attr(img, "src", img_src_value), 
+			t1 = space(), attr(img, "class", "image"), src_url_equal(img.src, img_src_value = `${ctx[26](ctx[177].pack, ctx[177].id)}`) || attr(img, "src", img_src_value), 
 			attr(img, "alt", img_alt_value = ctx[177].pack + " - " + ctx[177].id), attr(img, "title", img_title_value = ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name : ""), 
 			attr(div0, "class", "deleteFavorite"), attr(div0, "title", "Unfavorite"), attr(div1, "class", "sticker");
 		},
@@ -792,7 +792,7 @@ function create_each_block_6(ctx) {
 			mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 256 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) && attr(img, "src", img_src_value), 
+			ctx = new_ctx, 256 & dirty[0] && !src_url_equal(img.src, img_src_value = `${ctx[26](ctx[177].pack, ctx[177].id)}`) && attr(img, "src", img_src_value), 
 			256 & dirty[0] && img_alt_value !== (img_alt_value = ctx[177].pack + " - " + ctx[177].id) && attr(img, "alt", img_alt_value), 
 			8448 & dirty[0] && img_title_value !== (img_title_value = ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name : "") && attr(img, "title", img_title_value);
 		},
@@ -898,8 +898,8 @@ function create_each_block_5(ctx) {
 	return {
 		c() {
 			div = element("div"), img = element("img"), t0 = space(), if_block.c(), t1 = space(), 
-			attr(img, "class", "image"), src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) || attr(img, "src", img_src_value), 
-			attr(img, "alt", img_alt_value = ctx[177].pack + " - " + ctx[177].id), attr(img, "title", img_title_value = (ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name + " – " : "") + "Used: " + ctx[177].used), 
+			attr(img, "class", "image"), src_url_equal(img.src, img_src_value = `${ctx[26](ctx[177].pack, ctx[177].id)}`) || attr(img, "src", img_src_value), 
+			attr(img, "alt", img_alt_value = ctx[177].pack + " - " + ctx[177].id), attr(img, "title", img_title_value = (ctx[13][ctx[177].pack] ? `${ctx[13][ctx[177].pack].name} – ` : "") + "Used: " + ctx[177].used), 
 			attr(div, "class", "sticker");
 		},
 		m(target, anchor) {
@@ -907,9 +907,9 @@ function create_each_block_5(ctx) {
 			append(div, t1), mounted || (dispose = listen(img, "click", click_handler_2), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 4096 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[177].pack, ctx[177].id)) && attr(img, "src", img_src_value), 
+			ctx = new_ctx, 4096 & dirty[0] && !src_url_equal(img.src, img_src_value = `${ctx[26](ctx[177].pack, ctx[177].id)}`) && attr(img, "src", img_src_value), 
 			4096 & dirty[0] && img_alt_value !== (img_alt_value = ctx[177].pack + " - " + ctx[177].id) && attr(img, "alt", img_alt_value), 
-			12288 & dirty[0] && img_title_value !== (img_title_value = (ctx[13][ctx[177].pack] ? ctx[13][ctx[177].pack].name + " – " : "") + "Used: " + ctx[177].used) && attr(img, "title", img_title_value), 
+			12288 & dirty[0] && img_title_value !== (img_title_value = (ctx[13][ctx[177].pack] ? `${ctx[13][ctx[177].pack].name} – ` : "") + "Used: " + ctx[177].used) && attr(img, "title", img_title_value), 
 			current_block_type === (current_block_type = select_block_type(ctx, dirty)) && if_block ? if_block.p(ctx, dirty) : (if_block.d(1), 
 			if_block = current_block_type(ctx), if_block && (if_block.c(), if_block.m(div, t1)));
 		},
@@ -981,7 +981,7 @@ function create_each_block_4(ctx) {
 	return {
 		c() {
 			div = element("div"), img = element("img"), t = space(), if_block.c(), attr(img, "class", "image"), 
-			src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[170].id, ctx[177], !1, ctx[174])) || attr(img, "src", img_src_value), 
+			src_url_equal(img.src, img_src_value = `${ctx[26](ctx[170].id, ctx[177], !1, ctx[174])}`) || attr(img, "src", img_src_value), 
 			attr(img, "alt", img_alt_value = ctx[170].id + " - " + ctx[177]), attr(div, "class", "sticker");
 		},
 		m(target, anchor) {
@@ -989,7 +989,7 @@ function create_each_block_4(ctx) {
 			mounted || (dispose = listen(img, "click", click_handler_5), mounted = !0);
 		},
 		p(new_ctx, dirty) {
-			ctx = new_ctx, 512 & dirty[0] && !src_url_equal(img.src, img_src_value = "" + ctx[26](ctx[170].id, ctx[177], !1, ctx[174])) && attr(img, "src", img_src_value), 
+			ctx = new_ctx, 512 & dirty[0] && !src_url_equal(img.src, img_src_value = `${ctx[26](ctx[170].id, ctx[177], !1, ctx[174])}`) && attr(img, "src", img_src_value), 
 			512 & dirty[0] && img_alt_value !== (img_alt_value = ctx[170].id + " - " + ctx[177]) && attr(img, "alt", img_alt_value), 
 			current_block_type === (current_block_type = select_block_type_1(ctx, dirty)) && if_block ? if_block.p(ctx, dirty) : (if_block.d(1), 
 			if_block = current_block_type(ctx), if_block && (if_block.c(), if_block.m(div, null)));
@@ -1246,7 +1246,7 @@ function create_each_block_1(key_1, ctx) {
 			html_tag = new HtmlTag(!1), t6 = space(), div2 = element("div"), button = element("button"), 
 			button.textContent = "Del", t8 = space(), if_block1 && if_block1.c(), t9 = space(), 
 			attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id), 
+			attr(span0, "title", span0_title_value = ctx[20].showPackAppendix ? "" : `ID: ${ctx[170].id}`), 
 			html_tag.a = null, attr(div1, "class", "info"), attr(button, "class", "button is-danger"), 
 			attr(button, "title", "Unsubscribe"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[170].id] && (ctx[23](ctx[170].id) || ctx[14][ctx[170].id].updateUrl) ? " is-tight" : "")), 
 			attr(div3, "class", "pack"), this.first = div3;
@@ -1264,7 +1264,7 @@ function create_each_block_1(key_1, ctx) {
 			if_block0.c(), if_block0.m(div3, t0)) : if_block0 && (if_block0.d(1), if_block0 = null), 
 			512 & dirty[0] && set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
 			512 & dirty[0] && t2_value !== (t2_value = ctx[170].name + "") && set_data(t2, t2_value), 
-			1049088 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id) && attr(span0, "title", span0_title_value), 
+			1049088 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].showPackAppendix ? "" : `ID: ${ctx[170].id}`) && attr(span0, "title", span0_title_value), 
 			512 & dirty[0] && t4_value !== (t4_value = ctx[170].count + "") && set_data(t4, t4_value), 
 			1049088 & dirty[0] && raw_value !== (raw_value = (ctx[20].showPackAppendix ? ctx[32](ctx[170].id) : "") + "") && html_tag.p(raw_value), 
 			ctx[14][ctx[170].id] ? if_block1 ? if_block1.p(ctx, dirty) : (if_block1 = create_if_block_6(ctx), 
@@ -1444,7 +1444,7 @@ function create_each_block(ctx) {
 			t3 = text(t3_value), t4 = text(" stickers"), html_tag = new HtmlTag(!1), t5 = space(), 
 			div2 = element("div"), if_block0.c(), t6 = space(), if_block1 && if_block1.c(), 
 			t7 = space(), attr(div0, "class", "preview"), set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
-			attr(span0, "title", span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id), 
+			attr(span0, "title", span0_title_value = ctx[20].showPackAppendix ? "" : `ID: ${ctx[170].id}`), 
 			html_tag.a = null, attr(div1, "class", "info"), attr(div2, "class", div2_class_value = "action" + (ctx[14][ctx[170].id] ? " is-tight" : "")), 
 			attr(div3, "class", "pack");
 		},
@@ -1458,7 +1458,7 @@ function create_each_block(ctx) {
 		p(ctx, dirty) {
 			2048 & dirty[0] && set_style(div0, "background-image", `url(${ctx[26](ctx[170].id, ctx[170].files[0], !1, 0)})`), 
 			2048 & dirty[0] && t1_value !== (t1_value = ctx[170].name + "") && set_data(t1, t1_value), 
-			1050624 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].showPackAppendix ? "" : "ID: " + ctx[170].id) && attr(span0, "title", span0_title_value), 
+			1050624 & dirty[0] && span0_title_value !== (span0_title_value = ctx[20].showPackAppendix ? "" : `ID: ${ctx[170].id}`) && attr(span0, "title", span0_title_value), 
 			2048 & dirty[0] && t3_value !== (t3_value = ctx[170].count + "") && set_data(t3, t3_value), 
 			1050624 & dirty[0] && raw_value !== (raw_value = (ctx[20].showPackAppendix ? ctx[32](ctx[170].id) : "") + "") && html_tag.p(raw_value), 
 			current_block_type === (current_block_type = select_block_type_2(ctx, dirty)) && if_block0 ? if_block0.p(ctx, dirty) : (if_block0.d(1), 
@@ -1613,7 +1613,7 @@ function create_fragment$1(ctx) {
 			attr(div22, "style", div22_style_value = 3 === ctx[7] ? "" : "display: none;"), 
 			attr(div23, "class", "stickersConfig"), attr(div24, "class", "modal-content"), attr(div25, "class", "modal-close"), 
 			attr(div26, "class", "stickersModal"), attr(div26, "style", div26_style_value = ctx[5] ? "" : "display: none;"), 
-			attr(div27, "class", "stickerWindow"), attr(div27, "style", div27_style_value = "bottom: " + ctx[1].wbottom + "px; right: " + ctx[1].wright + "px; " + (ctx[4] ? "" : "display: none;")), 
+			attr(div27, "class", "stickerWindow"), attr(div27, "style", div27_style_value = `bottom: ${ctx[1].wbottom}px; right: ${ctx[1].wright}px; ` + (ctx[4] ? "" : "display: none;")), 
 			attr(div28, "id", "magane"), attr(div28, "style", div28_style_value = (ctx[0] === ctx[21].LEGACY ? `top: ${ctx[1].top}px; left: ${ctx[1].left}px;` : "") + " " + (ctx[3] ? "display: none;" : ""));
 		},
 		m(target, anchor) {
@@ -1731,7 +1731,7 @@ function create_fragment$1(ctx) {
 			262144 & dirty[0] && input18.value !== ctx[18] && set_input_value(input18, ctx[18]), 
 			128 & dirty[0] && div22_style_value !== (div22_style_value = 3 === ctx[7] ? "" : "display: none;") && attr(div22, "style", div22_style_value), 
 			32 & dirty[0] && div26_style_value !== (div26_style_value = ctx[5] ? "" : "display: none;") && attr(div26, "style", div26_style_value), 
-			18 & dirty[0] && div27_style_value !== (div27_style_value = "bottom: " + ctx[1].wbottom + "px; right: " + ctx[1].wright + "px; " + (ctx[4] ? "" : "display: none;")) && attr(div27, "style", div27_style_value), 
+			18 & dirty[0] && div27_style_value !== (div27_style_value = `bottom: ${ctx[1].wbottom}px; right: ${ctx[1].wright}px; ` + (ctx[4] ? "" : "display: none;")) && attr(div27, "style", div27_style_value), 
 			11 & dirty[0] && div28_style_value !== (div28_style_value = (ctx[0] === ctx[21].LEGACY ? `top: ${ctx[1].top}px; left: ${ctx[1].left}px;` : "") + " " + (ctx[3] ? "display: none;" : "")) && attr(div28, "style", div28_style_value);
 		},
 		i: noop,
@@ -1908,7 +1908,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
 		});
-		return component.$on("click", () => toggleStickerWindow(void 0, component)), component.$on("grabPacks", () => grabPacks(!0)), 
+		return component.$on("click", (() => toggleStickerWindow(void 0, component))), component.$on("grabPacks", (() => grabPacks(!0))), 
 		component.textArea = textArea, component.lastTextAreaSize = {
 			width: textArea.clientWidth,
 			height: textArea.clientHeight
@@ -1922,13 +1922,13 @@ function instance$1($$self, $$props, $$invalidate) {
 			$$invalidate(1, coords.wbottom += baseProps.top, coords), $$invalidate(1, coords.wright += baseProps.left, coords);
 		}
 	}, resizeObserverWorker = async entry => {
-		if (entry && 0 !== entry.contentRect.width && 0 !== entry.contentRect.height) for (const component of components) if (component.textArea === entry.target) {
+		if (0 !== entry?.contentRect.width && 0 !== entry?.contentRect.height) for (const component of components) if (component.textArea === entry.target) {
 			if (component.lastTextAreaSize.width === entry.contentRect.width) return;
 			break;
 		}
 		const textAreas = await ((selector, options = {}) => {
 			let poll;
-			return options.logname && log(`Waiting for ${options.logname}…`), new Promise(resolve => {
+			return options.logname && log(`Waiting for ${options.logname}…`), new Promise((resolve => {
 				(poll = () => {
 					const found = [], elements = document.querySelectorAll(selector);
 					for (let i = 0; i < elements.length && (("function" != typeof options.assert || options.assert(elements[i])) && found.push(elements[i]), 
@@ -1936,7 +1936,7 @@ function instance$1($$self, $$props, $$invalidate) {
 					if (found.length) return delete waitForTimeouts[selector], resolve(found);
 					waitForTimeouts[selector] = setTimeout(poll, 500);
 				})();
-			});
+			}));
 		})('[class^="channelTextArea_"]:not([class*="channelTextAreaDisabled_"])', {
 			logname: "textarea",
 			assert: element => Boolean(element.querySelector('[class^="buttons"]')),
@@ -1964,22 +1964,22 @@ function instance$1($$self, $$props, $$invalidate) {
 		activeComponent === component && (toggleStickerWindow(!1, activeComponent), activeComponent = null), 
 		resizeObserver.unobserve(component.textArea), component.$destroy();
 		components = componentsNew, components.length ? activeComponent && updateStickerWindowPosition(activeComponent) : resizeObserverWorker();
-	}, resizeObserverQueuePush = entry => new Promise((resolve, reject) => {
+	}, resizeObserverQueuePush = entry => new Promise(((resolve, reject) => {
 		resizeObserverQueue.push({
 			entry,
 			resolve,
 			reject
 		}), resizeObserverQueueShift();
-	}), resizeObserverQueueShift = () => {
+	})), resizeObserverQueueShift = () => {
 		if (resizeObserverQueueWorking) return !1;
 		const item = resizeObserverQueue.shift();
 		if (!item) return !1;
 		try {
-			resizeObserverQueueWorking = !0, resizeObserverWorker(item.entry).then(value => {
+			resizeObserverQueueWorking = !0, resizeObserverWorker(item.entry).then((value => {
 				resizeObserverQueueWorking = !1, item.resolve(value), resizeObserverQueueShift();
-			}).catch(err => {
+			})).catch((err => {
 				resizeObserverQueueWorking = !1, item.reject(err), resizeObserverQueueShift();
-			});
+			}));
 		} catch (err) {
 			resizeObserverQueueWorking = !1, item.reject(err), resizeObserverQueueShift();
 		}
@@ -1994,7 +1994,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			console.error(ex);
 		}
 	}, applySettings = data => {
-		for (const key of Object.keys(defaultSettings)) void 'undefined' === data[key] ? $$invalidate(20, settings[key] = defaultSettings[key], settings) : $$invalidate(20, settings[key] = data[key], settings);
+		for (const key of Object.keys(defaultSettings)) void 0 === data[key] ? $$invalidate(20, settings[key] = defaultSettings[key], settings) : $$invalidate(20, settings[key] = data[key], settings);
 		setWindowMaganeAPIs(settings.enableWindowMagane), $$invalidate(17, frequentlyUsedInput = settings.frequentlyUsed), 
 		$$invalidate(18, hotkeyInput = settings.hotkey), parseThenInitHotkey();
 	}, loadSettings = (reset = !1) => {
@@ -2005,13 +2005,13 @@ function instance$1($$self, $$props, $$invalidate) {
 		if (mountType !== MountType.BETTERDISCORD) return toastWarn("Sorry, update checker is only available when running on BetterDiscord.");
 		if (!Helper.Plugins.isEnabled("MaganeBD")) return toastWarn("Update check skipped, is this plugin not named MaganeBD?");
 		const currentVersion = Helper.Plugins.getVersion("MaganeBD");
-		log("Fetching remote dist file from: " + updateUrl), manual && toast("Checking for updates…", {
+		log(`Fetching remote dist file from: ${updateUrl}`), manual && toast("Checking for updates…", {
 			nolog: !0
 		}), await fetch(updateUrl, {
 			cache: "no-cache"
-		}).then(async response => {
+		}).then((async response => {
 			log("Remote dist file fetched.");
-			const match = (await response.text()).match(/^ \* @version ([a-zA-Z0-9.-]+)$/m), remoteVersion = match && match[1];
+			const match = (await response.text()).match(/^ \* @version ([a-zA-Z0-9.-]+)$/m), remoteVersion = match?.[1];
 			remoteVersion ? gt_1(remoteVersion, currentVersion) ? (log(`Update found: ${remoteVersion} > ${currentVersion}.`), 
 			Helper.UI.showNotice(`Magane v${currentVersion} found an update: v${remoteVersion}. Please download the update manually.`, {
 				buttons: [ {
@@ -2028,17 +2028,17 @@ function instance$1($$self, $$props, $$invalidate) {
 			})) : (log(`No updates found: ${remoteVersion} <= ${currentVersion}.`), manual && toast("No updates found.", {
 				nolog: !0
 			})) : toastWarn("Failed to parse version string from remote dist file.");
-		}).catch(error => {
+		})).catch((error => {
 			console.error(error), toastError("Unexpected error occurred when checking for Magane's updates. Check your console for details.");
-		});
+		}));
 	}, isLocalPackID = id => "string" == typeof id && (id.startsWith("startswith-") || id.startsWith("emojis-") || id.startsWith("custom-")), initSimplePackDataEntry = (pack, source) => {
 		if (simplePacksData[pack]) return;
-		const target = source || availablePacks, index = target.findIndex(p => p.id === pack);
+		const target = source || availablePacks, index = target.findIndex((p => p.id === pack));
 		-1 !== index && $$invalidate(13, simplePacksData[pack] = {
 			name: target[index].name
 		}, simplePacksData);
 	}, cleanUpSimplePackDataEntry = pack => {
-		favoriteStickers.some(s => s.pack === pack) || frequentlyUsedSorted.some(s => s.pack === pack) || delete simplePacksData[pack];
+		favoriteStickers.some((s => s.pack === pack)) || frequentlyUsedSorted.some((s => s.pack === pack)) || delete simplePacksData[pack];
 	}, grabPacks = async (reset = !1) => {
 		let packs;
 		try {
@@ -2054,33 +2054,33 @@ function instance$1($$self, $$props, $$invalidate) {
 		stickersStats = [], $$invalidate(12, frequentlyUsedSorted = []), $$invalidate(13, simplePacksData = {}));
 		const availLocalPacks = getFromLocalStorage("magane.available");
 		if (Array.isArray(availLocalPacks) && availLocalPacks.length) {
-			const filteredLocalPacks = availLocalPacks.filter(pack => "object" == typeof pack && void 'undefined' !== pack.id && isLocalPackID(pack.id));
+			const filteredLocalPacks = availLocalPacks.filter((pack => "object" == typeof pack && void 0 !== pack.id && isLocalPackID(pack.id)));
 			availLocalPacks.length !== filteredLocalPacks.length && (log(`magane.available mismatch: ${availLocalPacks.length} !== ${filteredLocalPacks.length}`), 
-			saveToLocalStorage("magane.available", filteredLocalPacks)), filteredLocalPacks.forEach(pack => {
+			saveToLocalStorage("magane.available", filteredLocalPacks)), filteredLocalPacks.forEach((pack => {
 				$$invalidate(14, localPacks[pack.id] = pack, localPacks);
-			}), availablePacks.push(...filteredLocalPacks);
+			})), availablePacks.push(...filteredLocalPacks);
 		}
-		packs && availablePacks.push(...packs.packs), availablePacks = availablePacks, $$invalidate(11, filteredPacks = availablePacks);
+		packs && availablePacks.push(...packs.packs), $$invalidate(11, filteredPacks = availablePacks);
 		const subscribed = getFromLocalStorage("magane.subscribed");
-		Array.isArray(subscribed) && subscribed.length && ($$invalidate(9, subscribedPacks = subscribed.filter(pack => !(isLocalPackID(pack.id) && !localPacks[pack.id]) && (subscribedPacksSimple.push(pack.id), 
-		!0))), subscribed.length !== subscribedPacks.length && (log(`magane.subscribed mismatch: ${subscribed.length} !== ${subscribedPacks.length}`), 
+		Array.isArray(subscribed) && subscribed.length && ($$invalidate(9, subscribedPacks = subscribed.filter((pack => !(isLocalPackID(pack.id) && !localPacks[pack.id]) && (subscribedPacksSimple.push(pack.id), 
+		!0)))), subscribed.length !== subscribedPacks.length && (log(`magane.subscribed mismatch: ${subscribed.length} !== ${subscribedPacks.length}`), 
 		saveToLocalStorage("magane.subscribed", subscribedPacks)));
 		const favorites = getFromLocalStorage("magane.favorites");
-		Array.isArray(favorites) && favorites.length && ($$invalidate(8, favoriteStickers = favorites.filter(sticker => !(isLocalPackID(sticker.pack) && !localPacks[sticker.pack]) && (initSimplePackDataEntry(sticker.pack), 
-		!0))), favorites.length !== favoriteStickers.length && (log(`magane.favorites mismatch: ${favorites.length} !== ${favoriteStickers.length}`), 
+		Array.isArray(favorites) && favorites.length && ($$invalidate(8, favoriteStickers = favorites.filter((sticker => !(isLocalPackID(sticker.pack) && !localPacks[sticker.pack]) && (initSimplePackDataEntry(sticker.pack), 
+		!0)))), favorites.length !== favoriteStickers.length && (log(`magane.favorites mismatch: ${favorites.length} !== ${favoriteStickers.length}`), 
 		saveToLocalStorage("magane.favorites", favoriteStickers)));
 		const stats = getFromLocalStorage("magane.stats");
-		Array.isArray(stats) && stats.length && (stickersStats = stats.filter(sticker => !isLocalPackID(sticker.pack) || localPacks[sticker.pack]), 
+		Array.isArray(stats) && stats.length && (stickersStats = stats.filter((sticker => !isLocalPackID(sticker.pack) || localPacks[sticker.pack])), 
 		stats.length !== stickersStats.length && (log(`magane.stats mismatch: ${stats.length} !== ${stickersStats.length}`), 
 		saveToLocalStorage("magane.stats", stickersStats)), updateFrequentlyUsed());
 	}, subscribeToPack = pack => {
-		-1 === subscribedPacks.findIndex(p => p.id === pack.id) && ($$invalidate(9, subscribedPacks = [ ...subscribedPacks, pack ]), 
+		-1 === subscribedPacks.findIndex((p => p.id === pack.id)) && ($$invalidate(9, subscribedPacks = [ ...subscribedPacks, pack ]), 
 		$$invalidate(10, subscribedPacksSimple = [ ...subscribedPacksSimple, pack.id ]), 
-		saveToLocalStorage("magane.subscribed", subscribedPacks), log("Subscribed > " + pack.name));
+		saveToLocalStorage("magane.subscribed", subscribedPacks), log(`Subscribed > ${pack.name}`));
 	}, unsubscribeToPack = pack => {
 		for (let i = 0; i < subscribedPacks.length; i++) if (subscribedPacks[i].id === pack.id) return subscribedPacks.splice(i, 1), 
 		subscribedPacksSimple.splice(i, 1), $$invalidate(9, subscribedPacks), $$invalidate(10, subscribedPacksSimple), 
-		log("Unsubscribed > " + pack.name), void saveToLocalStorage("magane.subscribed", subscribedPacks);
+		log(`Unsubscribed > ${pack.name}`), void saveToLocalStorage("magane.subscribed", subscribedPacks);
 	}, formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
 		if ("number" == typeof pack) if (baseURL) url = `${baseURL || ""}${pack}/${id}`, 
@@ -2099,7 +2099,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			settings.disableDownscale || (url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`);
 		} else if (pack.startsWith("custom-")) {
 			if (!sending && Array.isArray(localPacks[pack].thumbs)) {
-				if (localPacks[pack].thumbs.length && ("number" != typeof thumbIndex && (thumbIndex = localPacks[pack].files.findIndex(file => file === id)), 
+				if (localPacks[pack].thumbs.length && ("number" != typeof thumbIndex && (thumbIndex = localPacks[pack].files.findIndex((file => file === id))), 
 				url = thumbIndex >= 0 ? localPacks[pack].thumbs[thumbIndex] : null), !url) return "/assets/eedd4bd948a0da6d75bf5304bff4e17f.svg";
 			} else url = id;
 			"string" == typeof localPacks[pack].template && (url = localPacks[pack].template.replace(/%pack%/g, pack.replace("custom-", "")).replace(/%id%/g, url));
@@ -2116,9 +2116,9 @@ function instance$1($$self, $$props, $$invalidate) {
 		onCooldown = !0;
 		try {
 			const textAreaInstance = (textArea => {
-				let cursor = textArea[Object.keys(textArea).find(key => key.startsWith("__reactFiber") || key.startsWith("__reactInternalInstance"))];
+				let cursor = textArea[Object.keys(textArea).find((key => key.startsWith("__reactFiber") || key.startsWith("__reactInternalInstance")))];
 				for (let i = 0; i < 10 && cursor; i++) {
-					if (cursor.stateNode && cursor.stateNode.handleTextareaChange) return cursor;
+					if (cursor.stateNode?.handleTextareaChange) return cursor;
 					cursor = cursor.return;
 				}
 			})(activeComponent.textArea);
@@ -2137,11 +2137,11 @@ function instance$1($$self, $$props, $$invalidate) {
 				pendingReply && (messageOptions = Modules.MessageUtils.getSendMessageOptionsForReply(pendingReply));
 			}
 			let sendAsLink = settings.alwaysSendAsLink;
-			if (event && event.ctrlKey && settings.ctrlInvertSendBehavior && (sendAsLink = !sendAsLink), 
+			if (event?.ctrlKey && settings.ctrlInvertSendBehavior && (sendAsLink = !sendAsLink), 
 			!sendAsLink && channel && hasPermission("ATTACH_FILES", channel)) {
 				toast("Fetching sticker…", {
 					timeout: 1000
-				}), log("Fetching: " + url);
+				}), log(`Fetching: ${url}`);
 				const response = await fetch(url, {
 					cache: "force-cache"
 				}), blob = await response.blob();
@@ -2152,7 +2152,7 @@ function instance$1($$self, $$props, $$invalidate) {
 					const ext = filename.match(/(\.\w+)$/);
 					filename = `${Date.now().toString()}${ext ? ext[1] : ""}`;
 				}
-				settings.markAsSpoiler && (filename = "SPOILER_" + filename);
+				settings.markAsSpoiler && (filename = `SPOILER_${filename}`);
 				const file = new File([ blob ], filename);
 				log(`Sending sticker as ${filename}…`), toast("Sending…", {
 					timeout: 1000
@@ -2193,7 +2193,7 @@ function instance$1($$self, $$props, $$invalidate) {
 					} ]
 				} ]
 			})), 0 !== settings.frequentlyUsed) {
-				const last = stickersStats.findIndex(sticker => sticker.pack === pack && sticker.id === id);
+				const last = stickersStats.findIndex((sticker => sticker.pack === pack && sticker.id === id));
 				-1 === last ? stickersStats.push({
 					pack,
 					id,
@@ -2210,7 +2210,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		}
 		onCooldown = !1;
 	}, favoriteSticker = (pack, id) => {
-		if (-1 !== favoriteStickers.findIndex(f => f.pack === pack && f.id === id)) return;
+		if (-1 !== favoriteStickers.findIndex((f => f.pack === pack && f.id === id))) return;
 		initSimplePackDataEntry(pack, subscribedPacks);
 		const favorite = {
 			pack,
@@ -2221,7 +2221,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			nolog: !0
 		});
 	}, unfavoriteSticker = (pack, id) => {
-		const index = favoriteStickers.findIndex(f => f.pack === pack && f.id === id);
+		const index = favoriteStickers.findIndex((f => f.pack === pack && f.id === id));
 		-1 !== index && (favoriteStickers.splice(index, 1), $$invalidate(8, favoriteStickers), 
 		cleanUpSimplePackDataEntry(pack), saveToLocalStorage("magane.favorites", favoriteStickers), 
 		log(`Unfavorited > ${id} of pack ${pack}`), toastInfo("Unfavorited!", {
@@ -2229,11 +2229,11 @@ function instance$1($$self, $$props, $$invalidate) {
 		}));
 	}, filterPacks = () => {
 		const query = "string" == typeof packsSearch && packsSearch.trim().toLowerCase();
-		$$invalidate(11, filteredPacks = query ? availablePacks.filter(pack => pack.name.toLowerCase().indexOf(query) >= 0 || String(pack.id).indexOf(query) >= 0) : availablePacks);
+		$$invalidate(11, filteredPacks = query ? availablePacks.filter((pack => pack.name.toLowerCase().indexOf(query) >= 0 || String(pack.id).indexOf(query) >= 0)) : availablePacks);
 	}, _appendPack = (id, e, opts = {}) => {
 		let availLocalPacks = getFromLocalStorage("magane.available");
 		Array.isArray(availLocalPacks) && availLocalPacks.length || (availLocalPacks = []);
-		const foundIndex = availLocalPacks.findIndex(p => p.id === id);
+		const foundIndex = availLocalPacks.findIndex((p => p.id === id));
 		if (foundIndex >= 0) {
 			if (opts.overwrite && opts.partial) e = Object.assign(availLocalPacks[foundIndex], e); else if (!opts.overwrite) throw new Error(`Pack with ID ${id} already exist.`);
 		} else if (opts.overwrite) throw new Error(`Cannot overwrite missing pack with ID ${id}.`);
@@ -2243,25 +2243,25 @@ function instance$1($$self, $$props, $$invalidate) {
 		};
 		if (isLocalPackID(id) && $$invalidate(14, localPacks[id] = e, localPacks), foundIndex >= 0) {
 			availLocalPacks[foundIndex] = e;
-			const sharedIndex = availablePacks.findIndex(p => p.id === id);
+			const sharedIndex = availablePacks.findIndex((p => p.id === id));
 			-1 !== sharedIndex && (availablePacks[sharedIndex] = e);
-		} else availLocalPacks.unshift(e), availablePacks.unshift(e), availablePacks = availablePacks;
-		return saveToLocalStorage("magane.available", availLocalPacks), filterPacks(), opts.overwrite ? log("Overwritten pack with ID " + id) : log("Added a new pack with ID " + id), 
+		} else availLocalPacks.unshift(e), availablePacks.unshift(e);
+		return saveToLocalStorage("magane.available", availLocalPacks), filterPacks(), opts.overwrite ? log(`Overwritten pack with ID ${id}`) : log(`Added a new pack with ID ${id}`), 
 		result;
 	}, migrateStringPackIds = async () => {
 		let dirty = !1;
 		const favorites = getFromLocalStorage("magane.favorites");
-		Array.isArray(favorites) && favorites.length && favorites.forEach(item => {
+		Array.isArray(favorites) && favorites.length && favorites.forEach((item => {
 			if ("number" == typeof item.pack || isLocalPackID(item.pack)) return;
 			const result = parseInt(item.pack, 10);
 			isNaN(item.pack) || (item.pack = result, dirty = !0);
-		});
+		}));
 		const subscribed = getFromLocalStorage("magane.subscribed");
-		Array.isArray(subscribed) && subscribed.length && subscribed.forEach(item => {
+		Array.isArray(subscribed) && subscribed.length && subscribed.forEach((item => {
 			if ("number" == typeof item.id || isLocalPackID(item.id)) return;
 			const result = parseInt(item.id, 10);
 			isNaN(item.id) || (item.id = result, dirty = !0);
-		}), dirty && (toastInfo("Found packs/stickers to migrate, migrating now..."), saveToLocalStorage("magane.favorites", favorites), 
+		})), dirty && (toastInfo("Found packs/stickers to migrate, migrating now..."), saveToLocalStorage("magane.favorites", favorites), 
 		saveToLocalStorage("magane.subscribed", subscribed), await grabPacks(!0), toastSuccess("Migration successful."));
 	}, parseFunctionArgs = (args, argNames = [], minArgs = 0) => {
 		const isFirstArgAnObj = "object" == typeof args[0];
@@ -2273,8 +2273,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		let {name, firstid, count, animated} = parseFunctionArgs(args, [ "name", "firstid", "count", "animated" ], 3);
 		if (firstid = Number(firstid), isNaN(firstid) || !isFinite(firstid) || firstid < 0) throw new Error("Invalid first ID.");
 		count = Math.max(Math.min(Number(count), 200), 0) || 0;
-		const mid = "startswith-" + firstid, files = [];
-		for (let i = firstid; i < firstid + count; i += 1) files.push(i + ".png");
+		const mid = `startswith-${firstid}`, files = [];
+		for (let i = firstid; i < firstid + count; i += 1) files.push(`${i}.png`);
 		return _appendPack(mid, {
 			name,
 			count,
@@ -2285,8 +2285,8 @@ function instance$1($$self, $$props, $$invalidate) {
 	}, appendEmojisPack = (...args) => {
 		let {name, id, count, animated} = parseFunctionArgs(args, [ "name", "id", "count", "animated" ], 3);
 		count = Math.max(Math.min(Number(count), 200), 0) || 0;
-		const mid = "emojis-" + id, files = [];
-		for (let i = 0; i < count; i += 1) files.push(String(i + 1).padStart(3, "0") + ".png");
+		const mid = `emojis-${id}`, files = [];
+		for (let i = 0; i < count; i += 1) files.push(`${String(i + 1).padStart(3, "0")}.png`);
 		return _appendPack(mid, {
 			name,
 			count,
@@ -2297,7 +2297,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	}, appendCustomPack = (...args) => {
 		let {name, id, count, animated, template, files, thumbs} = parseFunctionArgs(args, [ "name", "id", "count", "animated", "template", "files", "thumbs" ], 5);
 		count = Math.max(Number(count), 0) || 0;
-		const mid = "custom-" + id;
+		const mid = `custom-${id}`;
 		if (Array.isArray(files)) {
 			if (!files.length) throw new Error('"files" array cannot be empty.');
 		} else {
@@ -2325,23 +2325,23 @@ function instance$1($$self, $$props, $$invalidate) {
 		if (!isLocalPackID(id)) throw new Error('Pack ID must start with either "startswith-", "emojis-", or "custom-".');
 		const availLocalPacks = getFromLocalStorage("magane.available");
 		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) throw new Error("You have not imported any remote or custom packs");
-		const index = availLocalPacks.findIndex(p => p.id === id);
-		if (-1 === index) throw new Error("Unable to find pack with ID " + id);
-		$$invalidate(8, favoriteStickers = favoriteStickers.filter(s => s.pack !== id)), 
-		saveToLocalStorage("magane.favorites", favoriteStickers), stickersStats = stickersStats.filter(s => s.pack !== id), 
+		const index = availLocalPacks.findIndex((p => p.id === id));
+		if (-1 === index) throw new Error(`Unable to find pack with ID ${id}`);
+		$$invalidate(8, favoriteStickers = favoriteStickers.filter((s => s.pack !== id))), 
+		saveToLocalStorage("magane.favorites", favoriteStickers), stickersStats = stickersStats.filter((s => s.pack !== id)), 
 		saveToLocalStorage("magane.stats", stickersStats), updateFrequentlyUsed();
-		const subbedPack = subscribedPacks.find(p => p.id === id);
+		const subbedPack = subscribedPacks.find((p => p.id === id));
 		subbedPack && unsubscribeToPack(subbedPack), availLocalPacks.splice(index, 1), saveToLocalStorage("magane.available", availLocalPacks);
-		const sharedIndex = availablePacks.findIndex(p => p.id === id);
-		return -1 !== sharedIndex && (availablePacks.splice(sharedIndex, 1), availablePacks = availablePacks, 
-		filterPacks()), delete localPacks[id], log(`Removed pack with ID ${id} (old index: ${index})`), 
+		const sharedIndex = availablePacks.findIndex((p => p.id === id));
+		return -1 !== sharedIndex && (availablePacks.splice(sharedIndex, 1), filterPacks()), 
+		delete localPacks[id], log(`Removed pack with ID ${id} (old index: ${index})`), 
 		!0;
 	}, searchPacks = keyword => {
 		if (!keyword) throw new Error("Keyword required");
 		keyword = keyword.toLowerCase();
 		const availLocalPacks = getFromLocalStorage("magane.available");
 		if (!Array.isArray(availLocalPacks) || !availLocalPacks.length) throw new Error("You have not imported any remote or custom packs");
-		return availLocalPacks.filter(p => p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0);
+		return availLocalPacks.filter((p => p.name.toLowerCase().indexOf(keyword) >= 0 || p.id.indexOf(keyword) >= 0));
 	}, setWindowMaganeAPIs = state => {
 		state ? window.magane = {
 			appendPack,
@@ -2355,7 +2355,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			hasPermission
 		} : window.magane instanceof Node || delete window.magane;
 	};
-	onMount(async () => {
+	onMount((async () => {
 		switch (base = main.parentNode.parentNode, $$invalidate(0, mountType = document.body ? MountType.BETTERDISCORD : MountType.LEGACY), 
 		$$invalidate(0, mountType), mountType) {
 		  case MountType.BETTERDISCORD:
@@ -2373,28 +2373,28 @@ function instance$1($$self, $$props, $$invalidate) {
 		try {
 			toast("Loading Magane…"), Modules.ChannelStore = Helper.findByProps("getChannel", "getDMFromUserId"), 
 			Modules.SelectedChannelStore = Helper.findByProps("getLastSelectedChannelId"), Modules.UserStore = Helper.findByProps("getCurrentUser", "getUser"), 
-			Modules.PermissionsBits = Helper.find(m => "bigint" == typeof m.ADMINISTRATOR, {
+			Modules.PermissionsBits = Helper.find((m => "bigint" == typeof m.ADMINISTRATOR), {
 				searchExports: !0
-			}), Modules.Permissions = Helper.findByProps("computePermissions"), Modules.CloudUpload = Helper.find(m => m.prototype && m.prototype.trackUploadFinished, {
+			}), Modules.Permissions = Helper.findByProps("computePermissions"), Modules.CloudUpload = Helper.find((m => m.prototype?.trackUploadFinished), {
 				searchExports: !0
-			}), Modules.DraftStore = Helper.findByProps("getDraft", "getState"), Modules.MessageUpload = Helper.findByProps("instantBatchUpload"), 
+			}), Modules.DraftStore = Helper.findByProps("getDraft", "getState"), Modules.MessageUpload = Helper.findByProps("uploadFiles"), 
 			Modules.MessageUtils = Helper.findByProps("sendMessage"), Modules.PendingReplyStore = Helper.findByProps("getPendingReply"), 
 			Modules.React = Helper.findByProps("createElement", "version"), (() => {
 				const iframe = document.createElement("iframe");
 				document.head.append(iframe), storage = Object.getOwnPropertyDescriptor(iframe.contentWindow.frames, "localStorage").get.call(window), 
 				iframe.remove();
 			})(), loadSettings(), await grabPacks(), await migrateStringPackIds(), toastSuccess("Magane is now ready!"), 
-			resizeObserver = new ResizeObserver(entries => {
+			resizeObserver = new ResizeObserver((entries => {
 				for (const entry of entries) {
 					if (!entry.contentRect) return;
 					resizeObserverQueuePush(entry);
 				}
-			}), resizeObserverWorker();
+			})), resizeObserverWorker();
 		} catch (error) {
 			console.error(error), toastError("Unexpected error occurred when initializing Magane. Check your console for details.");
 		}
 		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`), settings.disableUpdateCheck || mountType !== MountType.BETTERDISCORD || await checkUpdate();
-	}), onDestroy(() => {
+	})), onDestroy((() => {
 		document.removeEventListener("click", maganeBlurHandler), document.removeEventListener("keyup", onKeydownEvent);
 		let destroyedCount = 0;
 		for (let i = 0; i < components.length; i++) try {
@@ -2402,15 +2402,15 @@ function instance$1($$self, $$props, $$invalidate) {
 		} catch (_) {}
 		for (const timeout of Object.values(waitForTimeouts)) clearTimeout(timeout);
 		resizeObserver && resizeObserver.disconnect(), setWindowMaganeAPIs(!1), log(`${destroyedCount}/${components.length} internal component(s) cleaned up.`);
-	});
+	}));
 	const maganeBlurHandler = e => {
 		const stickerWindow = main.querySelector(".stickerWindow");
 		if (stickerWindow) {
 			const {x, y, width, height} = stickerWindow.getBoundingClientRect();
 			if (e.target) {
-				if (activeComponent && activeComponent.element.contains(e.target)) return;
+				if (activeComponent?.element.contains(e.target)) return;
 				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
-				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
+				if (visibleModals.length && Array.from(visibleModals).some((m => m.contains(e.target)))) return;
 			}
 			e.clientX <= x + width && e.clientX >= x && e.clientY <= y + height && e.clientY >= y || toggleStickerWindow(!1);
 		}
@@ -2421,10 +2421,10 @@ function instance$1($$self, $$props, $$invalidate) {
 		component && activeComponent && component !== activeComponent && (toggleStickerWindow(!1, activeComponent), 
 		activeComponent = null);
 		let toggledComponent = component || activeComponent;
-		if (!toggledComponent && components.length && (toggledComponent = components.find(component => document.body.contains(component.element))), 
+		if (!toggledComponent && components.length && (toggledComponent = components.find((component => document.body.contains(component.element)))), 
 		!toggledComponent) return;
 		if (!document.body.contains(toggledComponent.textArea)) return;
-		const active = void 'undefined' === forceState ? !stickerWindowActive : forceState;
+		const active = void 0 === forceState ? !stickerWindowActive : forceState;
 		if (active) {
 			if (updateStickerWindowPosition(toggledComponent), !settings.ignoreViewportSize && !isWarnedAboutViewportHeight) {
 				Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0) <= 700 && (toastWarn("Viewport height is less than 700px, Magane window may not display properly.", {
@@ -2477,18 +2477,17 @@ function instance$1($$self, $$props, $$invalidate) {
 			pack.thumbs.push(data.files[i].thumb || null);
 			break;
 
-		  case 0:
 		  default:
-			if ([ "id", "name", "files" ].some(key => !data[key])) throw new Error("Invalid config. Some required fields are missing.");
-			if (pack.id = String(data.id), pack.name = String(data.name), data.files.some(file => "string" != typeof file)) throw new Error('Invalid "files" array. Some values are not string.');
+			if ([ "id", "name", "files" ].some((key => !data[key]))) throw new Error("Invalid config. Some required fields are missing.");
+			if (pack.id = String(data.id), pack.name = String(data.name), data.files.some((file => "string" != typeof file))) throw new Error('Invalid "files" array. Some values are not string.');
 			if (pack.files = data.files, Array.isArray(data.thumbs)) {
-				if (data.thumbs.some(thumb => "string" != typeof thumb && null !== thumb)) throw new Error('Invalid "thumbs" array. Some values are neither string nor null.');
+				if (data.thumbs.some((thumb => "string" != typeof thumb && null !== thumb))) throw new Error('Invalid "thumbs" array. Some values are neither string nor null.');
 				pack.thumbs = data.thumbs;
 			}
 			pack.description = data.description ? String(data.description) : null, pack.homeUrl = data.homeUrl ? String(data.homeUrl) : null, 
 			pack.template = data.template ? String(data.template) : null, data.updateUrl && (pack.updateUrl = String(data.updateUrl));
 		}
-		return pack.count = pack.files.length, Array.isArray(pack.thumbs) && pack.thumbs.every(thumb => null === thumb) && (pack.thumbs = []), 
+		return pack.count = pack.files.length, Array.isArray(pack.thumbs) && pack.thumbs.every((thumb => null === thumb)) && (pack.thumbs = []), 
 		pack;
 	}, fetchRemotePack = async url => {
 		const opts = {
@@ -2501,7 +2500,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		};
 		for (let i = 0; i < regExes.length; i++) {
 			const _match = url.match(regExes[i]);
-			_match && !_match.some(m => void 0 === m) && (match = {
+			_match && !_match.some((m => void 0 === m)) && (match = {
 				index: i,
 				result: _match
 			});
@@ -2510,16 +2509,17 @@ function instance$1($$self, $$props, $$invalidate) {
 			1 === match.index && (url = `${match.result[1]}${match.result[2]}/a/${match.result[3]}`, 
 			opts.updateUrl = url), opts.id = `${match.result[2]}-${match.result[3]}`, opts.homeUrl = url;
 			const downloadUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`, chibisafeSuffix = "/view?page=1&limit=500";
-			log("Fetching chibisafe album: " + (downloadUrl + chibisafeSuffix));
+			log(`Fetching chibisafe album: ${downloadUrl + chibisafeSuffix}`);
 			let response = await fetch(downloadUrl + chibisafeSuffix, {
 				cache: "no-cache"
-			}).catch(response => response);
-			if (!response || 200 !== response.status && 304 !== response.status) {
-				const _status = response && response.status ? `${response.status} ${response.statusText}`.trim() : "N/A";
+			}).catch((response => response));
+			if (200 === response?.status || 304 === response?.status) data = await response.json(), 
+			opts.remoteType = 1; else {
+				const _status = response?.status ? `${response.status} ${response.statusText}`.trim() : "N/A";
 				log(`HTTP error ${_status}, re-trying with: ${downloadUrl}`), response = await fetch(downloadUrl, {
 					cache: "no-cache"
 				}), data = await response.json(), opts.remoteType = 2;
-			} else data = await response.json(), opts.remoteType = 1;
+			}
 		} else {
 			const response = await fetch(opts.updateUrl);
 			data = await response.json(), opts.remoteType = 0;
@@ -2538,11 +2538,11 @@ function instance$1($$self, $$props, $$invalidate) {
 			const stored = _appendPack(pack.id, pack, {
 				overwrite: !0
 			});
-			$$invalidate(8, favoriteStickers = favoriteStickers.filter(s => s.pack !== id || -1 !== stored.pack.files.findIndex(f => f === s.id))), 
-			saveToLocalStorage("magane.favorites", favoriteStickers), stickersStats = stickersStats.filter(s => s.pack !== id || -1 !== stored.pack.files.findIndex(f => f === s.id)), 
+			$$invalidate(8, favoriteStickers = favoriteStickers.filter((s => s.pack !== id || -1 !== stored.pack.files.findIndex((f => f === s.id))))), 
+			saveToLocalStorage("magane.favorites", favoriteStickers), stickersStats = stickersStats.filter((s => s.pack !== id || -1 !== stored.pack.files.findIndex((f => f === s.id)))), 
 			saveToLocalStorage("magane.stats", stickersStats), simplePacksData[id] && $$invalidate(13, simplePacksData[id].name = stored.pack.name, simplePacksData), 
 			updateFrequentlyUsed();
-			const subIndex = subscribedPacks.findIndex(p => p.id === id);
+			const subIndex = subscribedPacks.findIndex((p => p.id === id));
 			return -1 !== subIndex && ($$invalidate(9, subscribedPacks[subIndex] = stored.pack, subscribedPacks), 
 			$$invalidate(10, subscribedPacksSimple[subIndex] = stored.pack.id, subscribedPacksSimple), 
 			saveToLocalStorage("magane.subscribed", subscribedPacks)), silent || toastSuccess(`Updated pack ${stored.pack.name}.`, {
@@ -2560,7 +2560,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		const content = "**ID:**\n\n```\n" + id + "\n```\n\n**Name:**\n\n" + localPacks[id].name + "\n\n**Count:**\n\n" + localPacks[id].count + "\n\n**Description:**\n\n" + (localPacks[id].description || "N/A") + "\n\n**Home URL:**\n\n" + (localPacks[id].homeUrl || "N/A") + "\n\n**Update URL:**\n\n```\n" + (localPacks[id].updateUrl || "N/A") + "\n```\n\n**Remote Type:**\n\n" + remoteType;
 		Helper.Alerts.show(localPacks[id].name, content);
 	}, assertImportPacksConsent = (context, onConfirm) => {
-		const content = "**Please continue only if you trust these packs.**\n\n" + context;
+		const content = `**Please continue only if you trust these packs.**\n\n${context}`;
 		Helper.Alerts.show("Import Packs", content, {
 			confirmText: "Import",
 			cancelText: "Cancel",
@@ -2569,8 +2569,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		});
 	}, parseLinePack = () => {
 		if (!linePackSearch) return;
-		const linePackUrls = linePackSearch.split("\n").map(url => url.trim()).filter(url => url.length);
-		linePackUrls.length && assertImportPacksConsent("URLs:\n\n```\n" + linePackUrls.join("\n") + "\n```", async () => {
+		const linePackUrls = linePackSearch.split("\n").map((url => url.trim())).filter((url => url.length));
+		linePackUrls.length && assertImportPacksConsent("URLs:\n\n```\n" + linePackUrls.join("\n") + "\n```", (async () => {
 			toast("Importing packs…", {
 				nolog: !0,
 				timeout: 1000
@@ -2581,7 +2581,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				if (!match) throw new Error("Unsupported LINE Store URL or ID.");
 				let stored;
 				if ("emoji" === match[3]) {
-					const id = match[4], response = await fetch("https://magane.moe/api/proxy/emoji/" + id), props = await response.json();
+					const id = match[4], response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`), props = await response.json();
 					stored = appendEmojisPack({
 						name: props.title,
 						id: props.id,
@@ -2591,7 +2591,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				} else {
 					const id = Number(match[4]);
 					if (isNaN(id) || id < 0) return toastError("Unsupported LINE Stickers ID.");
-					const response = await fetch("https://magane.moe/api/proxy/sticker/" + id), props = await response.json();
+					const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`), props = await response.json();
 					stored = appendPack({
 						name: props.title,
 						firstid: props.first,
@@ -2609,11 +2609,11 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 			failed.length ? (toastError("Failed to add some remote packs. Their URLs have been kept in the input box."), 
 			$$invalidate(15, linePackSearch = failed.join("\n"))) : $$invalidate(15, linePackSearch = "");
-		});
+		}));
 	}, parseRemotePackUrl = () => {
 		if (!remotePackUrl) return;
-		const remotePackUrls = remotePackUrl.split("\n").map(url => url.trim()).filter(url => url.length);
-		remotePackUrls.length && assertImportPacksConsent("URLs:\n\n```\n" + remotePackUrls.join("\n") + "\n```", async () => {
+		const remotePackUrls = remotePackUrl.split("\n").map((url => url.trim())).filter((url => url.length));
+		remotePackUrls.length && assertImportPacksConsent("URLs:\n\n```\n" + remotePackUrls.join("\n") + "\n```", (async () => {
 			toast("Importing packs…", {
 				nolog: !0,
 				timeout: 1000
@@ -2621,7 +2621,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			const failed = [];
 			for (const url of remotePackUrls) try {
 				const pack = await fetchRemotePack(url);
-				pack.id = "custom-" + pack.id;
+				pack.id = `custom-${pack.id}`;
 				const stored = _appendPack(pack.id, pack);
 				toastSuccess(`Added a new pack ${stored.pack.name}.`, {
 					nolog: !0
@@ -2633,11 +2633,11 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 			failed.length ? (toastError("Failed to add some remote packs. Their URLs have been kept in the input box."), 
 			$$invalidate(16, remotePackUrl = failed.join("\n"))) : $$invalidate(16, remotePackUrl = "");
-		});
+		}));
 	}, loadLocalRemotePack = () => {
 		document.getElementById("localRemotePackInput").click();
 	}, bulkUpdateRemotePacks = () => {
-		const packs = Object.values(localPacks).filter(pack => pack.updateUrl).map(pack => pack.id);
+		const packs = Object.values(localPacks).filter((pack => pack.updateUrl)).map((pack => pack.id));
 		if (!packs.length) return toastWarn("You do not have any remote packs that can be updated.");
 		const content = `**Please confirm that you want to update __${packs.length}__ remote pack${1 === packs.length ? "" : "s"}.**`;
 		Helper.Alerts.show(`Update ${packs.length} remote pack${1 === packs.length ? "" : "s"}`, content, {
@@ -2664,17 +2664,17 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 		});
 	}, updateFrequentlyUsed = () => {
-		const lastPackIDs = frequentlyUsedSorted.map(v => v.pack).filter((v, i, a) => a.indexOf(v) === i);
+		const lastPackIDs = frequentlyUsedSorted.map((v => v.pack)).filter(((v, i, a) => a.indexOf(v) === i));
 		if (settings.frequentlyUsed) {
-			stickersStats = stickersStats.sort((a, b) => b.used - a.used || b.lastUsed - a.lastUsed).slice(0, Math.ceil(1.5 * settings.frequentlyUsed));
+			stickersStats = stickersStats.sort(((a, b) => b.used - a.used || b.lastUsed - a.lastUsed)).slice(0, Math.ceil(1.5 * settings.frequentlyUsed));
 			const sliced = stickersStats.slice(0, settings.frequentlyUsed);
-			sliced.forEach(sticker => initSimplePackDataEntry(sticker.pack)), $$invalidate(12, frequentlyUsedSorted = sliced);
+			sliced.forEach((sticker => initSimplePackDataEntry(sticker.pack))), $$invalidate(12, frequentlyUsedSorted = sliced);
 		} else frequentlyUsedSorted.length && $$invalidate(12, frequentlyUsedSorted = []);
 		lastPackIDs.forEach(cleanUpSimplePackDataEntry);
 	}, parseFrequentlyUsedInput = () => {
 		const count = parseInt(frequentlyUsedInput, 10);
 		if (isNaN(count) || count < 0) return toastError("Invalid number.");
-		$$invalidate(20, settings.frequentlyUsed = count, settings), log("settings['frequentlyUsed'] = " + settings.frequentlyUsed), 
+		$$invalidate(20, settings.frequentlyUsed = count, settings), log(`settings['frequentlyUsed'] = ${settings.frequentlyUsed}`), 
 		saveToLocalStorage("magane.settings", settings), 0 === count ? (stickersStats = [], 
 		saveToLocalStorage("magane.stats", stickersStats), toastSuccess("Settings saved, and stickers usage cleared!", {
 			nolog: !0
@@ -2685,10 +2685,10 @@ function instance$1($$self, $$props, $$invalidate) {
 		for (const prop in hotkey) if ("key" === prop || "code" === prop) {
 			if (hotkey[prop] !== event[prop].toLocaleLowerCase()) return;
 		} else if (hotkey[prop] !== event[prop]) return;
-		event.target && event.target.classList.contains("supress-magane-hotkey") || components.length && (event.preventDefault(), 
+		event.target?.classList.contains("supress-magane-hotkey") || components.length && (event.preventDefault(), 
 		toggleStickerWindow());
 	}, parseThenInitHotkey = save => {
-		const keys = (hotkeyInput || "").split("+").map(key => key.trim());
+		const keys = (hotkeyInput || "").split("+").map((key => key.trim()));
 		if ($$invalidate(18, hotkeyInput = keys.join("+")), hotkeyInput && keys.length) {
 			const tmp = {
 				key: null,
@@ -2710,7 +2710,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 			tmp.code || delete tmp.code, hotkey = tmp, document.addEventListener("keyup", onKeydownEvent);
 		} else hotkey = null, document.removeEventListener("keyup", onKeydownEvent);
-		save && ($$invalidate(20, settings.hotkey = hotkeyInput, settings), log("settings['hotkey'] = " + settings.hotkey), 
+		save && ($$invalidate(20, settings.hotkey = hotkeyInput, settings), log(`settings['hotkey'] = ${settings.hotkey}`), 
 		saveToLocalStorage("magane.settings", settings), toastSuccess(hotkey ? "Hotkey saved." : "Hotkey cleared.", {
 			nolog: !0
 		}));
@@ -2724,7 +2724,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			const database = {};
 			for (const key of allowedStorageKeys) {
 				const data = getFromLocalStorage(key);
-				void 'undefined' !== data && (database[key] = data);
+				void 0 !== data && (database[key] = data);
 			}
 			const dbString = JSON.stringify(database), blob = new Blob([ dbString ]);
 			hrefUrl = window.URL.createObjectURL(blob), element.href = hrefUrl, element.download = `magane.database.${(new Date).toISOString()}.json`, 
@@ -2735,8 +2735,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		element.remove(), hrefUrl && window.URL.revokeObjectURL(hrefUrl);
 	};
 	return [ mountType, coords, main, forceHideMagane, stickerWindowActive, stickerAddModalActive, stickerAddModalTabsInit, activeTab, favoriteStickers, subscribedPacks, subscribedPacksSimple, filteredPacks, frequentlyUsedSorted, simplePacksData, localPacks, linePackSearch, remotePackUrl, frequentlyUsedInput, hotkeyInput, packsSearch, settings, MountType, checkUpdate, isLocalPackID, subscribeToPack, unsubscribeToPack, formatUrl, sendSticker, favoriteSticker, unfavoriteSticker, filterPacks, count => `<span class="counts"><span>–</span>${count} sticker${1 === count ? "" : "s"}</span>`, id => {
-		let tmp = "" + id;
-		return "string" == typeof id && (id.startsWith("startswith-") ? tmp = "LINE " + id.replace("startswith-", "") : id.startsWith("emojis-") ? tmp = "LINE Emojis " + id.replace("emojis-", "") : id.startsWith("custom-") && (tmp = id.replace("custom-", ""))), 
+		let tmp = `${id}`;
+		return "string" == typeof id && (id.startsWith("startswith-") ? tmp = `LINE ${id.replace("startswith-", "")}` : id.startsWith("emojis-") ? tmp = `LINE Emojis ${id.replace("emojis-", "")}` : id.startsWith("custom-") && (tmp = id.replace("custom-", ""))), 
 		`<span class="appendix"><span>–</span><span title="ID: ${id}">${tmp}</span></span>`;
 	}, toggleStickerModal, activateTab, scrollToStickers, event => {
 		const value = event.target.value.trim();
@@ -2745,9 +2745,9 @@ function instance$1($$self, $$props, $$invalidate) {
 		if (isNaN(newIndex) || newIndex < 1 || newIndex > subscribedPacks.length) return toastError(`New position must be ≥ 1 and ≤ ${subscribedPacks.length}.`);
 		newIndex--;
 		let packId = event.target.dataset.pack;
-		if (void 'undefined' === packId) return;
+		if (void 0 === packId) return;
 		isLocalPackID(packId) || (packId = Number(packId));
-		const oldIndex = subscribedPacks.findIndex(pack => pack.id === packId);
+		const oldIndex = subscribedPacks.findIndex((pack => pack.id === packId));
 		if (oldIndex === newIndex) return;
 		const packData = subscribedPacks.splice(oldIndex, 1);
 		subscribedPacksSimple.splice(oldIndex, 1), subscribedPacks.splice(newIndex, 0, packData[0]), 
@@ -2759,7 +2759,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		if (!files.length) return !1;
 		const results = [];
 		toast(`Reading ${files.length} file${1 === files.length ? "" : "s"}…`);
-		for (const file of files) await new Promise((resolve, reject) => {
+		for (const file of files) await new Promise(((resolve, reject) => {
 			const reader = new FileReader;
 			reader.onload = e => {
 				try {
@@ -2772,16 +2772,16 @@ function instance$1($$self, $$props, $$invalidate) {
 					reject(error);
 				}
 			}, log(`Reading ${file.name}…`), reader.readAsText(file);
-		}).catch(error => {
-			console.error(error), toastError(file.name + " is not a valid JSON file.");
-		});
+		})).catch((error => {
+			console.error(error), toastError(`${file.name} is not a valid JSON file.`);
+		}));
 		event.target.value = "";
-		const fileNames = results.map(result => result.name);
-		assertImportPacksConsent("Files:\n\n```\n" + fileNames.join("\n") + "\n```", async () => {
+		const fileNames = results.map((result => result.name));
+		assertImportPacksConsent("Files:\n\n```\n" + fileNames.join("\n") + "\n```", (async () => {
 			const failedResults = [];
 			for (const result of results) try {
 				const pack = await processRemotePack(result.data);
-				pack.id = "custom-" + pack.id;
+				pack.id = `custom-${pack.id}`;
 				const stored = _appendPack(pack.id, pack);
 				toastSuccess(`Added a new pack ${stored.pack.name}.`, {
 					nolog: !0
@@ -2792,7 +2792,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				}), failedResults.push(result.name);
 			}
 			failedResults.length && toastError(`Failed to add: ${failedResults.join(",")}.`);
-		});
+		}));
 	}, loadLocalRemotePack, bulkUpdateRemotePacks, event => {
 		const {name} = event.target;
 		if (!name) return !1;
@@ -2814,7 +2814,7 @@ function instance$1($$self, $$props, $$invalidate) {
 			}
 			let content = "This database contains the following data:";
 			const valid = [], invalid = [];
-			for (const key of allowedStorageKeys) if (void 'undefined' === result[key] || null === result[key]) invalid.push(key); else {
+			for (const key of allowedStorageKeys) if (void 0 === result[key] || null === result[key]) invalid.push(key); else {
 				let len = null;
 				if (Array.isArray(result[key])) len = result[key].length; else try {
 					len = Object.keys(result[key]).length;
@@ -2824,7 +2824,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				valid.push(key);
 			}
 			valid.length || (content = "**This is an empty database file.**"), invalid.length && (content += `\nThese missing or invalid field${1 === invalid.length ? "" : "s"} **will be removed**:`, 
-			content += "\n" + invalid.join("\n")), content += "\n**Please continue only if you trust this database file.**", 
+			content += `\n${invalid.join("\n")}`), content += "\n**Please continue only if you trust this database file.**", 
 			Helper.Alerts.show("Replace Database", content.replace(/\n/g, "\n\n"), {
 				confirmText: "Go ahead!",
 				cancelText: "Cancel",
@@ -2838,7 +2838,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				}
 			});
 		}, log(`Reading ${files[0].name}…`), reader.readAsText(files[0]);
-	}, replaceDatabase, exportDatabase, (pack, sticker, f) => f.pack === pack.id && f.id === sticker, (sticker, f) => f.pack === sticker.pack && f.id === sticker.id, (sticker, event) => sendSticker(sticker.pack, sticker.id, event), sticker => unfavoriteSticker(sticker.pack, sticker.id), (sticker, event) => sendSticker(sticker.pack, sticker.id, event), sticker => favoriteSticker(sticker.pack, sticker.id), sticker => unfavoriteSticker(sticker.pack, sticker.id), (pack, sticker, event) => sendSticker(pack.id, sticker, event), (pack, sticker) => favoriteSticker(pack.id, sticker), (pack, sticker) => unfavoriteSticker(pack.id, sticker), () => toggleStickerModal(), () => scrollToStickers("#pfavorites"), () => scrollToStickers("#pfrequentlyused"), pack => scrollToStickers("#p" + pack.id), () => activateTab(0), () => activateTab(1), () => activateTab(2), () => activateTab(3), pack => unsubscribeToPack(pack), pack => showPackInfo(pack.id), pack => updateRemotePack(pack.id), function input0_input_handler() {
+	}, replaceDatabase, exportDatabase, (pack, sticker, f) => f.pack === pack.id && f.id === sticker, (sticker, f) => f.pack === sticker.pack && f.id === sticker.id, (sticker, event) => sendSticker(sticker.pack, sticker.id, event), sticker => unfavoriteSticker(sticker.pack, sticker.id), (sticker, event) => sendSticker(sticker.pack, sticker.id, event), sticker => favoriteSticker(sticker.pack, sticker.id), sticker => unfavoriteSticker(sticker.pack, sticker.id), (pack, sticker, event) => sendSticker(pack.id, sticker, event), (pack, sticker) => favoriteSticker(pack.id, sticker), (pack, sticker) => unfavoriteSticker(pack.id, sticker), () => toggleStickerModal(), () => scrollToStickers("#pfavorites"), () => scrollToStickers("#pfrequentlyused"), pack => scrollToStickers(`#p${pack.id}`), () => activateTab(0), () => activateTab(1), () => activateTab(2), () => activateTab(3), pack => unsubscribeToPack(pack), pack => showPackInfo(pack.id), pack => updateRemotePack(pack.id), function input0_input_handler() {
 		packsSearch = this.value, $$invalidate(19, packsSearch);
 	}, pack => unsubscribeToPack(pack), pack => subscribeToPack(pack), pack => showPackInfo(pack.id), pack => updateRemotePack(pack.id), pack => deleteLocalPack(pack.id), function textarea0_input_handler() {
 		linePackSearch = this.value, $$invalidate(15, linePackSearch);
@@ -2879,9 +2879,9 @@ function instance$1($$self, $$props, $$invalidate) {
 	}, () => parseFrequentlyUsedInput(), function input18_input_handler() {
 		hotkeyInput = this.value, $$invalidate(18, hotkeyInput);
 	}, () => parseThenInitHotkey(!0), () => replaceDatabase(), () => exportDatabase(), () => toggleStickerModal(), function main_1_binding($$value) {
-		binding_callbacks[$$value ? "unshift" : "push"](() => {
+		binding_callbacks[$$value ? "unshift" : "push"]((() => {
 			main = $$value, $$invalidate(2, main);
-		});
+		}));
 	} ];
 }
 
