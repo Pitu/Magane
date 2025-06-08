@@ -75,7 +75,7 @@ export default {
 			browser: true
 		}),
 		commonjs(),
-		production && terser({
+		terser({
 			ecma: 2021,
 			compress: {
 				keep_classnames: true,
@@ -89,25 +89,18 @@ export default {
 				indent_level: 4
 			}
 		}),
-		production && replace({
+		replace({
 			delimiters: ['', ''],
 			preventAssignment: false,
 			values: {
 				'    ': '\t'
 			}
 		}),
-		production && replace({
+		replace({
 			delimiters: ['', ''],
 			preventAssignment: false,
 			values: {
 				'"use strict";': '"use strict"\n__VencordImports__;'
-			}
-		}),
-		!production && replace({
-			delimiters: ['', ''],
-			preventAssignment: false,
-			values: {
-				'\'use strict\';': '\'use strict\';\n__VencordImports__;'
 			}
 		}),
 		replace({
