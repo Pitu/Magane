@@ -36,10 +36,10 @@ Currently the best way to get this up and running is by using [BetterDiscord](ht
 > Be advised that Magane's **update checker is not available** on Vencord.  
 > You must manually consult this repo to check for updates! Or just check back whenever it breaks due to Discord's updates...
 
-1. Grab Magane's Vencord plugin file from [https://magane.moe/api/dist/vencord](https://magane.moe/api/dist/vencord).
+1. Grab Magane's Vencord plugin directory from `dist/maganevencord`.
 2. Install Vencord from source. Follow its installation guide at [https://docs.vencord.dev/installing/](https://docs.vencord.dev/installing/).
-3. In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g. `/path/to/vencord/src/userplugins`).
-4. Place Magane's plugin file into it.
+3. In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g., `/path/to/vencord/src/userplugins`).
+4. Place Magane's plugin directory into it (e.g, `.../userplugins/maganevencord`). It must contain both `index.ts` and `native.ts`.
 5. Rebuild Vencord (`pnpm build`).
 6. (optional) If you had not done it before, you must inject Vencord into your Discord installation (`pnpm inject`).  
 For those that use **Vesktop**, please see below.
