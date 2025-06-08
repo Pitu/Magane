@@ -46,6 +46,9 @@ For those that use **Vesktop**, please see below.
 7. Restart your Discord/Vesktop.
 8. Activate Magane from Discord's **User Settings > Vencord > Plugins**.
 
+> Due to Vencord enforcing CSP policies, if you need to import packs from third-party Chibisafe hosts, you have to add the domains to `native.ts` file.  
+> Restart your Discord/Vesktop after making any changes to it.
+
 #### Vesktop
 
 Follow the same steps as above, until step 6.
