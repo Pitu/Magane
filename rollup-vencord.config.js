@@ -107,10 +107,9 @@ export default {
 			delimiters: ['', ''],
 			preventAssignment: false,
 			values: {
-				'__VencordImports__;': 'import definePlugin, { PluginNative } from "@utils/types";\n' +
+				'__VencordImports__;': 'import definePlugin from "@utils/types";\n' +
 					'import { findByPropsLazy, findLazy } from "@webpack";\n' +
-					'import { Alerts, Toasts } from "@webpack/common";\n' +
-					'const Native = VencordNative.pluginHelpers.MaganeVencord as PluginNative<typeof import("./native")>;',
+					'import { Alerts, Toasts } from "@webpack/common";',
 				'VencordApi.': '',
 
 				// Svelte syntax, lmao..
