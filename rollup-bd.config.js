@@ -11,8 +11,6 @@ import fs from 'fs/promises';
 import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
-const file = path.resolve(__dirname, production ? 'dist' : 'dist-dev', 'magane.plugin.js');
-const meta = path.resolve(__dirname, 'src/meta.txt');
 const metadata = {
 	name: 'MaganeBD',
 	displayName: 'MaganeBD',
@@ -20,10 +18,15 @@ const metadata = {
 	updateUrl: 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js'
 };
 
+const meta = path.resolve(__dirname, 'src/meta.txt');
+
+const dist = path.resolve(__dirname, production ? 'dist' : 'dist-dev');
+const outputFile = path.resolve(dist, 'magane.plugin.js');
+
 export default {
 	input: 'src/bd-main.js',
 	output: {
-		file,
+		file: outputFile,
 		format: 'cjs',
 		name: 'app',
 		// BetterDiscord won't make sourcemaps available to DevTools anyways,
@@ -103,7 +106,7 @@ export default {
 			name: 'copyDistFile',
 			writeBundle: async () => {
 				if (!Boolean(process.env.BD_PLUGIN_PATH)) return;
-				await fs.copyFile(file, process.env.BD_PLUGIN_PATH);
+				await fs.copyFile(outputFile, process.env.BD_PLUGIN_PATH);
 				console.log(`Copied dist file to ${process.env.BD_PLUGIN_PATH}`);
 			}
 		}
