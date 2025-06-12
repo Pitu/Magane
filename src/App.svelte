@@ -1389,7 +1389,7 @@
 			: MountType.LEGACY;
 
 		// Build script for other mods should probably find-replace the following if necessary.
-		mountType = mountType; // Svelte builds this line into: $$invalidate(0, mountType)
+		mountType = mountType;
 
 		switch (mountType) {
 			case MountType.BETTERDISCORD:
