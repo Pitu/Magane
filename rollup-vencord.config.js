@@ -128,7 +128,7 @@ export default {
 		}),
 		{
 			name: 'vencordImports',
-			generateBundle: async (options, bundle, isWrite) => {
+			generateBundle: (options, bundle, isWrite) => {
 				bundle[outputFileName].code = bundle[outputFileName].code.replace(
 					/(['"]use strict['"];)/,
 					'$1\n\n' +
