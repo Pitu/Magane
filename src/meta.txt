@@ -5,7 +5,7 @@
 @authorId 176200089226706944
 @authorLink https://github.com/Pitu
 @license MIT - https://opensource.org/licenses/MIT
-@version <%= pkg.version %>
+@version <%= data.version %>
 @invite 5g6vgwn
 @source https://github.com/Pitu/Magane
 @updateUrl <%= data.updateUrl %>

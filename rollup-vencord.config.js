@@ -15,14 +15,19 @@ const metadata = {
 	name: 'MaganeVencord',
 	displayName: 'MaganeVencord',
 	description: 'Bringing LINE stickers to Discord in a chaotic way. Vencord edition.',
+	version: require('./package.json').version,
 	updateUrl: 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/maganevencord'
 };
+
+const PACKAGE_URL = 'https://raw.githubusercontent.com/Pitu/Magane/refs/heads/master/package.json';
+const GITHUB_URL = 'https://github.com/Pitu/Magane';
 
 const nativeFile = path.resolve(__dirname, 'src/vencord-native.ts');
 const meta = path.resolve(__dirname, 'src/meta.txt');
 
 const dist = path.resolve(__dirname, production ? 'dist' : 'dist-dev', 'maganevencord');
-const outputFile = path.resolve(dist, 'index.ts');
+const outputFileName = 'index.ts';
+const outputFile = path.resolve(dist, outputFileName);
 
 export default {
 	input: 'src/vencord-main.js',
@@ -42,13 +47,28 @@ export default {
 				if (process.env.VENCORD_PLUGIN_PATH && /\.(js|ts$)/i.test(process.env.VENCORD_PLUGIN_PATH)) {
 					throw new Error('VENCORD_PLUGIN_PATH requires directory path. e.g., /path/to/Vencord/src/userplugins/maganevencord.');
 				}
+			}
+		},
+		!production && {
+			name: 'watchExtras',
+			buildStart() {
+				this.addWatchFile(meta);
 				this.addWatchFile(nativeFile);
 			}
 		},
 		svelte({
 			dev: !production,
 			emitCss: true,
-			preprocess: autoPreprocess(),
+			preprocess: autoPreprocess({
+				replace: [
+					[/VencordApi\./g, ''],
+					['mountType = mountType;', 'mountType = MountType.VENCORD;'],
+					['const VERSION = null;', `const VERSION = '${metadata.version}';`],
+					['const UPDATE_URL = null;', `const UPDATE_URL = '${metadata.updateUrl}';`],
+					['const PACKAGE_URL = null;', `const PACKAGE_URL = '${PACKAGE_URL}';`],
+					['const GITHUB_URL = null', `const GITHUB_URL = '${GITHUB_URL}';`]
+				]
+			}),
 			onwarn: (warning, handler) => {
 				if (warning.code === 'a11y-click-events-have-key-events') return;
 				handler(warning);
@@ -75,7 +95,7 @@ export default {
 			browser: true
 		}),
 		commonjs(),
-		terser({
+		production && terser({
 			ecma: 2021,
 			compress: {
 				keep_classnames: true,
@@ -89,35 +109,11 @@ export default {
 				indent_level: 4
 			}
 		}),
-		replace({
+		production && replace({
 			delimiters: ['', ''],
 			preventAssignment: false,
 			values: {
 				'    ': '\t'
-			}
-		}),
-		replace({
-			delimiters: ['', ''],
-			preventAssignment: false,
-			values: {
-				'"use strict";': '"use strict"\n__VencordImports__;'
-			}
-		}),
-		replace({
-			delimiters: ['', ''],
-			preventAssignment: false,
-			values: {
-				'__VencordImports__;': 'import definePlugin from "@utils/types";\n' +
-					'import { findByPropsLazy, findLazy } from "@webpack";\n' +
-					'import { Alerts, Toasts } from "@webpack/common";',
-				'VencordApi.': '',
-
-				// Svelte syntax, lmao..
-				'$$invalidate(0, mountType)': '$$invalidate(0, mountType = MountType.VENCORD)',
-
-				// This is so hacky, lmao
-				'var vencordMain = definePlugin({': 'export default definePlugin({',
-				'module.exports = vencordMain;': ''
 			}
 		}),
 		license({
@@ -130,6 +126,19 @@ export default {
 				data() { return metadata; }
 			}
 		}),
+		{
+			name: 'vencordImports',
+			generateBundle: async (options, bundle, isWrite) => {
+				bundle[outputFileName].code = bundle[outputFileName].code.replace(
+					/(['"]use strict['"];)/,
+					'$1\n\n' +
+					'import definePlugin from "@utils/types";\n' +
+					'import { findByPropsLazy, findLazy } from "@webpack";\n' +
+					'import { Alerts, Toasts } from "@webpack/common";\n' +
+					'import { Notices } from "@api/index";'
+				);
+			}
+		},
 		{
 			name: 'copyDistFile',
 			writeBundle: async () => {
