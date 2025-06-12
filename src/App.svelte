@@ -358,8 +358,8 @@
 
 		for (const textArea of textAreas) {
 			// Assign ephemeral ID to the textArea element
-			if (!textArea._maganeID) {
-				textArea._maganeID = Date.now();
+			if (!textArea.dataset.magane_id) {
+				textArea.dataset.magane_id = Date.now();
 			}
 
 			let valid = false;
@@ -378,24 +378,24 @@
 			}
 
 			if (valid) {
-				log(`Textarea #${textArea._maganeID}: still attached`);
+				log(`Textarea #${textArea.dataset.magane_id}: still attached`);
 				continue;
 			}
 
 			// Mount button component attached to the textArea
 			const component = mountButtonComponent(textArea);
 			if (component) {
-				log(`Textarea #${textArea._maganeID}: attached`);
+				log(`Textarea #${textArea.dataset.magane_id}: attached`);
 				resizeObserver.observe(textArea);
 				componentsNew.push(component);
 			} else {
-				log(`Textarea #${textArea._maganeID}: failed to attach`);
+				log(`Textarea #${textArea.dataset.magane_id}: failed to attach`);
 			}
 		}
 
 		// Loop through and destroy outdated components
 		for (const component of componentsOld) {
-			log(`Textarea #${component.textArea._maganeID}: outdated, destroying\u2026`);
+			log(`Textarea #${component.textArea.dataset.magane_id}: outdated, destroying\u2026`);
 			// Force-close sticker window if an active component is outdated
 			if (activeComponent === component) {
 				// eslint-disable-next-line no-use-before-define
@@ -1524,10 +1524,9 @@
 
 		// If unable to choose a component, return early
 		if (!toggledComponent) return;
-		if (!document.body.contains(toggledComponent.textArea)) return;
 
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
-		if (active) {
+		if (active && document.body.contains(toggledComponent.textArea)) {
 			// Re-position magane's sticker window
 			updateStickerWindowPosition(toggledComponent);
 
