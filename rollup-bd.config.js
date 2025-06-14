@@ -15,8 +15,12 @@ const metadata = {
 	name: 'MaganeBD',
 	displayName: 'MaganeBD',
 	description: 'Bringing LINE stickers to Discord in a chaotic way. BetterDiscord edition.',
+	version: require('./package.json').version,
 	updateUrl: 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js'
 };
+
+const PACKAGE_URL = 'https://raw.githubusercontent.com/Pitu/Magane/refs/heads/master/package.json';
+const GITHUB_URL = 'https://github.com/Pitu/Magane';
 
 const meta = path.resolve(__dirname, 'src/meta.txt');
 
@@ -36,7 +40,7 @@ export default {
 	},
 	plugins: [
 		!production && {
-			name: 'watch-extras',
+			name: 'watchExtras',
 			buildStart() {
 				this.addWatchFile(meta);
 			}
@@ -44,7 +48,14 @@ export default {
 		svelte({
 			dev: !production,
 			emitCss: true,
-			preprocess: autoPreprocess(),
+			preprocess: autoPreprocess({
+				replace: [
+					['const VERSION = null;', `const VERSION = '${metadata.version}';`],
+					['const UPDATE_URL = null;', `const UPDATE_URL = '${metadata.updateUrl}';`],
+					['const PACKAGE_URL = null;', `const PACKAGE_URL = '${PACKAGE_URL}';`],
+					['const GITHUB_URL = null', `const GITHUB_URL = '${GITHUB_URL}';`]
+				]
+			}),
 			onwarn: (warning, handler) => {
 				if (warning.code === 'a11y-click-events-have-key-events') return;
 				handler(warning);

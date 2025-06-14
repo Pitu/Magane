@@ -1,10 +1,8 @@
 /* global definePlugin */
 const App = require('./App.svelte');
 
-const pluginName = 'MaganeVencord';
-
-export default definePlugin({
-	name: pluginName,
+module.exports = definePlugin({
+	name: 'MaganeVencord',
 	authors: [
 		{
 			id: 176200089226706944n,
@@ -24,7 +22,7 @@ export default definePlugin({
 	start() {
 		for (const id of Object.keys(window.MAGANE_STYLES)) {
 			const style = document.createElement('style');
-			style.id = `${pluginName}-${id}`;
+			style.id = `MaganeVencord-${id}`;
 			style.innerText = window.MAGANE_STYLES[id];
 			document.head.appendChild(style);
 		}
@@ -47,7 +45,7 @@ export default definePlugin({
 			this.container.remove();
 		}
 		for (const id of Object.keys(window.MAGANE_STYLES)) {
-			const _style = document.head.getElementById(`${pluginName}-${id}`);
+			const _style = document.head.getElementById(`MaganeVencord-${id}`);
 			if (_style) {
 				_style.remove();
 			}

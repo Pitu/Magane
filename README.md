@@ -22,7 +22,7 @@ By injecting the script into Discord it will automatically pull a curated list o
 
 You can!
 
-Currently the best way to get this up and running is by using [BetterDiscord](https://github.com/rauenzi/BetterDiscordApp/releases), but we also have experimental support for [Vencord](https://vencord.dev/).
+Currently the best way to get this up and running is by using [BetterDiscord](https://github.com/rauenzi/BetterDiscordApp/releases) or [Vencord](https://vencord.dev/).
 
 #### BetterDiscord
 
@@ -32,11 +32,7 @@ Currently the best way to get this up and running is by using [BetterDiscord](ht
 
 #### Vencord
 
-> This is for the more advanced users.  
-> Be advised that Magane's **update checker is not available** on Vencord.  
-> You must manually consult this repo to check for updates! Or just check back whenever it breaks due to Discord's updates...
-
-1. Grab Magane's Vencord plugin directory from `dist/maganevencord`.
+1. Grab Magane's Vencord plugin directory from [https://github.com/Pitu/Magane/tree/master/dist/maganevencord](https://github.com/Pitu/Magane/tree/master/dist/maganevencord).
 2. Install Vencord from source. Follow its installation guide at [https://docs.vencord.dev/installing/](https://docs.vencord.dev/installing/).
 3. In Vencord git directory, navigate to `src`, then create `userplugins` directory (e.g., `/path/to/vencord/src/userplugins`).
 4. Place Magane's plugin directory into it (e.g, `.../userplugins/maganevencord`). It must contain both `index.ts` and `native.ts`.
@@ -46,7 +42,7 @@ For those that use **Vesktop**, please see below.
 7. Restart your Discord/Vesktop.
 8. Activate Magane from Discord's **User Settings > Vencord > Plugins**.
 
-> Due to Vencord enforcing CSP policies, if you need to import packs from third-party Chibisafe hosts, you have to add the domains to `native.ts` file.  
+> Due to Vencord enforcing CSP, if you need to import packs from third-party Chibisafe hosts, you have to add the domains to `native.ts` file.  
 > Restart your Discord/Vesktop after making any changes to it.
 
 #### Vesktop

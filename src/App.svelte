@@ -19,14 +19,10 @@
 	};
 	let mountType = null;
 
-	/*
-		Built-in update checker is not available outside of BetterDiscord.
-		Find-replacing these is not possible due to Svelte directly injecting string constants
-		into any functions that use them when building in production mode.
-	*/
-	const bdPluginName = 'MaganeBD';
-	const githubUrl = 'https://github.com/Pitu/Magane/commits/master';
-	const updateUrl = 'https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js';
+	const VERSION = null;
+	const UPDATE_URL = null;
+	const PACKAGE_URL = null;
+	const GITHUB_URL = null;
 
 	// APIs
 	const Modules = {};
@@ -130,38 +126,23 @@
 				return MOCK_API.TOASTS_SHOW(...args);
 			}
 		},
-		Plugins: {
-			isEnabled(...args) {
-				switch (mountType) {
-					case MountType.BETTERDISCORD:
-						return BdApi.Plugins.isEnabled(...args);
-					case MountType.VENCORD:
-						return null; // TODO Vencord
-					default:
-						return MOCK_API.PLUGINS_ISENABLED(...args);
-				}
-			},
-			getVersion(...args) {
-				switch (mountType) {
-					case MountType.BETTERDISCORD:
-						return BdApi.Plugins.get(...args).version;
-					case MountType.VENCORD:
-						return null; // TODO Vencord
-					default:
-						return MOCK_API.PLUGINS_GETVERSION(...args);
-				}
-			}
-		},
 		UI: {
 			showNotice(...args) {
-				switch (mountType) {
-					case MountType.BETTERDISCORD:
-						return BdApi.UI.showNotice(...args);
-					case MountType.VENCORD:
-						return null; // TODO Vencord
-					default:
-						return MOCK_API.UI_SHOWNOTICE(...args);
+				if (mountType === MountType.BETTERDISCORD) {
+					return BdApi.UI.showNotice(...args);
+				} else if (mountType === MountType.VENCORD) {
+					let buttonText = 'OK';
+					let onOkClick = () => VencordApi.Notices.popNotice();
+
+					if (Array.isArray(args[1]?.buttons) && args[1].buttons.length) {
+						buttonText = args[1].buttons[0].label;
+						onOkClick = args[1].buttons[0].onClick;
+					}
+
+					return VencordApi.Notices.showNotice(args[0], buttonText, onOkClick);
 				}
+
+				return MOCK_API.UI_SHOWNOTICE(...args);
 			}
 		}
 	};
@@ -358,8 +339,8 @@
 
 		for (const textArea of textAreas) {
 			// Assign ephemeral ID to the textArea element
-			if (!textArea._maganeID) {
-				textArea._maganeID = Date.now();
+			if (!textArea.dataset.magane_id) {
+				textArea.dataset.magane_id = Date.now();
 			}
 
 			let valid = false;
@@ -378,24 +359,24 @@
 			}
 
 			if (valid) {
-				log(`Textarea #${textArea._maganeID}: still attached`);
+				log(`Textarea #${textArea.dataset.magane_id}: still attached`);
 				continue;
 			}
 
 			// Mount button component attached to the textArea
 			const component = mountButtonComponent(textArea);
 			if (component) {
-				log(`Textarea #${textArea._maganeID}: attached`);
+				log(`Textarea #${textArea.dataset.magane_id}: attached`);
 				resizeObserver.observe(textArea);
 				componentsNew.push(component);
 			} else {
-				log(`Textarea #${textArea._maganeID}: failed to attach`);
+				log(`Textarea #${textArea.dataset.magane_id}: failed to attach`);
 			}
 		}
 
 		// Loop through and destroy outdated components
 		for (const component of componentsOld) {
-			log(`Textarea #${component.textArea._maganeID}: outdated, destroying\u2026`);
+			log(`Textarea #${component.textArea.dataset.magane_id}: outdated, destroying\u2026`);
 			// Force-close sticker window if an active component is outdated
 			if (activeComponent === component) {
 				// eslint-disable-next-line no-use-before-define
@@ -549,45 +530,39 @@
 	};
 
 	const checkUpdate = async (manual = false) => {
-		if (mountType !== MountType.BETTERDISCORD) {
-			return toastWarn('Sorry, update checker is only available when running on BetterDiscord.');
+		if (!VERSION || !UPDATE_URL || !PACKAGE_URL) {
+			return toastWarn('Sorry, update checker is not available for this release.');
 		}
 
-		// Check if hard-coded plugin name is enabled, sanity-check to ensure the running script is it
-		if (!Helper.Plugins.isEnabled(bdPluginName)) {
-			return toastWarn(`Update check skipped, is this plugin not named ${bdPluginName}?`);
-		}
-
-		const currentVersion = Helper.Plugins.getVersion(bdPluginName);
-
-		log(`Fetching remote dist file from: ${updateUrl}`);
+		log(`Fetching remote dist file from: ${PACKAGE_URL}`);
 		if (manual) toast('Checking for updates\u2026', { nolog: true });
 
-		await fetch(updateUrl, { cache: 'no-cache' }).then(async response => {
+		await fetch(PACKAGE_URL, { cache: 'no-cache' }).then(async response => {
 			log('Remote dist file fetched.');
 
-			const data = await response.text();
-			const match = data.match(/^ \* @version ([a-zA-Z0-9.-]+)$/m);
-			const remoteVersion = match?.[1];
+			const data = await response.json();
+			if (data.version) {
+				if (SemverGt(data.version, VERSION)) {
+					log(`Update found: ${data.version} > ${VERSION}.`);
 
-			if (remoteVersion) {
-				if (SemverGt(remoteVersion, currentVersion)) {
-					log(`Update found: ${remoteVersion} > ${currentVersion}.`);
+					const buttons = [{
+						label: 'Download',
+						onClick: () => window.open(UPDATE_URL, { target: '_blank' })
+					}];
 
-					Helper.UI.showNotice(`Magane v${currentVersion} found an update: v${remoteVersion}. Please download the update manually.`, {
-						buttons: [
-							{
-								label: 'GitHub',
-								onClick: () => window.open(githubUrl, { target: '_blank' })
-							},
-							{
-								label: 'Download',
-								onClick: () => window.open(updateUrl, { target: '_blank' })
-							}
-						]
-					});
+					if (GITHUB_URL) {
+						buttons.unshift({
+							label: 'GitHub',
+							onClick: () => window.open(GITHUB_URL, { target: '_blank' })
+						});
+					}
+
+					Helper.UI.showNotice(
+						`Magane v${VERSION} found an update: v${data.version}. Please download the update manually.`,
+						{ buttons }
+					);
 				} else {
-					log(`No updates found: ${remoteVersion} <= ${currentVersion}.`);
+					log(`No updates found: ${data.version} <= ${VERSION}.`);
 					if (manual) toast('No updates found.', { nolog: true });
 				}
 			} else {
@@ -1414,7 +1389,7 @@
 			: MountType.LEGACY;
 
 		// Build script for other mods should probably find-replace the following if necessary.
-		mountType = mountType; // Svelte builds this line into: $$invalidate(0, mountType)
+		mountType = mountType;
 
 		switch (mountType) {
 			case MountType.BETTERDISCORD:
@@ -1451,8 +1426,7 @@
 
 		log(`Time taken: ${(Date.now() - startTime) / 1000}s.`);
 
-		// Only check for updates if running on BetterDiscord
-		if (!settings.disableUpdateCheck && mountType === MountType.BETTERDISCORD) {
+		if (!settings.disableUpdateCheck) {
 			await checkUpdate();
 		}
 	});
@@ -1524,10 +1498,9 @@
 
 		// If unable to choose a component, return early
 		if (!toggledComponent) return;
-		if (!document.body.contains(toggledComponent.textArea)) return;
 
 		const active = typeof forceState === 'undefined' ? !stickerWindowActive : forceState;
-		if (active) {
+		if (active && document.body.contains(toggledComponent.textArea)) {
 			// Re-position magane's sticker window
 			updateStickerWindowPosition(toggledComponent);
 
@@ -2721,7 +2694,7 @@
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
-										Disable downscaling of imported LINE packs using <code>wsrv.nl</code> (this service is known to be blocked by Discord if sending as links)
+										Disable downscaling of imported LINE packs using <code>wsrv.nl</code>
 									</label>
 								</p>
 								<p>
