@@ -1,14 +1,13 @@
-import { CspPolicies, MediaSrc } from '@main/csp';
+import { CspPolicies, ImageSrc } from '@main/csp';
 
 // Magane's built-in packs
-CspPolicies['magane.moe'] = MediaSrc;
+CspPolicies['magane.moe'] = ImageSrc;
 // Chibisafe
-CspPolicies['chibisafe.moe'] = MediaSrc;
+CspPolicies['chibisafe.moe'] = ImageSrc;
 // LINE Store
-CspPolicies['stickershop.line-scdn.net'] = MediaSrc;
+CspPolicies['stickershop.line-scdn.net'] = ImageSrc;
 // Image resize service for imported LINE Store packs
-CspPolicies['wsrv.nl'] = MediaSrc;
+CspPolicies['wsrv.nl'] = ImageSrc;
 
 // If you need to import packs from third-party Chibisafe-based hosts, add the domains here.
-// CspPolicies['example.com'] = MediaSrc;
-// CspPolicies['example.com'] = MediaSrc;
+// CspPolicies['example.com'] = ImageSrc;
