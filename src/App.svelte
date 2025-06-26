@@ -220,10 +220,14 @@
 	];
 
 	const toast = (message, options = {}) => {
-		if (!options.nolog || settings.disableToasts) {
+		const show = options.force || !settings.disableToasts;
+		delete options.force;
+
+		if (!options.nolog || !show) {
 			log(message, options.type);
 		}
-		if (!settings.disableToasts) {
+
+		if (show) {
 			delete options.nolog;
 			Helper.Toasts.show(message, options);
 		}
@@ -241,11 +245,13 @@
 
 	const toastError = (message, options = {}) => {
 		options.type = 'error';
+		options.force = true;
 		return toast(message, options);
 	};
 
 	const toastWarn = (message, options = {}) => {
 		options.type = 'warn';
+		options.force = true;
 		return toast(message, options);
 	};
 
