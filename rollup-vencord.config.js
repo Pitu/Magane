@@ -66,7 +66,7 @@ export default {
 					['const VERSION = null;', `const VERSION = '${metadata.version}';`],
 					['const UPDATE_URL = null;', `const UPDATE_URL = '${metadata.updateUrl}';`],
 					['const PACKAGE_URL = null;', `const PACKAGE_URL = '${PACKAGE_URL}';`],
-					['const GITHUB_URL = null', `const GITHUB_URL = '${GITHUB_URL}';`]
+					['const GITHUB_URL = null;', `const GITHUB_URL = '${GITHUB_URL}';`]
 				]
 			}),
 			onwarn: (warning, handler) => {
