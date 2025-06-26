@@ -465,7 +465,6 @@
 		// Messages & Uploads
 		Modules.CloudUpload = Helper.find(m => m.prototype?.trackUploadFinished, { searchExports: true });
 		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
-		Modules.MessageUpload = Helper.findByProps('uploadFiles');
 		Modules.MessageUtils = Helper.findByProps('sendMessage');
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
 
@@ -902,14 +901,14 @@
 
 			let messageContent = '';
 			if (!settings.disableSendingWithChatInput && Modules.DraftStore) {
-				messageContent = Modules.DraftStore.getDraft(channelId, 0);
+				messageContent = Modules.DraftStore.getDraft(channelId, 0) || '';
 			}
 
-			let messageOptions;
+			let messageOptions = {};
 			if (Modules.PendingReplyStore) {
 				const pendingReply = Modules.PendingReplyStore.getPendingReply(channelId);
 				if (pendingReply) {
-					messageOptions = Modules.MessageUtils.getSendMessageOptionsForReply(pendingReply);
+					messageOptions = Modules.MessageUtils.getSendMessageOptionsForReply(pendingReply) || {};
 				}
 			}
 
@@ -943,27 +942,16 @@
 				if (settings.markAsSpoiler) {
 					filename = `SPOILER_${filename}`;
 				}
-				const file = new File([blob], filename);
-				log(`Sending sticker as ${filename}\u2026`);
 
-				toast('Sending\u2026', { timeout: 1000 });
-				Modules.MessageUpload.uploadFiles({
-					channelId,
-					draftType: 0,
-					hasSpoiler: false,
-					options: messageOptions || {},
-					parsedMessage: {
-						content: messageContent
-					},
-					uploads: [
-						new Modules.CloudUpload({
-							file,
-							isClip: false,
-							isThumbnail: false,
-							platform: 1
-						}, channelId, false, 0)
-					]
-				});
+				log(`Sending sticker as ${filename}\u2026`);
+				messageOptions.attachmentsToUpload = [
+					new Modules.CloudUpload({
+						file: new File([blob], filename),
+						isClip: false,
+						isThumbnail: false,
+						platform: 1
+					}, channelId, false, 0)
+				];
 			} else if (settings.ignoreEmbedLinksPermission || (channel && hasPermission('EMBED_LINKS', channel))) {
 				if (!sendAsLink) {
 					if (channel) {
@@ -974,18 +962,18 @@
 				}
 
 				let append = url;
-
 				if (settings.maskStickerLink) {
 					append = `[sticker](${append})`;
 				}
-
-				toast('Sending\u2026', { timeout: 1000 });
-				Modules.MessageUtils._sendMessage(channelId, {
-					content: `${messageContent} ${append}`.trim()
-				}, messageOptions || {});
+				messageContent += ` ${append}`;
 			} else {
 				throw new Error('No permission to attach files nor embed links.');
 			}
+
+			toast('Sending\u2026', { timeout: 1000 });
+			Modules.MessageUtils._sendMessage(channelId, {
+				content: messageContent
+			}, messageOptions);
 
 			// Clear chat input if required
 			if (!settings.disableSendingWithChatInput && textAreaInstance) {
