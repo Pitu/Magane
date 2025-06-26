@@ -292,8 +292,19 @@
 
 		// eslint-disable-next-line no-use-before-define
 		component.$on('click', () => toggleStickerWindow(undefined, component));
-		// eslint-disable-next-line no-use-before-define
-		component.$on('grabPacks', () => grabPacks(true));
+
+		component.$on('grabPacks', async () => {
+			forceHideMagane = true;
+			toast('Reloading Magane\'s built-in packs\u2026', { timeout: 1000, force: true });
+
+			// eslint-disable-next-line no-use-before-define
+			const success = await grabPacks(true);
+
+			if (success) {
+				toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+			}
+			forceHideMagane = false;
+		});
 
 		component.textArea = textArea;
 		component.lastTextAreaSize = {
