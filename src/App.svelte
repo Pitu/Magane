@@ -540,7 +540,9 @@
 		}
 
 		log(`Fetching remote dist file from: ${PACKAGE_URL}`);
-		if (manual) toast('Checking for updates\u2026', { nolog: true });
+		if (manual) {
+			toast('Checking for updates\u2026', { nolog: true, timeout: 1000, force: true });
+		}
 
 		await fetch(PACKAGE_URL, { cache: 'no-cache' }).then(async response => {
 			log('Remote dist file fetched.');
@@ -568,7 +570,9 @@
 					);
 				} else {
 					log(`No updates found: ${data.version} <= ${VERSION}.`);
-					if (manual) toast('No updates found.', { nolog: true });
+					if (manual) {
+						toast('No updates found.', { nolog: true, timeout: 1000, force: true });
+					}
 				}
 			} else {
 				toastWarn('Failed to parse version string from remote dist file.');
@@ -621,7 +625,7 @@
 			baseURL = packs.baseURL;
 		} catch (error) {
 			// Toast and log to console, but allow to continue as-is
-			toastError('Unable to fetch Magane\'s API. Magane will load as-is, but built-in remote packs will temporarily be unavailable.', { timeout: 12000 });
+			toastError('Unable to fetch Magane\'s API. Magane will load as-is, but built-in remote packs will be unavailable.', { timeout: 6000 });
 			console.error(error);
 		}
 
@@ -724,6 +728,8 @@
 			// eslint-disable-next-line no-use-before-define
 			updateFrequentlyUsed();
 		}
+
+		return Boolean(packs);
 	};
 
 	const subscribeToPack = pack => {
@@ -1396,20 +1402,26 @@
 				log('Magane is mounted with other or legacy method.');
 		}
 
+		if (VERSION) {
+			log(`Magane version: v${VERSION}.`);
+		}
+
 		const startTime = Date.now();
 
 		try {
-			toast('Loading Magane\u2026');
+			toast('Loading Magane\u2026', { timeout: 1000 });
 
 			// Background tasks
 			initModules();
 			getLocalStorage();
 			loadSettings();
 
-			await grabPacks();
+			const success = await grabPacks();
 			await migrateStringPackIds();
 
-			toastSuccess('Magane is now ready!');
+			if (success) {
+				toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+			}
 
 			// Init ResizeObserver
 			initResizeObserver();
@@ -1751,7 +1763,7 @@
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
 			if (!silent) {
-				toast('Updating pack information\u2026', { nolog: true, timeout: 1000 });
+				toast('Updating pack information\u2026', { nolog: true, timeout: 500 });
 			}
 
 			// Only pass update URL, the function will determine by itself what to do with it
@@ -1859,7 +1871,7 @@
 
 		/* eslint-disable-next-line prefer-template */
 		assertImportPacksConsent('URLs:\n\n```\n' + linePackUrls.join('\n') + '\n```', async () => {
-			toast('Importing packs\u2026', { nolog: true, timeout: 1000 });
+			toast('Importing packs\u2026', { nolog: true, timeout: 500 });
 			const failed = [];
 			for (const url of linePackUrls) {
 				try {
@@ -1919,7 +1931,7 @@
 
 		/* eslint-disable-next-line prefer-template */
 		assertImportPacksConsent('URLs:\n\n```\n' + remotePackUrls.join('\n') + '\n```', async () => {
-			toast('Importing packs\u2026', { nolog: true, timeout: 1000 });
+			toast('Importing packs\u2026', { nolog: true, timeout: 500 });
 			const failed = [];
 			for (const url of remotePackUrls) {
 				try {
@@ -2254,14 +2266,16 @@
 						}
 
 						forceHideMagane = true;
-						toast('Reloading Magane database\u2026');
+						toast('Reloading Magane database\u2026', { timeout: 1000, force: true });
 
 						Object.assign(settings, defaultSettings);
 						loadSettings(true);
-						await grabPacks(true);
+						const success = await grabPacks(true);
 						await migrateStringPackIds();
 
-						toastSuccess('Magane is now ready!');
+						if (success) {
+							toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+						}
 						forceHideMagane = false;
 					}
 				}
