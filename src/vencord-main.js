@@ -21,10 +21,12 @@ module.exports = definePlugin({
 
 	start() {
 		for (const id of Object.keys(window.MAGANE_STYLES)) {
+			const _id = `MaganeVencord-${id}`;
 			const style = document.createElement('style');
-			style.id = `MaganeVencord-${id}`;
+			style.id = _id;
 			style.innerText = window.MAGANE_STYLES[id];
 			document.head.appendChild(style);
+			this.log(`Injected CSS with ID "${_id}".`);
 		}
 		this.log('Mounting container into DOM\u2026');
 		this.container = document.createElement('div');
@@ -37,17 +39,19 @@ module.exports = definePlugin({
 
 	stop() {
 		if (this.app) {
-			this.log('Destroying Svelte component\u2026');
 			this.app.$destroy();
+			this.log('Destroyed Svelte component.');
 		}
 		if (this.container) {
-			this.log('Removing container from DOM\u2026');
 			this.container.remove();
+			this.log('Removed container from DOM.');
 		}
 		for (const id of Object.keys(window.MAGANE_STYLES)) {
-			const _style = document.head.getElementById(`MaganeVencord-${id}`);
+			const _id = `MaganeVencord-${id}`;
+			const _style = document.querySelector(`head style#${_id}`);
 			if (_style) {
 				_style.remove();
+				this.log(`Cleared CSS with ID "${_id}".`);
 			}
 		}
 	}

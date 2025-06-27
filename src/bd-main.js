@@ -10,7 +10,9 @@ module.exports = class MaganeBD {
 
 	start() {
 		for (const id of Object.keys(global.MAGANE_STYLES)) {
-			BdApi.injectCSS(`${this.constructor.name}-${id}`, global.MAGANE_STYLES[id]);
+			const _id = `${this.constructor.name}-${id}`;
+			BdApi.injectCSS(_id, global.MAGANE_STYLES[id]);
+			this.log(`Injected CSS with ID "${_id}".`);
 		}
 		this.log('Mounting container into DOM\u2026');
 		this.container = document.createElement('div');
@@ -23,15 +25,17 @@ module.exports = class MaganeBD {
 
 	stop() {
 		if (this.app) {
-			this.log('Destroying Svelte component\u2026');
 			this.app.$destroy();
+			this.log('Destroyed Svelte component.');
 		}
 		if (this.container) {
-			this.log('Removing container from DOM\u2026');
 			this.container.remove();
+			this.log('Removed container from DOM.');
 		}
 		for (const id of Object.keys(global.MAGANE_STYLES)) {
-			BdApi.clearCSS(`${this.constructor.name}-${id}`);
+			const _id = `${this.constructor.name}-${id}`;
+			BdApi.clearCSS();
+			this.log(`Cleared CSS with ID "${_id}".`);
 		}
 	}
 };
