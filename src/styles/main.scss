@@ -1,11 +1,15 @@
 /** Magane: main.scss **/
 
+$backgroundPrimary: var(--background-surface-high, #242429);
+$backgroundSecondary: var(--background-base-lower, #1a1a1e);
+$textColor: var(--header-secondary, #efeff0);
+
+$scrollbarColor: rgb(105, 96, 128);
+
+$fontDisplay: var(--font-display, "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif);
+$fontCode: var(--font-code, "gg mono", "Source Code Pro", Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace);
+
 div#magane {
-	$backgroundPrimary: var(--background-base-low, #202024);
-	$backgroundSecondary: var(--background-base-lower, #1a1a1e);
-	$textColor: var(--header-secondary, #efeff0);
-	$hoverColor: var(--interactive-active, #fbfbfb);
-	$scrollbarColor: rgb(105, 96, 128);
 	display: flex;
 	flex-direction: row;
 	height: 44px;
@@ -13,7 +17,7 @@ div#magane {
 	z-index: 1001;
 
 	button, input, select, label, span, p, a, li, ul, div, textarea {
-		font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+		font-family: $fontDisplay;
 		color: $textColor;
 		font-weight: 400;
 		line-height: 1.5;
@@ -637,15 +641,6 @@ div#magane {
 			}
 		}
 	}
-
-	code {
-		box-sizing: border-box;
-		padding: 2px 6px;
-		border-radius: 3px;
-		border: 1px solid $backgroundPrimary;
-		background: $backgroundPrimary;
-		color: $textColor;
-	}
 }
 
 div#maganeButton {
@@ -665,6 +660,36 @@ div#maganeButton {
 		padding: 4px;
 		margin-left: 2px;
 		margin-right: 2px;
+	}
+}
+
+div.magane-vencord-modal {
+	color: $textColor;
+	user-select: text;
+
+	p {
+		margin: 0;
+		margin-bottom: 8px;
+	}
+}
+
+div#magane,
+div.magane-vencord-modal {
+	code {
+		font-family: $fontCode;
+		border-radius: 4px;
+		margin: -.2em 0;
+		padding: 0 .2em;
+		box-sizing: border-box;
+		border: 1px solid var(--border-normal, #97979f33);
+		background: var(--background-code, #5865f214);
+		color: $textColor;
+	}
+
+	pre code {
+		display: block;
+		padding: .5em;
+		overflow-x: auto;
 	}
 }
 

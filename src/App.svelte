@@ -68,17 +68,20 @@
 					const title = args[0];
 
 					// Re-map Markdown formatting to pure HTML
+					const html = args[1]
+						.split('\n\n')
+						.map(p => `<p>${p}</p>`)
+						.join('')
+						.replace(/\*\*(.*?)\*\*/gm, '<b>$1</b>')
+						.replace(/__(.*?)__/gm, '<u>$1</u>')
+						.replace(/```\n(.*?)\n```/gms, '<pre><code>$1</code></pre>')
+						.replace(/`(.*?)`/gm, '<code>$1</code>');
+
 					// Once again I'm reminded how whack it is to implant Svelte into React
 					const body = Modules.React.createElement('div', {
-						dangerouslySetInnerHTML: {
-							__html: args[1]
-								.replace(/\*\*(.*?)\*\*/gm, '<b>$1</b>')
-								.replace(/__(.*?)__/gm, '<u>$1</u>')
-								.replace(/```\n(.*?)\n```/gms, '<code>$1</code>')
-								.replace(/\n\n/gm, '<br>')
-						},
-						style: {
-							'user-select': 'text'
+						'class': 'magane-vencord-modal',
+						'dangerouslySetInnerHTML': {
+							__html: html
 						}
 					});
 
@@ -1864,7 +1867,7 @@
 
 		let remoteType = 'N/A';
 		if (typeof localPacks[id].remoteType === 'number') {
-			remoteType = `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType] || 'N/A'}`;
+			remoteType = `\`${localPacks[id].remoteType}\` – ${remotePackTypes[localPacks[id].remoteType] || 'N/A'}`;
 		} else if (id.startsWith('startswith-')) {
 			remoteType = 'LINE';
 		} else if (id.startsWith('emojis-')) {
@@ -1872,26 +1875,45 @@
 		}
 
 		// Formatting is very particular, so we do this the old-fashioned way
-		/* eslint-disable prefer-template */
-		const content = '**ID:**\n\n' +
-			'```\n' + id + '\n```\n\n' +
-			'**Name:**\n\n' +
-			localPacks[id].name + '\n\n' +
-			'**Count:**\n\n' +
-			localPacks[id].count + '\n\n' +
-			'**Description:**\n\n' +
-			(localPacks[id].description || 'N/A') + '\n\n' +
-			'**Home URL:**\n\n' +
-			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
-			'**Update URL:**\n\n' +
-			'```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```\n\n' +
-			'**Remote Type:**\n\n' +
-			remoteType;
-		/* eslint-enable prefer-template */
+		const contents = [
+			/* eslint-disable-next-line prefer-template */
+			'**ID:**\n\n```\n' + id + '\n```',
+			`**Name:**\n\n${localPacks[id].name}`,
+			`**Count:**\n\n\`${localPacks[id].count}\``
+		];
+
+		if (localPacks[id].description) {
+			contents.push(`**Description:**\n\n${localPacks[id].description}`);
+		}
+
+		if (localPacks[id].homeUrl) {
+			contents.push(`**Home URL:**\n\n${localPacks[id].homeUrl}`);
+		}
+
+		if (localPacks[id].updateUrl) {
+			contents.push(`**Update URL:**\n\n${localPacks[id].updateUrl}`);
+		}
+
+		contents.push(`**Remote Type:**\n\n${remoteType}`);
+
+		if (typeof localPacks[id].remoteType === 'number') {
+			/* eslint-disable-next-line prefer-template */
+			contents.push('**Files:**\n\n```\n' +
+				localPacks[id].files.join('\n') +
+				'\n```');
+			if (localPacks[id].template) {
+				/* eslint-disable-next-line prefer-template */
+				contents.push('**URL Template:**\n\n```\n' + localPacks[id].template + '\n```');
+			}
+			if (localPacks[id].thumbsTemplate) {
+				/* eslint-disable-next-line prefer-template */
+				contents.push('**Thumbnail URL Template:**\n\n```\n' + localPacks[id].thumbsTemplate + '\n```');
+			}
+		}
 
 		Helper.Alerts.show(
 			localPacks[id].name,
-			content
+			contents.join('\n\n')
 		);
 	};
 
