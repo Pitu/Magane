@@ -326,7 +326,7 @@
 		const props = buttonsContainer.getBoundingClientRect();
 
 		coords.wbottom = (base.clientHeight - props.top) + 8;
-		coords.wright = (base.clientWidth - props.right) - 6;
+		coords.wright = (base.clientWidth - props.right) - 12;
 
 		if (mountType === MountType.LEGACY) {
 			const baseProps = base.getBoundingClientRect();
@@ -1523,7 +1523,7 @@
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
 			if (e.target) {
 				if (activeComponent?.element.contains(e.target)) return;
-				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
+				const visibleModals = document.querySelectorAll('[class*="layerContainer_"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
 			}
 			if (!((e.clientX <= x + width && e.clientX >= x) &&
