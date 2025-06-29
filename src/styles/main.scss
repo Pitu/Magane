@@ -599,20 +599,16 @@ div#magane {
 	}
 
 	.has-scroll-x {
-		overflow-x: auto;
+		overflow: auto hidden;
 		scrollbar-gutter: stable;
 	}
 
 	.has-scroll-y {
-		overflow-y: auto;
+		overflow: hidden auto;
 		scrollbar-gutter: stable;
 	}
 
 	::-webkit-scrollbar {
-		/* Let's make the scrollbars pretty */
-		width: 6px;
-		height: 6px;
-
 		&-track {
 			margin: 0;
 			background: transparent;
