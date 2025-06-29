@@ -153,9 +153,11 @@ export default {
 				await fs.copyFile(outputFile, indexDest);
 				console.log(`Copied index file to ${indexDest}`);
 
-				const nativeDest = path.resolve(process.env.VENCORD_PLUGIN_PATH, 'native.ts');
-				await fs.copyFile(nativeFile, nativeDest);
-				console.log(`Copied native file to ${nativeDest}`);
+				if (!process.env.VENCORD_SKIP_NATIVE) {
+					const nativeDest = path.resolve(process.env.VENCORD_PLUGIN_PATH, 'native.ts');
+					await fs.copyFile(nativeFile, nativeDest);
+					console.log(`Copied native file to ${nativeDest}`);
+				}
 			}
 		}
 	],
