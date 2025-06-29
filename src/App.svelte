@@ -980,20 +980,18 @@
 
 				let filename = id;
 
-				if (pack.startsWith('custom-')) {
-					if (id.includes('#')) {
-						// Allow overriding filenames, for URLs that don't have extensions.
-						// e.g. https://example.com/path/to/image#custom_name.jpg
-						filename = id.substring(id.indexOf('#') + 1);
-					} else {
-						filename = id.substring(id.lastIndexOf('/') + 1).split('?')[0];
-					}
-				}
-
 				if (typeof pack === 'string') {
 					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 						filename = filename.replace(/\.png$/i, '.gif');
 						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
+					} else if (pack.startsWith('custom-')) {
+						// Allow overriding filenames, for URLs that don't have extensions.
+						// e.g. https://example.com/path/to/image#custom_name.jpg
+						if (id.includes('#')) {
+							filename = id.substring(id.indexOf('#') + 1);
+						} else {
+							filename = id.substring(id.lastIndexOf('/') + 1).split('?')[0];
+						}
 					}
 				}
 
