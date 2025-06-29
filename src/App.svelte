@@ -2512,7 +2512,7 @@
 				{ /each }
 			</div>
 
-			<div class="packs-toolbar { settings.useLeftToolbar ? 'has-scroll-y' : 'has-scroll-x' }">
+			<div class="packs-toolbar { settings.useLeftToolbar ? 'is-left' : 'is-bottom' }">
 				<div class="packs packs-controls">
 					<div class="packs-wrapper">
 						<div class="pack"
@@ -2537,7 +2537,7 @@
 					</div>
 				</div>
 
-				<div class="packs" style="">
+				<div class="packs { settings.useLeftToolbar ? 'has-scroll-y' : 'has-scroll-x' }" style="">
 					<div class="packs-wrapper">
 						{ #each subscribedPacks as pack, i }
 						<div class="pack"

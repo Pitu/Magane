@@ -29,23 +29,24 @@ div#magane {
 	}
 
 	div.stickerWindow {
-		width: 600px;
+		width: 608px;
 		min-height: 200px;
 		position: fixed;
 		background: $backgroundPrimary;
-		max-height: 600px;
+		max-height: 608px;
 		transition: all 0.2s ease;
-		border-radius: 4px;
+		border-radius: $borderRadius;
 		box-shadow: var(--elevation-stroke, 0 0 0 1px #020203), var(--elevation-high, 0 8px 16px #000);
 
 		div.stickers {
 			height: 550px !important;
-			margin-bottom: 100px;
+			margin-bottom: 58px;
 			position: relative;
 
 			&.has-left-toolbar {
-				height: 600px !important;
-				margin-left: 50px;
+				height: 608px !important;
+				margin-left: 58px;
+				margin-bottom: 0;
 			}
 
 			h3.getStarted {
@@ -141,15 +142,17 @@ div#magane {
 		div.packs-toolbar {
 			position: absolute;
 			bottom: 0;
-			background: $backgroundSecondary;
 			display: flex;
+			background: $backgroundSecondary;
 
-			&.has-scroll-x {
+			&.is-bottom {
 				width: 100%;
-				height: 50px;
+				height: 58px;
+				border-bottom-right-radius: $borderRadius;
+				border-bottom-left-radius: $borderRadius;
 
 				div.packs {
-					flex: 1 0 auto;
+					flex: 1 1 auto;
 
 					&.packs-controls {
 						flex: 0 0 auto;
@@ -159,15 +162,21 @@ div#magane {
 						white-space: nowrap;
 						float: left;
 						width: 100%;
-						font-size: 0; /* quick hax to clear whitespace */
+						font-size: 0; /* clear whitespace */
+					}
+
+					div.pack {
+						margin: 9px 6px;
 					}
 				}
 			}
 
-			&.has-scroll-y {
-				width: 50px;
+			&.is-left {
+				width: 58px;
 				height: 100%;
 				flex-direction: column;
+				border-top-left-radius: $borderRadius;
+				border-bottom-left-radius: $borderRadius;
 
 				div.packs {
 					flex: 1 1 auto;
@@ -179,7 +188,11 @@ div#magane {
 					}
 
 					div.packs-wrapper {
-						font-size: 0; /* quick hax to clear whitespace */
+						font-size: 0; /* clear whitespace */
+					}
+
+					div.pack {
+						margin: 6px 9px;
 					}
 				}
 			}
@@ -188,7 +201,6 @@ div#magane {
 				display: inline-block;
 				height: 40px;
 				width: 40px;
-				margin: 5px;
 				cursor: pointer;
 				background-position: center;
 				background-size: contain;
@@ -249,7 +261,7 @@ div#magane {
 			box-sizing: border-box;
 			margin: 0 15px 10px;
 			padding: 5px 12px;
-			border-radius: 3px;
+			border-radius: $borderRadius;
 			border: 1px solid $backgroundPrimary;
 			background: $backgroundPrimary;
 			color: $textColor;
@@ -265,7 +277,7 @@ div#magane {
 			height: 36px;
 			box-sizing: border-box;
 			padding: 5px 12px;
-			border-radius: 3px;
+			border-radius: $borderRadius;
 			border: 1px solid $backgroundPrimary;
 			background: $backgroundPrimary;
 			color: $textColor;
@@ -283,14 +295,14 @@ div#magane {
 			background-color: rgba(10, 10, 10, 0.86);
 		}
 
-		.modal-content,
-		.modal-card {
+		.modal-content {
 			position: absolute;
 			width: 100%;
 			height: 100%;
 			left: 0;
 			top: 0;
 			background: $backgroundSecondary;
+			border-radius: $borderRadius;
 		}
 
 		.modal-content {
@@ -309,7 +321,7 @@ div#magane {
 					.tab {
 						color: $textColor;
 						display: inline-block;
-						border-radius: var(--radius-sm, 8px);
+						border-radius: $borderRadius;
 						font-weight: 600;
 						padding: 4px 12px;
 						transition: background-color .1s ease-in-out,color .1s ease-in-out;
@@ -328,7 +340,7 @@ div#magane {
 				}
 
 				div.tab-content {
-					height: calc(100% - 66px); /* .tabs height */
+					height: calc(100% - 64px); /* .tabs height */
 					width: 100%;
 					padding: 10px 0;
 					box-sizing: border-box;
@@ -568,10 +580,11 @@ div#magane {
 	.button {
 		align-items: center;
 		border: 1px solid transparent;
-		border-radius: 3px;
+		border-radius: $borderRadius;
 		box-shadow: none;
 		display: inline-flex;
 		font-size: 1rem;
+		font-weight: var(--font-weight-medium, 500);
 		padding: calc(0.375em - 1px) 0.75em;
 		position: relative;
 		vertical-align: top;
@@ -647,7 +660,8 @@ div#maganeButton {
 		align-items: center;
 		cursor: pointer;
 
-		&:hover, &.active {
+		&:hover,
+		&.active {
 			filter: brightness(1.35);
 		}
 	}
@@ -675,7 +689,7 @@ div#magane,
 div.magane-vencord-modal {
 	code {
 		font-family: $fontCode;
-		border-radius: 4px;
+		border-radius: var(--radius-xs, 4px);
 		margin: -.2em 0;
 		padding: 0 .2em;
 		box-sizing: border-box;
