@@ -863,8 +863,8 @@
 			}
 
 			// Don't include filename overrides in the final URL
-			if (url.includes('#')) {
-				url = url.substring(0, url.indexOf('#'));
+			if (url.includes(' ')) {
+				url = url.substring(0, url.indexOf(' '));
 			}
 
 			// If not sending, try thumbsTemplate if available, otherwise fallback to template
@@ -986,9 +986,9 @@
 						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
 					} else if (pack.startsWith('custom-')) {
 						// Allow overriding filenames, for URLs that don't have extensions.
-						// e.g. https://example.com/path/to/image#custom_name.jpg
-						if (id.includes('#')) {
-							filename = id.substring(id.indexOf('#') + 1);
+						// e.g. https://example.com/path/to/image custom_name.jpg
+						if (id.includes(' ')) {
+							filename = id.substring(id.indexOf(' ') + 1);
 						} else {
 							filename = id.substring(id.lastIndexOf('/') + 1).split('?')[0];
 						}
