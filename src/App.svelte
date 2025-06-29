@@ -87,7 +87,8 @@
 
 					return VencordApi.Alerts.show(Object.assign({
 						title,
-						body
+						body,
+						className: 'magane-vencord-modal-container'
 					}, ...args.slice(2)));
 				}
 

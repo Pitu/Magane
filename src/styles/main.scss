@@ -693,6 +693,12 @@ div.magane-vencord-modal {
 	}
 }
 
+div.magane-vencord-modal-container {
+	width: auto;
+	min-width: 442px;
+	max-width: 663px;
+}
+
 /* Visually hide Magane button in certain scenarios */
 
 div[class^="submitContainer_"] div#maganeButton { /* create thread */
