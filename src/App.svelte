@@ -846,8 +846,18 @@
 			} else {
 				url = id;
 			}
-			if (typeof localPacks[pack].template === 'string') {
-				url = localPacks[pack].template.replace(/%pack%/g, pack.replace('custom-', '')).replace(/%id%/g, url);
+
+			// If not sending, try thumbsTemplate if available, otherwise fallback to template
+			const template = sending
+				? localPacks[pack].template
+				: (localPacks[pack].thumbsTemplate || localPacks[pack].template);
+
+			if (typeof template === 'string') {
+				// Use anon functions so that they won't immediately be called if no matches
+				url = template
+					.replace(/%pack%/g, () => pack.replace('custom-', ''))
+					.replace(/%id%/g, url)
+					.replace(/%idencoded%/g, () => encodeURIComponent(url));
 			}
 		}
 		return url;
@@ -1245,8 +1255,8 @@
 	};
 
 	const appendCustomPack = (...args) => {
-		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
-			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
+		let { name, id, count, animated, template, files, thumbs, thumbsTemplate } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs', 'thumbsTemplate'], 5);
 
 		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
@@ -1271,7 +1281,8 @@
 			animated: animated ? 1 : null,
 			files,
 			thumbs,
-			template
+			template,
+			thumbsTemplate
 		});
 	};
 
@@ -1673,6 +1684,7 @@
 				pack.description = data.description ? String(data.description) : null;
 				pack.homeUrl = data.homeUrl ? String(data.homeUrl) : null;
 				pack.template = data.template ? String(data.template) : null;
+				pack.thumbsTemplate = data.thumbsTemplate ? String(data.thumbsTemplate) : null;
 
 				// Override update URL if required
 				if (data.updateUrl) {
