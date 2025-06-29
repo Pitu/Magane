@@ -74,6 +74,7 @@
 						.join('')
 						.replace(/\*\*(.*?)\*\*/gm, '<b>$1</b>')
 						.replace(/__(.*?)__/gm, '<u>$1</u>')
+						.replace(/\[(.*?)\]\((.*?)\)/gm, '<a href="$2" target="_blank">$1</a>')
 						.replace(/```\n(.*?)\n```/gms, '<pre><code>$1</code></pre>')
 						.replace(/`(.*?)`/gm, '<code>$1</code>');
 
@@ -1897,11 +1898,11 @@
 		}
 
 		if (localPacks[id].homeUrl) {
-			contents.push(`**Home URL:**\n\n${localPacks[id].homeUrl}`);
+			contents.push(`**Home URL:**\n\n[${localPacks[id].homeUrl}](${localPacks[id].homeUrl})`);
 		}
 
 		if (localPacks[id].updateUrl) {
-			contents.push(`**Update URL:**\n\n${localPacks[id].updateUrl}`);
+			contents.push(`**Update URL:**\n\n[${localPacks[id].updateUrl}](${localPacks[id].updateUrl})`);
 		}
 
 		contents.push(`**Remote Type:**\n\n${remoteType}`);
