@@ -295,26 +295,28 @@ div#magane {
 				flex-direction: column;
 
 				.tabs {
+					padding: 16px;
 					width: 100%;
+					box-sizing: border-box;
 					text-align: center;
 
 					.tab {
 						color: $textColor;
 						display: inline-block;
-						border: none;
-						border-top: 0px transparent;
-						border-left: 0px transparent;
-						border-right: 0px transparent;
-						border-width: 1px;
-						border-style: solid;
-						border-bottom-color: $textColor;
-						padding: 20px;
+						border-radius: var(--radius-sm, 8px);
+						font-weight: 600;
+						padding: 4px 12px;
+						transition: background-color .1s ease-in-out,color .1s ease-in-out;
 						cursor: pointer;
 
-						&:hover,
+						&:hover {
+							color: var(--interactive-hover, #fbfbfb);
+							background: var(--button-secondary-background-hover, #97979f33);
+						}
+
 						&.is-active {
-							border-bottom-color: $hoverColor;
-							color: $hoverColor;
+							color: var(--button-secondary-text, #ebebed);
+							background: var(--button-secondary-background, #97979f1f);
 						}
 					}
 				}
@@ -519,8 +521,8 @@ div#magane {
 			vertical-align: top;
 			background: none;
 			position: absolute;
-			right: 20px;
-			top: 20px;
+			right: 16px;
+			top: 16px;
 			height: 32px;
 			max-height: 32px;
 			max-width: 32px;
