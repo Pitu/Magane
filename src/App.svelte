@@ -797,12 +797,17 @@
 			*/
 			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
 			url = template.replace(/%id%/g, id.split('.')[0]);
+
 			let append = sending ? '&h=180p' : '&h=100p';
+
 			if (localPacks[pack].animated) {
 				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
 				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
+			} else {
+				append += '&af&output=png';
 			}
+
 			if (!settings.disableDownscale) {
 				// Downsizing with wsrv.nl to stay consistent with Magane's built-in packs
 				url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
@@ -818,13 +823,20 @@
 				(Android variant of emojis only go up to 154p).
 			*/
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
-			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
+			url = template
+				.replace(/%pack%/g, pack.split('-')[1])
+				.replace(/%id%/g, id.split('.')[0]);
+
 			let append = sending ? '' : '&h=100p';
+
 			if (localPacks[pack].animated) {
 				url = url.replace(/\.png/, '_animation.png');
 				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
+			} else {
+				append += '&af&output=png';
 			}
+
 			if (!settings.disableDownscale) {
 				// Downsizing with wsrv.nl to stay consistent with Magane's built-in packs
 				url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
