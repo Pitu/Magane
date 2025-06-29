@@ -34,7 +34,7 @@ module.exports = class MaganeBD {
 		}
 		for (const id of Object.keys(global.MAGANE_STYLES)) {
 			const _id = `${this.constructor.name}-${id}`;
-			BdApi.clearCSS();
+			BdApi.clearCSS(_id);
 			this.log(`Cleared CSS with ID "${_id}".`);
 		}
 	}
