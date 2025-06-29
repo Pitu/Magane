@@ -1904,6 +1904,12 @@
 				/* eslint-disable-next-line prefer-template */
 				contents.push('**URL Template:**\n\n```\n' + localPacks[id].template + '\n```');
 			}
+			if (localPacks[id].thumbs) {
+				/* eslint-disable-next-line prefer-template */
+				contents.push('**Thumbnails:**\n\n```\n' +
+					localPacks[id].thumbs.join('\n') +
+					'\n```');
+			}
 			if (localPacks[id].thumbsTemplate) {
 				/* eslint-disable-next-line prefer-template */
 				contents.push('**Thumbnail URL Template:**\n\n```\n' + localPacks[id].thumbsTemplate + '\n```');
