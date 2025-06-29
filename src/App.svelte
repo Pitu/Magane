@@ -301,7 +301,7 @@
 			const success = await grabPacks(true);
 
 			if (success) {
-				toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+				toastSuccess('Magane is now ready!', { force: true });
 			}
 			forceHideMagane = false;
 		});
@@ -582,7 +582,7 @@
 				} else {
 					log(`No updates found: ${data.version} <= ${VERSION}.`);
 					if (manual) {
-						toast('No updates found.', { nolog: true, timeout: 1000, force: true });
+						toast('No updates found.', { nolog: true, force: true });
 					}
 				}
 			} else {
@@ -1176,11 +1176,11 @@
 		}
 
 		if (dirty) {
-			toastInfo('Found packs/stickers to migrate, migrating now...');
+			toastInfo('Found packs/stickers to migrate, migrating now...', { force: true });
 			saveToLocalStorage('magane.favorites', favorites);
 			saveToLocalStorage('magane.subscribed', subscribed);
 			await grabPacks(true);
-			toastSuccess('Migration successful.');
+			toastSuccess('Migration successful.', { force: true });
 		}
 	};
 
@@ -1420,7 +1420,7 @@
 		const startTime = Date.now();
 
 		try {
-			toast('Loading Magane\u2026', { timeout: 1000 });
+			toast('Loading Magane\u2026', { timeout: 1000, force: true });
 
 			// Background tasks
 			initModules();
@@ -1431,7 +1431,7 @@
 			await migrateStringPackIds();
 
 			if (success) {
-				toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+				toastSuccess('Magane is now ready!', { force: true });
 			}
 
 			// Init ResizeObserver
@@ -1606,7 +1606,7 @@
 			const _name = localPacks[id].name;
 			const deleted = deletePack(id);
 			if (deleted) {
-				toastSuccess(`Removed pack ${_name}.`, { nolog: true });
+				toastSuccess(`Removed pack ${_name}.`, { nolog: true, force: true });
 			}
 		} catch (error) {
 			console.error(error);
@@ -1774,7 +1774,7 @@
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
 			if (!silent) {
-				toast('Updating pack information\u2026', { nolog: true, timeout: 500 });
+				toast('Updating pack information\u2026', { nolog: true, timeout: 1000, force: true });
 			}
 
 			// Only pass update URL, the function will determine by itself what to do with it
@@ -1811,7 +1811,7 @@
 			}
 
 			if (!silent) {
-				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true });
+				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 			}
 			return stored;
 		} catch (error) {
@@ -1882,7 +1882,7 @@
 
 		/* eslint-disable-next-line prefer-template */
 		assertImportPacksConsent('URLs:\n\n```\n' + linePackUrls.join('\n') + '\n```', async () => {
-			toast('Importing packs\u2026', { nolog: true, timeout: 500 });
+			toast('Importing packs\u2026', { nolog: true, timeout: 500, force: true });
 			const failed = [];
 			for (const url of linePackUrls) {
 				try {
@@ -1914,7 +1914,7 @@
 							animated: props.hasAnimation
 						});
 					}
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
@@ -1942,14 +1942,14 @@
 
 		/* eslint-disable-next-line prefer-template */
 		assertImportPacksConsent('URLs:\n\n```\n' + remotePackUrls.join('\n') + '\n```', async () => {
-			toast('Importing packs\u2026', { nolog: true, timeout: 500 });
+			toast('Importing packs\u2026', { nolog: true, timeout: 500, force: true });
 			const failed = [];
 			for (const url of remotePackUrls) {
 				try {
 					const pack = await fetchRemotePack(url);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
@@ -1972,7 +1972,7 @@
 
 		const results = [];
 
-		toast(`Reading ${files.length} file${files.length === 1 ? '' : 's'}\u2026`);
+		toast(`Reading ${files.length} file${files.length === 1 ? '' : 's'}\u2026`, { timeout: 500, force: true });
 		for (const file of files) {
 			await new Promise((resolve, reject) => {
 				const reader = new FileReader();
@@ -2006,7 +2006,7 @@
 					const pack = await processRemotePack(result.data);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
@@ -2045,11 +2045,11 @@
 				onConfirm: async () => {
 					try {
 						for (let i = 0; i < packs.length; i++) {
-							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 500 });
+							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 500, force: true });
 							const stored = await updateRemotePack(packs[i], true);
 							if (!stored) break;
 						}
-						toastSuccess('Updates completed.', { nolog: true });
+						toastSuccess('Updates completed.', { nolog: true, force: true });
 					} catch (ex) {
 						toastWarn('Updates cancelled due to unexpected errors.', { nolog: true });
 						// Do nothing
@@ -2113,9 +2113,9 @@
 		if (count === 0) {
 			stickersStats = [];
 			saveToLocalStorage('magane.stats', stickersStats);
-			toastSuccess('Settings saved, and stickers usage cleared!', { nolog: true });
+			toastSuccess('Settings saved, and stickers usage cleared!', { nolog: true, force: true });
 		} else {
-			toastSuccess('Settings saved!', { nolog: true });
+			toastSuccess('Settings saved!', { nolog: true, force: true });
 		}
 
 		// Refresh UI
@@ -2200,7 +2200,7 @@
 			log(`settings['hotkey'] = ${settings.hotkey}`);
 
 			saveToLocalStorage('magane.settings', settings);
-			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.', { nolog: true });
+			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.', { nolog: true, force: true });
 		}
 	};
 
@@ -2285,7 +2285,7 @@
 						await migrateStringPackIds();
 
 						if (success) {
-							toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+							toastSuccess('Magane is now ready!', { force: true });
 						}
 						forceHideMagane = false;
 					}
@@ -2307,7 +2307,7 @@
 		let hrefUrl = '';
 
 		try {
-			toast('Exporting database\u2026');
+			toast('Exporting database\u2026', { timeout: 1000, force: true });
 			const database = {};
 			for (const key of allowedStorageKeys) {
 				const data = getFromLocalStorage(key);
@@ -2321,6 +2321,7 @@
 			element.href = hrefUrl;
 			element.download = `magane.database.${new Date().toISOString()}.json`;
 			element.click();
+			toastSuccess('Database exported!', { force: true });
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred. Check your console for details.');
