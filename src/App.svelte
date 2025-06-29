@@ -1642,16 +1642,27 @@
 	};
 
 	const deleteLocalPack = id => {
-		try {
-			const _name = localPacks[id].name;
-			const deleted = deletePack(id);
-			if (deleted) {
-				toastSuccess(`Removed pack ${_name}.`, { nolog: true, force: true });
+		const name = localPacks[id].name;
+		Helper.Alerts.show(
+			`Purge Local Pack`,
+			`**${name}**\n\nAre you sure you want to do this?`, // Markdown, so we do double \n for new line
+			{
+				confirmText: 'Yes, purge it!',
+				cancelText: 'Cancel',
+				danger: true,
+				onConfirm: async () => {
+					try {
+						const deleted = deletePack(id);
+						if (deleted) {
+							toastSuccess(`Removed pack ${name}.`, { nolog: true, force: true });
+						}
+					} catch (error) {
+						console.error(error);
+						toastError(error.toString(), { nolog: true });
+					}
+				}
 			}
-		} catch (error) {
-			console.error(error);
-			toastError(error.toString(), { nolog: true });
-		}
+		);
 	};
 
 	const processRemotePack = async (data, opts) => {
