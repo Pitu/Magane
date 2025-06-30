@@ -879,7 +879,7 @@
 				}
 
 				// Use wsrv.nl to downscale when desired
-				if (settings.stickerSize < 180) {
+				if (!settings.disableDownscale && settings.stickerSize < 180) {
 					const append = `&h=${settings.stickerSize}p&fit=inside&we`;
 					return `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
 				}
