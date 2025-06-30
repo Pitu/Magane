@@ -1254,6 +1254,9 @@
 			throw new Error('Invalid stickers count.');
 		}
 
+		// Standardize some values
+		e.animated = Boolean(e.animated);
+
 		const result = { pack: e };
 		if (isLocalPackID(id)) {
 			localPacks[id] = e;
@@ -1380,7 +1383,7 @@
 			name,
 			count,
 			id: mid,
-			animated: animated ? 1 : null,
+			animated,
 			files
 		});
 	};
@@ -1400,7 +1403,7 @@
 			name,
 			count,
 			id: mid,
-			animated: animated ? 1 : null,
+			animated,
 			files
 		});
 	};
@@ -1429,7 +1432,7 @@
 			name,
 			count,
 			id: mid,
-			animated: animated ? 1 : null,
+			animated,
 			files,
 			thumbs,
 			template,
@@ -1857,9 +1860,9 @@
 
 		// General chores
 		pack.count = pack.files.length;
-		// If all thumbs are missing, just empty the array
+		// If all thumbs are missing, just remove the prop
 		if (Array.isArray(pack.thumbs) && pack.thumbs.every(thumb => thumb === null)) {
-			pack.thumbs = [];
+			delete pack.thumbs;
 		}
 
 		return pack;
@@ -1904,7 +1907,7 @@
 			opts.id = `${match.result[2]}-${match.result[3]}`;
 			opts.homeUrl = url;
 
-			// API will now be always deteremined on-the-fly,
+			// API will now be always determined on-the-fly,
 			// to allow changing this in the future, if required,
 			// without breaking packs saved with any older methods.
 			const downloadUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
@@ -2043,7 +2046,7 @@
 				/* eslint-disable-next-line prefer-template */
 				contents.push('**URL Template:**\n\n```\n' + localPacks[id].template + '\n```');
 			}
-			if (localPacks[id].thumbs) {
+			if (Array.isArray(localPacks[id].thumbs) && localPacks[id].thumbs.length) {
 				/* eslint-disable-next-line prefer-template */
 				contents.push('**Thumbnails:**\n\n```\n' +
 					localPacks[id].thumbs.join('\n') +
@@ -2104,7 +2107,7 @@
 							name: props.title,
 							id: props.id,
 							count: props.len,
-							animated: props.hasAnimation || null
+							animated: Boolean(props.hasAnimation)
 						});
 					} else {
 						// LINE Stickers work with either its full URL or just its ID
@@ -2116,7 +2119,7 @@
 							name: props.title,
 							firstid: props.first,
 							count: props.len,
-							animated: props.hasAnimation
+							animated: Boolean(props.hasAnimation)
 						});
 					}
 					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
@@ -2543,7 +2546,6 @@
 			element.href = hrefUrl;
 			element.download = `magane.database.${new Date().toISOString()}.json`;
 			element.click();
-			toastSuccess('Database exported!', { force: true });
 		} catch (error) {
 			console.error(error);
 			toastError('Unexpected error occurred. Check your console for details.');
