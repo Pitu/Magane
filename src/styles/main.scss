@@ -78,6 +78,16 @@ div#magane {
 					.counts span {
 						padding: 0 0.5em;
 					}
+
+					&:has(+ .subtext) {
+						margin-bottom: 0;
+					}
+
+					&.subtext {
+						color: var(--text-muted, #94959c);
+						font-size: 13px;
+						margin-top: 0;
+					}
 				}
 
 				div.sticker {

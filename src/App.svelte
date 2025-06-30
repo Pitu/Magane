@@ -1105,7 +1105,7 @@
 							toast('Converting APNG to GIF\u2026', { timeout: 1000 });
 							arrayBuffer = await convertAnimatedSticker(arrayBuffer);
 						} else {
-							toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
+							log('This release does not have APNG to GIF conversion library, so the sticker may end up being sent as a static image.');
 						}
 					} else if (pack.startsWith('custom-')) {
 						// Allow overriding filenames, for URLs that don't have extensions.
@@ -1190,6 +1190,12 @@
 		}
 
 		onCooldown = false;
+	};
+
+	const replaySticker = event => {
+		if (!event.target) return;
+		// eslint-disable-next-line no-self-assign
+		event.target.src = event.target.src;
 	};
 
 	const favoriteSticker = (pack, id) => {
@@ -2091,6 +2097,7 @@
 		/* eslint-disable-next-line prefer-template */
 		assertImportPacksConsent('URLs:\n\n```\n' + linePackUrls.join('\n') + '\n```', async () => {
 			toast('Importing packs\u2026', { nolog: true, timeout: 500, force: true });
+			let hasAnimation = false;
 			const failed = [];
 			for (const url of linePackUrls) {
 				try {
@@ -2122,6 +2129,11 @@
 							animated: Boolean(props.hasAnimation)
 						});
 					}
+
+					if (stored.pack.animated) {
+						hasAnimation = true;
+					}
+
 					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 				} catch (error) {
 					console.error(error);
@@ -2135,6 +2147,10 @@
 				linePackSearch = failed.join('\n');
 			} else {
 				linePackSearch = '';
+			}
+
+			if (hasAnimation && mountType !== MountType.VENCORD) {
+				toastWarn('Be advised that animated stickers/emojis from LINE Store currently cannot be animated.', { nolog: true, timeout: 6000, force: true });
 			}
 		});
 	};
@@ -2576,6 +2592,7 @@
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? simplePacksData[sticker.pack].name : '' }"
 							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
+							on:contextmenu|stopPropagation|preventDefault="{ replaySticker }"
 						>
 						<div class="deleteFavorite"
 							title="Unfavorite"
@@ -2600,6 +2617,7 @@
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? `${simplePacksData[sticker.pack].name} – ` : '' }Used: {sticker.used}"
 							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
+							on:contextmenu|stopPropagation|preventDefault="{ replaySticker }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
 						<div class="addFavorite"
@@ -2626,6 +2644,9 @@
 				{ #each subscribedPacks as pack, i }
 				<div class="pack">
 					<span id="p{pack.id}">{ pack.name }{ @html formatStickersCount(pack.files.length) }</span>
+					{ #if pack.animated && mountType === MountType.VENCORD && (pack.id.startsWith('startswith-') || pack.id.startsWith('emojis-')) }
+					<span class="subtext">Right-click the sticker to replay its animation.</span>
+					{ /if }
 
 					{ #each pack.files as sticker, i }
 					<div class="sticker">
@@ -2634,6 +2655,7 @@
 							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
 							on:click="{ event => sendSticker(pack.id, sticker, event) }"
+							on:contextmenu|stopPropagation|preventDefault="{ replaySticker }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
 						<div class="addFavorite"
