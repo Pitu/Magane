@@ -1370,8 +1370,8 @@
 	};
 
 	const appendPack = (...args) => {
-		let { name, firstid, count, animated } = parseFunctionArgs(args,
-			['name', 'firstid', 'count', 'animated'], 3);
+		let { name, firstid, count, animated, homeUrl } = parseFunctionArgs(args,
+			['name', 'firstid', 'count', 'animated', 'homeUrl'], 3);
 
 		firstid = Number(firstid);
 		if (isNaN(firstid) || !isFinite(firstid) || firstid < 0) {
@@ -1390,13 +1390,14 @@
 			count,
 			id: mid,
 			animated,
-			files
+			files,
+			homeUrl
 		});
 	};
 
 	const appendEmojisPack = (...args) => {
-		let { name, id, count, animated } = parseFunctionArgs(args,
-			['name', 'id', 'count', 'animated'], 3);
+		let { name, id, count, animated, homeUrl } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'homeUrl'], 3);
 
 		count = Math.max(Math.min(Number(count), 200), 0) || 0;
 		const mid = `emojis-${id}`;
@@ -1410,7 +1411,8 @@
 			count,
 			id: mid,
 			animated,
-			files
+			files,
+			homeUrl
 		});
 	};
 
@@ -2114,7 +2116,8 @@
 							name: props.title,
 							id: props.id,
 							count: props.len,
-							animated: Boolean(props.hasAnimation)
+							animated: Boolean(props.hasAnimation),
+							homeUrl: url
 						});
 					} else {
 						// LINE Stickers work with either its full URL or just its ID
@@ -2126,7 +2129,8 @@
 							name: props.title,
 							firstid: props.first,
 							count: props.len,
-							animated: Boolean(props.hasAnimation)
+							animated: Boolean(props.hasAnimation),
+							homeUrl: url
 						});
 					}
 
