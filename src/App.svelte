@@ -211,6 +211,7 @@
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
+	let stickerSizeInput = 180; // default
 	let frequentlyUsedInput = 10; // default
 	let hotkeyInput = null;
 	let hotkey = {};
@@ -246,6 +247,7 @@
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
 		disableSendingWithChatInput: false,
+		stickerSize: stickerSizeInput,
 		frequentlyUsed: frequentlyUsedInput,
 		hotkey: null
 	};
@@ -566,6 +568,7 @@
 		// eslint-disable-next-line no-use-before-define
 		setWindowMaganeAPIs(settings.enableWindowMagane);
 
+		stickerSizeInput = settings.stickerSize;
 		frequentlyUsedInput = settings.frequentlyUsed;
 		hotkeyInput = settings.hotkey;
 
@@ -812,19 +815,27 @@
 
 	const formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
+
 		if (typeof pack === 'number') {
 			// Magane's built-in packs
 			if (baseURL) {
 				url = `${baseURL || ''}${pack}/${id}`;
+
 				if (!sending) {
-					url = url.replace(/\.(gif|png)$/i, '_key.$1');
+					return url.replace(/\.(gif|png)$/i, '_key.$1');
+				}
+
+				// Use wsrv.nl to downscale when desired
+				if (settings.stickerSize < 180) {
+					const append = `&h=${settings.stickerSize}p&fit=inside&we`;
+					return `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
 				}
 			} else if (sending) {
 				// Let sendSticker() handle displaying error
 				throw new Error('Magane\'s API was unavailable. Please reload Magane if the API is already back online.');
 			} else {
 				// Placeholder thumb (❌) if baseURL is missing (i.e. failed to fetch it from Magane's API)
-				url = '/assets/8becd37ab9d13cdfe37c08c496a9def3.svg';
+				return '/assets/8becd37ab9d13cdfe37c08c496a9def3.svg';
 			}
 		} else if (pack.startsWith('startswith-')) {
 			/*
@@ -838,7 +849,8 @@
 			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
 			url = template.replace(/%id%/g, id.split('.')[0]);
 
-			let append = sending ? '&h=180p' : '&h=100p';
+			// &we = without enlargement
+			let append = `${sending ? `&h=${settings.stickerSize}p` : '&h=100p'}&fit=inside&we`;
 
 			if (localPacks[pack].animated) {
 				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
@@ -867,7 +879,8 @@
 				.replace(/%pack%/g, pack.split('-')[1])
 				.replace(/%id%/g, id.split('.')[0]);
 
-			let append = sending ? '' : '&h=100p';
+			// &we = without enlargement
+			let append = `${sending ? `&h=${settings.stickerSize}p` : '&h=100p'}&fit=inside&we`;
 
 			if (localPacks[pack].animated) {
 				url = url.replace(/\.png/, '_animation.png');
@@ -914,9 +927,11 @@
 				url = template
 					.replace(/%pack%/g, () => pack.replace('custom-', ''))
 					.replace(/%id%/g, url)
-					.replace(/%idencoded%/g, () => encodeURIComponent(url));
+					.replace(/%idencoded%/g, () => encodeURIComponent(url))
+					.replace(/%size%/g, settings.stickerSize);
 			}
 		}
+
 		return url;
 	};
 
@@ -2186,6 +2201,22 @@
 		toastSuccess('Settings saved!', { nolog: true });
 	};
 
+	const parseStickerSizeInput = () => {
+		const size = parseInt(stickerSizeInput, 10);
+		if (isNaN(size) || size < 32 || size > 512) {
+			return toastError('Sticker size must be ≥ 32 and ≤ 512.');
+		}
+
+		settings.stickerSize = size;
+		log(`settings['stickerSize'] = ${settings.stickerSize}`);
+
+		saveToLocalStorage('magane.settings', settings);
+		toastSuccess('Settings saved!', { nolog: true, force: true });
+
+		// Refresh UI
+		stickerSizeInput = size;
+	};
+
 	const updateFrequentlyUsed = () => {
 		// Get pack IDs of stickers previously included in frequently used section
 		const lastPackIDs = frequentlyUsedSorted
@@ -2232,6 +2263,7 @@
 		}
 
 		// Refresh UI
+		frequentlyUsedInput = count;
 		updateFrequentlyUsed();
 	};
 
@@ -2827,7 +2859,7 @@
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
-										Disable downscaling of imported LINE packs using <code>wsrv.nl</code>
+										Disable downscaling stickers with <a href="https://wsrv.nl/" target="_blank">wsrv.nl</a>
 									</label>
 								</p>
 								<p>
@@ -2903,6 +2935,23 @@
 									</label>
 								</p>
 							</div>
+							<div class="section sticker-size">
+								<p class="section-title">Sticker Size</p>
+								<p>
+									Maximum height of stickers to send. Downscaling-only.
+								</p>
+								<p>
+									This depends on <b>wsrv.nl</b> not being disabled.
+								</p>
+								<p class="input-grouped">
+									<input
+										bind:value={ stickerSizeInput }
+										class="inputQuery supress-magane-hotkey"
+										type="number" />
+									<button class="button is-primary"
+										on:click="{ () => parseStickerSizeInput() }">Set</button>
+								</p>
+							</div>
 							<div class="section frequently-used">
 								<p class="section-title">Frequently Used</p>
 								<p>
@@ -2915,7 +2964,7 @@
 									<input
 										bind:value={ frequentlyUsedInput }
 										class="inputQuery supress-magane-hotkey"
-										type="text" />
+										type="number" />
 									<button class="button is-primary"
 										on:click="{ () => parseFrequentlyUsedInput() }">Set</button>
 								</p>
