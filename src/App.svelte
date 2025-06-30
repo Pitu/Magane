@@ -2224,6 +2224,8 @@
 		// Reset selected files in the hidden input
 		event.target.value = '';
 
+		if (!results.length) return false;
+
 		const fileNames = results.map(result => result.name);
 
 		/* eslint-disable-next-line prefer-template */
