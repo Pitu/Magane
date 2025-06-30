@@ -135,7 +135,10 @@ export default {
 					'import definePlugin from "@utils/types";\n' +
 					'import { findByPropsLazy, findLazy } from "@webpack";\n' +
 					'import { Alerts, Toasts } from "@webpack/common";\n' +
-					'import { Notices } from "@api/index";'
+					'import { Notices } from "@api/index";\n' +
+					'import { APNG } from "@utils/apng-canvas";\n' +
+					'import { ApngBlendOp, ApngDisposeOp } from "@utils/dependencies";\n' +
+					'import { applyPalette, GIFEncoder, quantize } from "gifenc";'
 				);
 			}
 		},

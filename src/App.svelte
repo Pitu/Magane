@@ -813,6 +813,59 @@
 		}
 	};
 
+	const convertAnimatedSticker = async arrayBuffer => {
+		const { frames, width, height } = await VencordApi.APNG.parseBuffer(arrayBuffer);
+
+		const gif = VencordApi.GIFEncoder();
+		const maxHeight = Math.min(settings.stickerSize, height);
+		const maxWidth = (width / height) * maxHeight;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = maxWidth;
+		canvas.height = maxHeight;
+
+		const ctx = canvas.getContext('2d', {
+			willReadFrequently: true
+		});
+
+		const scale = maxHeight / height;
+		ctx.scale(scale, scale);
+
+		let previousFrameData;
+
+		for (const frame of frames) {
+			const { left, top, width, height, img, delay, blendOp, disposeOp } = frame;
+
+			previousFrameData = ctx.getImageData(left, top, width, height);
+
+			if (blendOp === VencordApi.ApngBlendOp.SOURCE) {
+				ctx.clearRect(left, top, width, height);
+			}
+
+			ctx.drawImage(img, left, top, width, height);
+
+			const { data } = ctx.getImageData(0, 0, maxWidth, maxHeight);
+
+			const palette = VencordApi.quantize(data, 256);
+			const index = VencordApi.applyPalette(data, palette);
+
+			gif.writeFrame(index, maxWidth, maxHeight, {
+				transparent: true,
+				palette,
+				delay
+			});
+
+			if (disposeOp === VencordApi.ApngDisposeOp.BACKGROUND) {
+				ctx.clearRect(left, top, width, height);
+			} else if (disposeOp === VencordApi.ApngDisposeOp.PREVIOUS) {
+				ctx.putImageData(previousFrameData, left, top);
+			}
+		}
+
+		gif.finish();
+		return gif.bytesView();
+	};
+
 	const formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
 
@@ -854,6 +907,12 @@
 
 			if (localPacks[pack].animated) {
 				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
+
+				// For Vencord, return the URL as-is
+				if (mountType === MountType.VENCORD) {
+					return url;
+				}
+
 				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
 			} else {
@@ -884,6 +943,12 @@
 
 			if (localPacks[pack].animated) {
 				url = url.replace(/\.png/, '_animation.png');
+
+				// For Vencord, return the URL as-is
+				if (mountType === MountType.VENCORD) {
+					return url;
+				}
+
 				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
 			} else {
@@ -1035,7 +1100,13 @@
 				if (typeof pack === 'string') {
 					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 						filename = filename.replace(/\.png$/i, '.gif');
-						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
+						// Vencord ships a library for APNG -> GIF conversion
+						if (mountType === MountType.VENCORD) {
+							toast('Converting APNG to GIF\u2026', { timeout: 1000 });
+							arrayBuffer = await convertAnimatedSticker(arrayBuffer);
+						} else {
+							toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
+						}
 					} else if (pack.startsWith('custom-')) {
 						// Allow overriding filenames, for URLs that don't have extensions.
 						// e.g. https://example.com/path/to/image custom_name.jpg
@@ -1931,8 +2002,14 @@
 			remoteType = `\`${localPacks[id].remoteType}\` – ${remotePackTypes[localPacks[id].remoteType] || 'N/A'}`;
 		} else if (id.startsWith('startswith-')) {
 			remoteType = 'LINE';
+			if (localPacks[id].animated) {
+				remoteType += ' – Animated';
+			}
 		} else if (id.startsWith('emojis-')) {
 			remoteType = 'LINE Emojis';
+			if (localPacks[id].animated) {
+				remoteType += ' – Animated';
+			}
 		}
 
 		// Formatting is very particular, so we do this the old-fashioned way
@@ -2943,6 +3020,11 @@
 								<p>
 									This depends on <b>wsrv.nl</b> not being disabled.
 								</p>
+								{ #if mountType === MountType.VENCORD }
+								<p>
+									<i>This always applies to imported animated LINE stickers, because Vencord has a built-in APNG to GIF conversion library.</i>
+								</p>
+								{ /if }
 								<p class="input-grouped">
 									<input
 										bind:value={ stickerSizeInput }
