@@ -1261,7 +1261,9 @@
 		}
 
 		// Standardize some values
-		e.animated = Boolean(e.animated);
+		if ('animated' in e) {
+			e.animated = Boolean(e.animated);
+		}
 
 		const result = { pack: e };
 		if (isLocalPackID(id)) {
