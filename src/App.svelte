@@ -149,6 +149,41 @@
 
 				return MOCK_API.UI_SHOWNOTICE(...args);
 			}
+		},
+		fetch: async (...args) => {
+			if (mountType === MountType.BETTERDISCORD) {
+				return fetch(...args);
+			} else if (mountType === MountType.VENCORD) {
+				return VencordApi.VencordNative.pluginHelpers.MaganeVencord.fetchNative(...args);
+			}
+
+			return MOCK_API.FETCH(...args);
+		},
+		fetchJson: async (...args) => {
+			if (mountType === MountType.BETTERDISCORD) {
+				const response = await fetch(...args);
+				return {
+					response,
+					data: await response.json()
+				};
+			} else if (mountType === MountType.VENCORD) {
+				return VencordApi.VencordNative.pluginHelpers.MaganeVencord.fetchNativeJson(...args);
+			}
+
+			return MOCK_API.FETCHJSON(...args);
+		},
+		fetchArrayBuffer: async (...args) => {
+			if (mountType === MountType.BETTERDISCORD) {
+				const response = await fetch(...args);
+				return {
+					response,
+					data: await response.arrayBuffer()
+				};
+			} else if (mountType === MountType.VENCORD) {
+				return VencordApi.VencordNative.pluginHelpers.MaganeVencord.fetchNativeArrayBuffer(...args);
+			}
+
+			return MOCK_API.FETCHARRAYBUFFER(...args);
 		}
 	};
 
@@ -560,10 +595,10 @@
 			toast('Checking for updates\u2026', { nolog: true, timeout: 1000, force: true });
 		}
 
-		await fetch(PACKAGE_URL, { cache: 'no-cache' }).then(async response => {
+		await Helper.fetchJson(PACKAGE_URL, { cache: 'no-cache' }).then(async result => {
 			log('Remote dist file fetched.');
 
-			const data = await response.json();
+			const data = result.data;
 			if (data.version) {
 				if (SemverGt(data.version, VERSION)) {
 					log(`Update found: ${data.version} > ${VERSION}.`);
@@ -636,8 +671,8 @@
 	const grabPacks = async (reset = false) => {
 		let packs;
 		try {
-			const response = await fetch('https://magane.moe/api/packs');
-			packs = await response.json();
+			const result = await Helper.fetchJson('https://magane.moe/api/packs');
+			packs = result.data;
 			baseURL = packs.baseURL;
 		} catch (error) {
 			// Toast and log to console, but allow to continue as-is
@@ -977,8 +1012,8 @@
 				toast('Fetching sticker\u2026', { timeout: 1000 });
 
 				log(`Fetching: ${url}`);
-				const response = await fetch(url, { cache: 'force-cache' });
-				const blob = await response.blob();
+				const result = await Helper.fetchArrayBuffer(url, { cache: 'force-cache' });
+				let arrayBuffer = result.data;
 
 				let filename = id;
 
@@ -1009,7 +1044,7 @@
 				log(`Sending sticker as ${filename}\u2026`);
 				messageOptions.attachmentsToUpload = [
 					new Modules.CloudUpload({
-						file: new File([blob], filename),
+						file: new File([arrayBuffer], filename),
 						isClip: false,
 						isThumbnail: false,
 						platform: 1
@@ -1166,7 +1201,7 @@
 		const data = {
 			packs: ids.filter(id => typeof id === 'number')
 		};
-		const response = await fetch('https://magane.moe/api/packs/subscribe', {
+		const response = await Helper.fetch('https://magane.moe/api/packs/subscribe', {
 			method: 'POST',
 			headers: {
 				'Accept': 'application/json',
@@ -1791,12 +1826,12 @@
 			// Initially try with latest Chibisafe API
 			const chibisafeSuffix = '/view?page=1&limit=500';
 			log(`Fetching chibisafe album: ${downloadUrl + chibisafeSuffix}`);
-			let response = await fetch(downloadUrl + chibisafeSuffix, { cache: 'no-cache' })
-				.catch(response => response); // ignore network errors, mainly CORS
+			const result = await Helper.fetchJson(downloadUrl + chibisafeSuffix, { cache: 'no-cache' });
+			const response = result.response;
 
 			if (response?.status === 200 || response?.status === 304) {
 				// Parse as JSON immediately, and assign remote type 1
-				data = await response.json();
+				data = result.data;
 				opts.remoteType = 1;
 			} else {
 				// Fallback to old API for backwards-compatibility,
@@ -1805,14 +1840,14 @@
 					? `${response.status} ${response.statusText}`.trim()
 					: 'N/A';
 				log(`HTTP error ${_status}, re-trying with: ${downloadUrl}`);
-				response = await fetch(downloadUrl, { cache: 'no-cache' });
-				data = await response.json();
+				const retryResult = await Helper.fetchJson(downloadUrl, { cache: 'no-cache' });
+				data = retryResult.data;
 				opts.remoteType = 2; // assign remote type 2
 			}
 		} else {
 			// Custom JSON
-			const response = await fetch(opts.updateUrl);
-			data = await response.json();
+			const result = await Helper.fetchJson(opts.updateUrl);
+			data = result.data;
 			opts.remoteType = 0; // assign remote type 0
 		}
 
@@ -1971,8 +2006,8 @@
 					if (match[3] === 'emoji') {
 						// LINE Emojis will only work when using its full URL
 						const id = match[4];
-						const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
-						const props = await response.json();
+						const result = await Helper.fetchJson(`https://magane.moe/api/proxy/emoji/${id}`);
+						const props = result.data;
 						stored = appendEmojisPack({
 							name: props.title,
 							id: props.id,
@@ -1983,8 +2018,8 @@
 						// LINE Stickers work with either its full URL or just its ID
 						const id = Number(match[4]);
 						if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
-						const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
-						const props = await response.json();
+						const result = await Helper.fetchJson(`https://magane.moe/api/proxy/sticker/${id}`);
+						const props = result.data;
 						stored = appendPack({
 							name: props.title,
 							firstid: props.first,
