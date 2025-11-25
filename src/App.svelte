@@ -814,7 +814,7 @@
 	};
 
 	const convertAnimatedSticker = async arrayBuffer => {
-		const { frames, width, height } = await VencordApi.APNG.parseBuffer(arrayBuffer);
+		const { frames, width, height } = await VencordApi.parseAPNG(arrayBuffer);
 
 		const gif = VencordApi.GIFEncoder();
 		const maxHeight = Math.min(settings.stickerSize, height);

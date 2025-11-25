@@ -136,8 +136,7 @@ export default {
 					'import { findByPropsLazy, findLazy } from "@webpack";\n' +
 					'import { Alerts, Toasts } from "@webpack/common";\n' +
 					'import { Notices } from "@api/index";\n' +
-					'import { APNG } from "@utils/apng-canvas";\n' +
-					'import { ApngBlendOp, ApngDisposeOp } from "@utils/dependencies";\n' +
+					'import { ApngBlendOp, ApngDisposeOp, parseAPNG } from "@utils/apng";\n' +
 					'import { applyPalette, GIFEncoder, quantize } from "gifenc";'
 				);
 			}
