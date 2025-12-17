@@ -10,8 +10,11 @@ module.exports = class MaganeBD {
 
 	start() {
 		for (const id of Object.keys(global.MAGANE_STYLES)) {
-			const _id = `${this.constructor.name}-${id}`;
-			BdApi.injectCSS(_id, global.MAGANE_STYLES[id]);
+			const _id = `MaganeBD-${id}`;
+			const style = document.createElement('style');
+			style.id = _id;
+			style.innerText = global.MAGANE_STYLES[id];
+			document.head.appendChild(style);
 			this.log(`Injected CSS with ID "${_id}".`);
 		}
 		this.log('Mounting container into DOM\u2026');
@@ -33,9 +36,12 @@ module.exports = class MaganeBD {
 			this.log('Removed container from DOM.');
 		}
 		for (const id of Object.keys(global.MAGANE_STYLES)) {
-			const _id = `${this.constructor.name}-${id}`;
-			BdApi.clearCSS(_id);
-			this.log(`Cleared CSS with ID "${_id}".`);
+			const _id = `MaganeBD-${id}`;
+			const _style = document.querySelector(`head style#${_id}`);
+			if (_style) {
+				_style.remove();
+				this.log(`Cleared CSS with ID "${_id}".`);
+			}
 		}
 	}
 };
