@@ -43,7 +43,7 @@
 		findByProps(...args) {
 			switch (mountType) {
 				case MountType.BETTERDISCORD:
-					return BdApi.findModuleByProps(...args);
+					return BdApi.Webpack.getByKeys(...args);
 				case MountType.VENCORD:
 					return VencordApi.findByPropsLazy(...args);
 				default:
@@ -63,7 +63,7 @@
 		Alerts: {
 			show(...args) {
 				if (mountType === MountType.BETTERDISCORD) {
-					return BdApi.showConfirmationModal(...args);
+					return BdApi.UI.showConfirmationModal(...args);
 				} else if (mountType === MountType.VENCORD) {
 					const title = args[0];
 
@@ -98,7 +98,7 @@
 		Toasts: {
 			show(...args) {
 				if (mountType === MountType.BETTERDISCORD) {
-					return BdApi.showToast(...args);
+					return BdApi.UI.showToast(...args);
 				} else if (mountType === MountType.VENCORD) {
 					const message = args[0];
 					const options = Object.assign({}, ...args.slice(1));
