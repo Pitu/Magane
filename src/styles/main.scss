@@ -715,15 +715,23 @@ div.magane-vencord-modal {
 	}
 }
 
-div.magane-vencord-modal-container {
+
+/* Vencord: fix modal width */
+
+div[data-mana-component="modal"]:has(div.magane-vencord-modal) {
+	max-width: 650px !important;
+	min-width: 400px;
 	width: auto;
-	min-width: 442px;
-	max-width: 663px;
+	overflow-y: auto;
+
+	div[class*="-headerSubtitle"] {
+		width: 100%;
+	}
 }
 
 /* Visually hide Magane button in certain scenarios */
 
-div[class^="submitContainer_"] div#maganeButton { /* create thread */
+div[class*="-submitContainer"] div#maganeButton { /* create thread */
 	display: none;
 }
 
