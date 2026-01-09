@@ -2652,7 +2652,7 @@
 				{ #each subscribedPacks as pack, i }
 				<div class="pack">
 					<span id="p{pack.id}">{ pack.name }{ @html formatStickersCount(pack.files.length) }</span>
-					{ #if pack.animated && mountType === MountType.VENCORD && (pack.id.startsWith('startswith-') || pack.id.startsWith('emojis-')) }
+					{ #if mountType === MountType.VENCORD && typeof pack.id === 'string' && pack.animated && (pack.id.startsWith('startswith-') || pack.id.startsWith('emojis-')) }
 					<span class="subtext">Right-click the sticker to replay its animation.</span>
 					{ /if }
 
