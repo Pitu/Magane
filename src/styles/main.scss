@@ -636,32 +636,6 @@ div#magane {
 	.has-scroll-y {
 		overflow: hidden auto;
 	}
-
-	::-webkit-scrollbar {
-		height: 8px !important;
-		width: 8px !important;
-
-		&-corner {
-			background-color: transparent;
-		}
-
-		&-track {
-			background-color: var(--scrollbar-auto-track, transparent);
-			margin: $borderRadius 0 !important;
-		}
-
-		&-thumb {
-			background-color: var(--scrollbar-auto-thumb, #666771);
-			min-height: 40px;
-		}
-
-		&-track,
-		&-thumb {
-			background-clip: padding-box;
-			border: 0 solid transparent !important;
-			border-radius: $borderRadius;
-		}
-	}
 }
 
 div#maganeButton {
@@ -715,8 +689,38 @@ div.magane-vencord-modal {
 	}
 }
 
+/* Scrollbars, also apply to Vencord modals */
 
-/* Vencord: fix modal width */
+div#magane,
+div[class*="-outerContainer"]:has(div[data-mana-component="modal"] div.magane-vencord-modal) {
+	::-webkit-scrollbar {
+		height: 8px !important;
+		width: 8px !important;
+
+		&-corner {
+			background-color: transparent;
+		}
+
+		&-track {
+			background-color: var(--scrollbar-auto-track, transparent);
+			margin: $borderRadius 0 !important;
+		}
+
+		&-thumb {
+			background-color: var(--scrollbar-auto-thumb, #666771);
+			min-height: 40px;
+		}
+
+		&-track,
+		&-thumb {
+			background-clip: padding-box;
+			border: 0 solid transparent !important;
+			border-radius: $borderRadius;
+		}
+	}
+}
+
+/* Fix Vencord modals width */
 
 div[data-mana-component="modal"]:has(div.magane-vencord-modal) {
 	max-width: 650px !important;
