@@ -135,7 +135,9 @@ export default {
 					'import definePlugin from "@utils/types";\n' +
 					'import { findByPropsLazy, findLazy } from "@webpack";\n' +
 					'import { Alerts, Toasts } from "@webpack/common";\n' +
-					'import { Notices } from "@api/index";'
+					'import { Notices } from "@api/index";\n' +
+					'import { ApngBlendOp, ApngDisposeOp, parseAPNG } from "@utils/apng";\n' +
+					'import { applyPalette, GIFEncoder, quantize } from "gifenc";'
 				);
 			}
 		},
@@ -153,9 +155,11 @@ export default {
 				await fs.copyFile(outputFile, indexDest);
 				console.log(`Copied index file to ${indexDest}`);
 
-				const nativeDest = path.resolve(process.env.VENCORD_PLUGIN_PATH, 'native.ts');
-				await fs.copyFile(nativeFile, nativeDest);
-				console.log(`Copied native file to ${nativeDest}`);
+				if (!process.env.VENCORD_SKIP_NATIVE) {
+					const nativeDest = path.resolve(process.env.VENCORD_PLUGIN_PATH, 'native.ts');
+					await fs.copyFile(nativeFile, nativeDest);
+					console.log(`Copied native file to ${nativeDest}`);
+				}
 			}
 		}
 	],

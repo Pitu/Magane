@@ -1,19 +1,25 @@
 /** Magane: main.scss **/
 
+$backgroundPrimary: var(--background-surface-high, #242429);
+$backgroundSecondary: var(--background-base-lower, #1a1a1e);
+$textColor: var(--header-secondary, #efeff0);
+
+$borderRadius: var(--radius-sm, 8px);
+
+$fontDisplay: var(--font-display, "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif);
+$fontCode: var(--font-code, "gg mono", "Source Code Pro", Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace);
+
 div#magane {
-	$backgroundPrimary: var(--background-base-low, #202024);
-	$backgroundSecondary: var(--background-base-lower, #1a1a1e);
-	$textColor: var(--header-secondary, #efeff0);
-	$hoverColor: var(--interactive-active, #fbfbfb);
-	$scrollbarColor: rgb(105, 96, 128);
 	display: flex;
 	flex-direction: row;
 	height: 44px;
 	position: absolute;
 	z-index: 1001;
+	scrollbar-width: auto !important;
+	scrollbar-color: auto !important;
 
 	button, input, select, label, span, p, a, li, ul, div, textarea {
-		font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+		font-family: $fontDisplay;
 		color: $textColor;
 		font-weight: 400;
 		line-height: 1.5;
@@ -23,23 +29,24 @@ div#magane {
 	}
 
 	div.stickerWindow {
-		width: 600px;
+		width: 608px;
 		min-height: 200px;
 		position: fixed;
 		background: $backgroundPrimary;
-		max-height: 600px;
+		max-height: 608px;
 		transition: all 0.2s ease;
-		border-radius: 4px;
+		border-radius: $borderRadius;
 		box-shadow: var(--elevation-stroke, 0 0 0 1px #020203), var(--elevation-high, 0 8px 16px #000);
 
 		div.stickers {
 			height: 550px !important;
-			margin-bottom: 100px;
+			margin-bottom: 58px;
 			position: relative;
 
 			&.has-left-toolbar {
-				height: 600px !important;
-				margin-left: 50px;
+				height: 608px !important;
+				margin-left: 58px;
+				margin-bottom: 0;
 			}
 
 			h3.getStarted {
@@ -70,6 +77,16 @@ div#magane {
 
 					.counts span {
 						padding: 0 0.5em;
+					}
+
+					&:has(+ .subtext) {
+						margin-bottom: 0;
+					}
+
+					&.subtext {
+						color: var(--text-muted, #94959c);
+						font-size: 13px;
+						margin-top: 0;
 					}
 				}
 
@@ -135,15 +152,17 @@ div#magane {
 		div.packs-toolbar {
 			position: absolute;
 			bottom: 0;
-			background: $backgroundSecondary;
 			display: flex;
+			background: $backgroundSecondary;
 
-			&.has-scroll-x {
+			&.is-bottom {
 				width: 100%;
-				height: 50px;
+				height: 58px;
+				border-bottom-right-radius: $borderRadius;
+				border-bottom-left-radius: $borderRadius;
 
 				div.packs {
-					flex: 1 0 auto;
+					flex: 1 1 auto;
 
 					&.packs-controls {
 						flex: 0 0 auto;
@@ -153,15 +172,21 @@ div#magane {
 						white-space: nowrap;
 						float: left;
 						width: 100%;
-						font-size: 0; /* quick hax to clear whitespace */
+						font-size: 0; /* clear whitespace */
+					}
+
+					div.pack {
+						margin: 9px 6px;
 					}
 				}
 			}
 
-			&.has-scroll-y {
-				width: 50px;
+			&.is-left {
+				width: 58px;
 				height: 100%;
 				flex-direction: column;
+				border-top-left-radius: $borderRadius;
+				border-bottom-left-radius: $borderRadius;
 
 				div.packs {
 					flex: 1 1 auto;
@@ -173,7 +198,11 @@ div#magane {
 					}
 
 					div.packs-wrapper {
-						font-size: 0; /* quick hax to clear whitespace */
+						font-size: 0; /* clear whitespace */
+					}
+
+					div.pack {
+						margin: 6px 9px;
 					}
 				}
 			}
@@ -182,7 +211,6 @@ div#magane {
 				display: inline-block;
 				height: 40px;
 				width: 40px;
-				margin: 5px;
 				cursor: pointer;
 				background-position: center;
 				background-size: contain;
@@ -243,7 +271,7 @@ div#magane {
 			box-sizing: border-box;
 			margin: 0 15px 10px;
 			padding: 5px 12px;
-			border-radius: 3px;
+			border-radius: $borderRadius;
 			border: 1px solid $backgroundPrimary;
 			background: $backgroundPrimary;
 			color: $textColor;
@@ -259,7 +287,7 @@ div#magane {
 			height: 36px;
 			box-sizing: border-box;
 			padding: 5px 12px;
-			border-radius: 3px;
+			border-radius: $borderRadius;
 			border: 1px solid $backgroundPrimary;
 			background: $backgroundPrimary;
 			color: $textColor;
@@ -277,14 +305,14 @@ div#magane {
 			background-color: rgba(10, 10, 10, 0.86);
 		}
 
-		.modal-content,
-		.modal-card {
+		.modal-content {
 			position: absolute;
 			width: 100%;
 			height: 100%;
 			left: 0;
 			top: 0;
 			background: $backgroundSecondary;
+			border-radius: $borderRadius;
 		}
 
 		.modal-content {
@@ -295,32 +323,34 @@ div#magane {
 				flex-direction: column;
 
 				.tabs {
+					padding: 16px;
 					width: 100%;
+					box-sizing: border-box;
 					text-align: center;
 
 					.tab {
 						color: $textColor;
 						display: inline-block;
-						border: none;
-						border-top: 0px transparent;
-						border-left: 0px transparent;
-						border-right: 0px transparent;
-						border-width: 1px;
-						border-style: solid;
-						border-bottom-color: $textColor;
-						padding: 20px;
+						border-radius: $borderRadius;
+						font-weight: 600;
+						padding: 4px 12px;
+						transition: background-color .1s ease-in-out,color .1s ease-in-out;
 						cursor: pointer;
 
-						&:hover,
+						&:hover {
+							color: var(--interactive-hover, #fbfbfb);
+							background: var(--button-secondary-background-hover, #97979f33);
+						}
+
 						&.is-active {
-							border-bottom-color: $hoverColor;
-							color: $hoverColor;
+							color: var(--button-secondary-text, #ebebed);
+							background: var(--button-secondary-background, #97979f1f);
 						}
 					}
 				}
 
 				div.tab-content {
-					height: calc(100% - 66px); /* .tabs height */
+					height: calc(100% - 64px); /* .tabs height */
 					width: 100%;
 					padding: 10px 0;
 					box-sizing: border-box;
@@ -519,8 +549,8 @@ div#magane {
 			vertical-align: top;
 			background: none;
 			position: absolute;
-			right: 20px;
-			top: 20px;
+			right: 16px;
+			top: 16px;
 			height: 32px;
 			max-height: 32px;
 			max-width: 32px;
@@ -560,10 +590,11 @@ div#magane {
 	.button {
 		align-items: center;
 		border: 1px solid transparent;
-		border-radius: 3px;
+		border-radius: $borderRadius;
 		box-shadow: none;
 		display: inline-flex;
 		font-size: 1rem;
+		font-weight: var(--font-weight-medium, 500);
 		padding: calc(0.375em - 1px) 0.75em;
 		position: relative;
 		vertical-align: top;
@@ -599,54 +630,11 @@ div#magane {
 	}
 
 	.has-scroll-x {
-		overflow-x: auto;
-		scrollbar-gutter: stable;
+		overflow: auto hidden;
 	}
 
 	.has-scroll-y {
-		overflow-y: auto;
-		scrollbar-gutter: stable;
-	}
-
-	::-webkit-scrollbar {
-		/* Let's make the scrollbars pretty */
-		width: 6px;
-		height: 6px;
-
-		&-track {
-			margin: 0;
-			background: transparent;
-			border-radius: 5px;
-
-			&-piece {
-				border: 0 solid transparent;
-				background: transparent;
-				margin: 0;
-			}
-		}
-
-		&-thumb {
-			background: rgba($scrollbarColor, 0.5);
-			border: 0 solid transparent;
-			border-radius: 5px;
-
-			&:hover {
-				background: rgba($scrollbarColor, 0.75);
-			}
-
-			&:active {
-				background: rgba($scrollbarColor, 1);
-			}
-		}
-	}
-
-	code {
-		box-sizing: border-box;
-		padding: 2px 6px;
-		border-radius: 3px;
-		border: 1px solid $backgroundPrimary;
-		background: $backgroundPrimary;
-		color: $textColor;
+		overflow: hidden auto;
 	}
 }
 
@@ -656,7 +644,8 @@ div#maganeButton {
 		align-items: center;
 		cursor: pointer;
 
-		&:hover, &.active {
+		&:hover,
+		&.active {
 			filter: brightness(1.35);
 		}
 	}
@@ -670,9 +659,83 @@ div#maganeButton {
 	}
 }
 
+div.magane-vencord-modal {
+	color: $textColor;
+	user-select: text;
+
+	p {
+		margin: 0;
+		margin-bottom: 8px;
+	}
+}
+
+div#magane,
+div.magane-vencord-modal {
+	code {
+		font-family: $fontCode;
+		border-radius: var(--radius-xs, 4px);
+		margin: -.2em 0;
+		padding: 0 .2em;
+		box-sizing: border-box;
+		border: 1px solid var(--border-normal, #97979f33);
+		background: var(--background-code, #5865f214);
+		color: $textColor;
+	}
+
+	pre code {
+		display: block;
+		padding: .5em;
+		overflow-x: auto;
+	}
+}
+
+/* Scrollbars, also apply to Vencord modals */
+
+div#magane,
+div[class*="-outerContainer"]:has(div[data-mana-component="modal"] div.magane-vencord-modal) {
+	::-webkit-scrollbar {
+		height: 8px !important;
+		width: 8px !important;
+
+		&-corner {
+			background-color: transparent;
+		}
+
+		&-track {
+			background-color: var(--scrollbar-auto-track, transparent);
+			margin: $borderRadius 0 !important;
+		}
+
+		&-thumb {
+			background-color: var(--scrollbar-auto-thumb, #666771);
+			min-height: 40px;
+		}
+
+		&-track,
+		&-thumb {
+			background-clip: padding-box;
+			border: 0 solid transparent !important;
+			border-radius: $borderRadius;
+		}
+	}
+}
+
+/* Fix Vencord modals width */
+
+div[data-mana-component="modal"]:has(div.magane-vencord-modal) {
+	max-width: 650px !important;
+	min-width: 400px;
+	width: auto;
+	overflow-y: auto;
+
+	div[class*="-headerSubtitle"] {
+		width: 100%;
+	}
+}
+
 /* Visually hide Magane button in certain scenarios */
 
-div[class^="submitContainer_"] div#maganeButton { /* create thread */
+div[class*="-submitContainer"] div#maganeButton { /* create thread */
 	display: none;
 }
 

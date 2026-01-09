@@ -43,7 +43,7 @@
 		findByProps(...args) {
 			switch (mountType) {
 				case MountType.BETTERDISCORD:
-					return BdApi.findModuleByProps(...args);
+					return BdApi.Webpack.getByKeys(...args);
 				case MountType.VENCORD:
 					return VencordApi.findByPropsLazy(...args);
 				default:
@@ -63,22 +63,26 @@
 		Alerts: {
 			show(...args) {
 				if (mountType === MountType.BETTERDISCORD) {
-					return BdApi.showConfirmationModal(...args);
+					return BdApi.UI.showConfirmationModal(...args);
 				} else if (mountType === MountType.VENCORD) {
 					const title = args[0];
 
 					// Re-map Markdown formatting to pure HTML
+					const html = args[1]
+						.split('\n\n')
+						.map(p => `<p>${p}</p>`)
+						.join('')
+						.replace(/\*\*(.*?)\*\*/gm, '<b>$1</b>')
+						.replace(/__(.*?)__/gm, '<u>$1</u>')
+						.replace(/\[(.*?)\]\((.*?)\)/gm, '<a href="$2" target="_blank">$1</a>')
+						.replace(/```\n(.*?)\n```/gms, '<pre><code>$1</code></pre>')
+						.replace(/`(.*?)`/gm, '<code>$1</code>');
+
 					// Once again I'm reminded how whack it is to implant Svelte into React
 					const body = Modules.React.createElement('div', {
-						dangerouslySetInnerHTML: {
-							__html: args[1]
-								.replace(/\*\*(.*?)\*\*/gm, '<b>$1</b>')
-								.replace(/__(.*?)__/gm, '<u>$1</u>')
-								.replace(/```\n(.*?)\n```/gms, '<code>$1</code>')
-								.replace(/\n\n/gm, '<br>')
-						},
-						style: {
-							'user-select': 'text'
+						'class': 'magane-vencord-modal',
+						'dangerouslySetInnerHTML': {
+							__html: html
 						}
 					});
 
@@ -94,7 +98,7 @@
 		Toasts: {
 			show(...args) {
 				if (mountType === MountType.BETTERDISCORD) {
-					return BdApi.showToast(...args);
+					return BdApi.UI.showToast(...args);
 				} else if (mountType === MountType.VENCORD) {
 					const message = args[0];
 					const options = Object.assign({}, ...args.slice(1));
@@ -144,11 +148,47 @@
 
 				return MOCK_API.UI_SHOWNOTICE(...args);
 			}
+		},
+		fetch: async (...args) => {
+			if (mountType === MountType.BETTERDISCORD) {
+				return fetch(...args);
+			} else if (mountType === MountType.VENCORD) {
+				return VencordApi.VencordNative.pluginHelpers.MaganeVencord.fetchNative(...args);
+			}
+
+			return MOCK_API.FETCH(...args);
+		},
+		fetchJson: async (...args) => {
+			if (mountType === MountType.BETTERDISCORD) {
+				const response = await fetch(...args);
+				return {
+					response,
+					data: await response.json()
+				};
+			} else if (mountType === MountType.VENCORD) {
+				return VencordApi.VencordNative.pluginHelpers.MaganeVencord.fetchNativeJson(...args);
+			}
+
+			return MOCK_API.FETCHJSON(...args);
+		},
+		fetchArrayBuffer: async (...args) => {
+			if (mountType === MountType.BETTERDISCORD) {
+				const response = await fetch(...args);
+				return {
+					response,
+					data: await response.arrayBuffer()
+				};
+			} else if (mountType === MountType.VENCORD) {
+				return VencordApi.VencordNative.pluginHelpers.MaganeVencord.fetchNativeArrayBuffer(...args);
+			}
+
+			return MOCK_API.FETCHARRAYBUFFER(...args);
 		}
 	};
 
 	const coords = { top: 0, left: 0 };
-	const selectorTextArea = '[class^="channelTextArea_"]:not([class*="channelTextAreaDisabled_"])';
+	const selectorButtonsContainer = '[class*="-buttons"]';
+	const selectorTextArea = '[class*="-channelTextArea"]:not([class*="-channelTextAreaDisabled"])';
 	let main = null;
 	let base = null;
 	let forceHideMagane = false;
@@ -171,6 +211,7 @@
 	const localPacks = {};
 	let linePackSearch = null;
 	let remotePackUrl = null;
+	let stickerSizeInput = 180; // default
 	let frequentlyUsedInput = 10; // default
 	let hotkeyInput = null;
 	let hotkey = {};
@@ -206,6 +247,7 @@
 		markAsSpoiler: false,
 		ignoreViewportSize: false,
 		disableSendingWithChatInput: false,
+		stickerSize: stickerSizeInput,
 		frequentlyUsed: frequentlyUsedInput,
 		hotkey: null
 	};
@@ -284,7 +326,7 @@
 	};
 
 	const mountButtonComponent = textArea => {
-		const buttonsContainer = textArea.querySelector('[class^="buttons"]');
+		const buttonsContainer = textArea.querySelector(selectorButtonsContainer);
 		const component = new Button({
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
@@ -301,7 +343,7 @@
 			const success = await grabPacks(true);
 
 			if (success) {
-				toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+				toastSuccess('Magane is now ready!', { force: true });
 			}
 			forceHideMagane = false;
 		});
@@ -318,11 +360,11 @@
 	const updateStickerWindowPosition = component => {
 		log('Updating window\'s position\u2026');
 
-		const buttonsContainer = component.textArea.querySelector('[class^="buttons"]');
+		const buttonsContainer = component.textArea.querySelector(selectorButtonsContainer);
 		const props = buttonsContainer.getBoundingClientRect();
 
 		coords.wbottom = (base.clientHeight - props.top) + 8;
-		coords.wright = (base.clientWidth - props.right) - 6;
+		coords.wright = (base.clientWidth - props.right) - 12;
 
 		if (mountType === MountType.LEGACY) {
 			const baseProps = base.getBoundingClientRect();
@@ -347,7 +389,7 @@
 		const textAreas = await waitFor(selectorTextArea, {
 			logname: 'textarea',
 			// Ensure that the textArea element has a buttons container
-			assert: element => Boolean(element.querySelector('[class^="buttons"]')),
+			assert: element => Boolean(element.querySelector(selectorButtonsContainer)),
 			multiple: true
 		});
 
@@ -526,6 +568,7 @@
 		// eslint-disable-next-line no-use-before-define
 		setWindowMaganeAPIs(settings.enableWindowMagane);
 
+		stickerSizeInput = settings.stickerSize;
 		frequentlyUsedInput = settings.frequentlyUsed;
 		hotkeyInput = settings.hotkey;
 
@@ -555,10 +598,10 @@
 			toast('Checking for updates\u2026', { nolog: true, timeout: 1000, force: true });
 		}
 
-		await fetch(PACKAGE_URL, { cache: 'no-cache' }).then(async response => {
+		await Helper.fetchJson(PACKAGE_URL, { cache: 'no-cache' }).then(async result => {
 			log('Remote dist file fetched.');
 
-			const data = await response.json();
+			const data = result.data;
 			if (data.version) {
 				if (SemverGt(data.version, VERSION)) {
 					log(`Update found: ${data.version} > ${VERSION}.`);
@@ -582,7 +625,7 @@
 				} else {
 					log(`No updates found: ${data.version} <= ${VERSION}.`);
 					if (manual) {
-						toast('No updates found.', { nolog: true, timeout: 1000, force: true });
+						toast('No updates found.', { nolog: true, force: true });
 					}
 				}
 			} else {
@@ -631,8 +674,8 @@
 	const grabPacks = async (reset = false) => {
 		let packs;
 		try {
-			const response = await fetch('https://magane.moe/api/packs');
-			packs = await response.json();
+			const result = await Helper.fetchJson('https://magane.moe/api/packs');
+			packs = result.data;
 			baseURL = packs.baseURL;
 		} catch (error) {
 			// Toast and log to console, but allow to continue as-is
@@ -770,21 +813,82 @@
 		}
 	};
 
+	const convertAnimatedSticker = async arrayBuffer => {
+		const { frames, width, height } = await VencordApi.parseAPNG(arrayBuffer);
+
+		const gif = VencordApi.GIFEncoder();
+		const maxHeight = Math.min(settings.stickerSize, height);
+		const maxWidth = (width / height) * maxHeight;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = maxWidth;
+		canvas.height = maxHeight;
+
+		const ctx = canvas.getContext('2d', {
+			willReadFrequently: true
+		});
+
+		const scale = maxHeight / height;
+		ctx.scale(scale, scale);
+
+		let previousFrameData;
+
+		for (const frame of frames) {
+			const { left, top, width, height, img, delay, blendOp, disposeOp } = frame;
+
+			previousFrameData = ctx.getImageData(left, top, width, height);
+
+			if (blendOp === VencordApi.ApngBlendOp.SOURCE) {
+				ctx.clearRect(left, top, width, height);
+			}
+
+			ctx.drawImage(img, left, top, width, height);
+
+			const { data } = ctx.getImageData(0, 0, maxWidth, maxHeight);
+
+			const palette = VencordApi.quantize(data, 256);
+			const index = VencordApi.applyPalette(data, palette);
+
+			gif.writeFrame(index, maxWidth, maxHeight, {
+				transparent: true,
+				palette,
+				delay
+			});
+
+			if (disposeOp === VencordApi.ApngDisposeOp.BACKGROUND) {
+				ctx.clearRect(left, top, width, height);
+			} else if (disposeOp === VencordApi.ApngDisposeOp.PREVIOUS) {
+				ctx.putImageData(previousFrameData, left, top);
+			}
+		}
+
+		gif.finish();
+		return gif.bytesView();
+	};
+
 	const formatUrl = (pack, id, sending, thumbIndex) => {
 		let url;
+
 		if (typeof pack === 'number') {
 			// Magane's built-in packs
 			if (baseURL) {
 				url = `${baseURL || ''}${pack}/${id}`;
+
 				if (!sending) {
-					url = url.replace(/\.(gif|png)$/i, '_key.$1');
+					return url.replace(/\.(gif|png)$/i, '_key.$1');
+				}
+
+				// Use wsrv.nl to downscale when desired
+				if (!settings.disableDownscale && settings.stickerSize < 180) {
+					const append = `&h=${settings.stickerSize}p&fit=inside&we`;
+					return `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
 				}
 			} else if (sending) {
 				// Let sendSticker() handle displaying error
 				throw new Error('Magane\'s API was unavailable. Please reload Magane if the API is already back online.');
 			} else {
 				// Placeholder thumb (❌) if baseURL is missing (i.e. failed to fetch it from Magane's API)
-				url = '/assets/8becd37ab9d13cdfe37c08c496a9def3.svg';
+				return '/assets/8becd37ab9d13cdfe37c08c496a9def3.svg';
 			}
 		} else if (pack.startsWith('startswith-')) {
 			/*
@@ -797,12 +901,24 @@
 			*/
 			const template = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%id%/android/sticker.png;compress=true';
 			url = template.replace(/%id%/g, id.split('.')[0]);
-			let append = sending ? '&h=180p' : '&h=100p';
+
+			// &we = without enlargement
+			let append = `${sending ? `&h=${settings.stickerSize}p` : '&h=100p'}&fit=inside&we`;
+
 			if (localPacks[pack].animated) {
 				url = url.replace(/sticker(@2x)?\.png/, 'sticker_animation$1.png');
+
+				// For Vencord, return the URL as-is
+				if (mountType === MountType.VENCORD) {
+					return url;
+				}
+
 				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
+			} else {
+				append += '&af&output=png';
 			}
+
 			if (!settings.disableDownscale) {
 				// Downsizing with wsrv.nl to stay consistent with Magane's built-in packs
 				url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
@@ -818,13 +934,27 @@
 				(Android variant of emojis only go up to 154p).
 			*/
 			const template = 'https://stickershop.line-scdn.net/sticonshop/v1/sticon/%pack%/android/%id%.png';
-			url = template.replace(/%pack%/g, pack.split('-')[1]).replace(/%id%/g, id.split('.')[0]);
-			let append = sending ? '' : '&h=100p';
+			url = template
+				.replace(/%pack%/g, pack.split('-')[1])
+				.replace(/%id%/g, id.split('.')[0]);
+
+			// &we = without enlargement
+			let append = `${sending ? `&h=${settings.stickerSize}p` : '&h=100p'}&fit=inside&we`;
+
 			if (localPacks[pack].animated) {
 				url = url.replace(/\.png/, '_animation.png');
+
+				// For Vencord, return the URL as-is
+				if (mountType === MountType.VENCORD) {
+					return url;
+				}
+
 				// In case one day wsrv.nl starts properly supporting APNGs -> GIFs
 				append += '&output=gif';
+			} else {
+				append += '&af&output=png';
 			}
+
 			if (!settings.disableDownscale) {
 				// Downsizing with wsrv.nl to stay consistent with Magane's built-in packs
 				url = `https://wsrv.nl/?url=${encodeURIComponent(url)}${append}`;
@@ -846,10 +976,27 @@
 			} else {
 				url = id;
 			}
-			if (typeof localPacks[pack].template === 'string') {
-				url = localPacks[pack].template.replace(/%pack%/g, pack.replace('custom-', '')).replace(/%id%/g, url);
+
+			// Don't include filename overrides in the final URL
+			if (url.includes(' ')) {
+				url = url.substring(0, url.indexOf(' '));
+			}
+
+			// If not sending, try thumbsTemplate if available, otherwise fallback to template
+			const template = sending
+				? localPacks[pack].template
+				: (localPacks[pack].thumbsTemplate || localPacks[pack].template);
+
+			if (typeof template === 'string') {
+				// Use anon functions so that they won't immediately be called if no matches
+				url = template
+					.replace(/%pack%/g, () => pack.replace('custom-', ''))
+					.replace(/%id%/g, url)
+					.replace(/%idencoded%/g, () => encodeURIComponent(url))
+					.replace(/%size%/g, settings.stickerSize);
 			}
 		}
+
 		return url;
 	};
 
@@ -945,15 +1092,29 @@
 				toast('Fetching sticker\u2026', { timeout: 1000 });
 
 				log(`Fetching: ${url}`);
-				const response = await fetch(url, { cache: 'force-cache' });
-				const blob = await response.blob();
+				const result = await Helper.fetchArrayBuffer(url, { cache: 'force-cache' });
+				let arrayBuffer = result.data;
 
-				let filename = id.substring(id.lastIndexOf('/') + 1).split('?')[0];
+				let filename = id;
 
 				if (typeof pack === 'string') {
 					if (localPacks[pack].animated && (pack.startsWith('startswith-') || pack.startsWith('emojis-'))) {
 						filename = filename.replace(/\.png$/i, '.gif');
-						toastWarn('Animated stickers/emojis from LINE Store currently cannot be animated.');
+						// Vencord ships a library for APNG -> GIF conversion
+						if (mountType === MountType.VENCORD) {
+							toast('Converting APNG to GIF\u2026', { timeout: 1000 });
+							arrayBuffer = await convertAnimatedSticker(arrayBuffer);
+						} else {
+							log('This release does not have APNG to GIF conversion library, so the sticker may end up being sent as a static image.');
+						}
+					} else if (pack.startsWith('custom-')) {
+						// Allow overriding filenames, for URLs that don't have extensions.
+						// e.g. https://example.com/path/to/image custom_name.jpg
+						if (id.includes(' ')) {
+							filename = id.substring(id.indexOf(' ') + 1);
+						} else {
+							filename = id.substring(id.lastIndexOf('/') + 1).split('?')[0];
+						}
 					}
 				}
 
@@ -969,7 +1130,7 @@
 				log(`Sending sticker as ${filename}\u2026`);
 				messageOptions.attachmentsToUpload = [
 					new Modules.CloudUpload({
-						file: new File([blob], filename),
+						file: new File([arrayBuffer], filename),
 						isClip: false,
 						isThumbnail: false,
 						platform: 1
@@ -1029,6 +1190,12 @@
 		}
 
 		onCooldown = false;
+	};
+
+	const replaySticker = event => {
+		if (!event.target) return;
+		// eslint-disable-next-line no-self-assign
+		event.target.src = event.target.src;
 	};
 
 	const favoriteSticker = (pack, id) => {
@@ -1093,6 +1260,11 @@
 			throw new Error('Invalid stickers count.');
 		}
 
+		// Standardize some values
+		if ('animated' in e) {
+			e.animated = Boolean(e.animated);
+		}
+
 		const result = { pack: e };
 		if (isLocalPackID(id)) {
 			localPacks[id] = e;
@@ -1126,7 +1298,7 @@
 		const data = {
 			packs: ids.filter(id => typeof id === 'number')
 		};
-		const response = await fetch('https://magane.moe/api/packs/subscribe', {
+		const response = await Helper.fetch('https://magane.moe/api/packs/subscribe', {
 			method: 'POST',
 			headers: {
 				'Accept': 'application/json',
@@ -1176,11 +1348,11 @@
 		}
 
 		if (dirty) {
-			toastInfo('Found packs/stickers to migrate, migrating now...');
+			toastInfo('Found packs/stickers to migrate, migrating now...', { force: true });
 			saveToLocalStorage('magane.favorites', favorites);
 			saveToLocalStorage('magane.subscribed', subscribed);
 			await grabPacks(true);
-			toastSuccess('Migration successful.');
+			toastSuccess('Migration successful.', { force: true });
 		}
 	};
 
@@ -1200,8 +1372,8 @@
 	};
 
 	const appendPack = (...args) => {
-		let { name, firstid, count, animated } = parseFunctionArgs(args,
-			['name', 'firstid', 'count', 'animated'], 3);
+		let { name, firstid, count, animated, homeUrl } = parseFunctionArgs(args,
+			['name', 'firstid', 'count', 'animated', 'homeUrl'], 3);
 
 		firstid = Number(firstid);
 		if (isNaN(firstid) || !isFinite(firstid) || firstid < 0) {
@@ -1219,14 +1391,15 @@
 			name,
 			count,
 			id: mid,
-			animated: animated ? 1 : null,
-			files
+			animated,
+			files,
+			homeUrl
 		});
 	};
 
 	const appendEmojisPack = (...args) => {
-		let { name, id, count, animated } = parseFunctionArgs(args,
-			['name', 'id', 'count', 'animated'], 3);
+		let { name, id, count, animated, homeUrl } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'homeUrl'], 3);
 
 		count = Math.max(Math.min(Number(count), 200), 0) || 0;
 		const mid = `emojis-${id}`;
@@ -1239,14 +1412,15 @@
 			name,
 			count,
 			id: mid,
-			animated: animated ? 1 : null,
-			files
+			animated,
+			files,
+			homeUrl
 		});
 	};
 
 	const appendCustomPack = (...args) => {
-		let { name, id, count, animated, template, files, thumbs } = parseFunctionArgs(args,
-			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs'], 5);
+		let { name, id, count, animated, template, files, thumbs, thumbsTemplate } = parseFunctionArgs(args,
+			['name', 'id', 'count', 'animated', 'template', 'files', 'thumbs', 'thumbsTemplate'], 5);
 
 		count = Math.max(Number(count), 0) || 0;
 		const mid = `custom-${id}`;
@@ -1268,10 +1442,11 @@
 			name,
 			count,
 			id: mid,
-			animated: animated ? 1 : null,
+			animated,
 			files,
 			thumbs,
-			template
+			template,
+			thumbsTemplate
 		});
 	};
 
@@ -1420,7 +1595,7 @@
 		const startTime = Date.now();
 
 		try {
-			toast('Loading Magane\u2026', { timeout: 1000 });
+			toast('Loading Magane\u2026', { timeout: 1000, force: true });
 
 			// Background tasks
 			initModules();
@@ -1431,7 +1606,7 @@
 			await migrateStringPackIds();
 
 			if (success) {
-				toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+				toastSuccess('Magane is now ready!', { force: true });
 			}
 
 			// Init ResizeObserver
@@ -1483,7 +1658,7 @@
 			const { x, y, width, height } = stickerWindow.getBoundingClientRect();
 			if (e.target) {
 				if (activeComponent?.element.contains(e.target)) return;
-				const visibleModals = document.querySelectorAll('[class^="layerContainer-"]');
+				const visibleModals = document.querySelectorAll('[class*="layerContainer_"]');
 				if (visibleModals.length && Array.from(visibleModals).some(m => m.contains(e.target))) return;
 			}
 			if (!((e.clientX <= x + width && e.clientX >= x) &&
@@ -1602,16 +1777,27 @@
 	};
 
 	const deleteLocalPack = id => {
-		try {
-			const _name = localPacks[id].name;
-			const deleted = deletePack(id);
-			if (deleted) {
-				toastSuccess(`Removed pack ${_name}.`, { nolog: true });
+		const name = localPacks[id].name;
+		Helper.Alerts.show(
+			`Purge Local Pack`,
+			`**${name}**\n\nAre you sure you want to do this?`, // Markdown, so we do double \n for new line
+			{
+				confirmText: 'Yes, purge it!',
+				cancelText: 'Cancel',
+				danger: true,
+				onConfirm: async () => {
+					try {
+						const deleted = deletePack(id);
+						if (deleted) {
+							toastSuccess(`Removed pack ${name}.`, { nolog: true, force: true });
+						}
+					} catch (error) {
+						console.error(error);
+						toastError(error.toString(), { nolog: true });
+					}
+				}
 			}
-		} catch (error) {
-			console.error(error);
-			toastError(error.toString(), { nolog: true });
-		}
+		);
 	};
 
 	const processRemotePack = async (data, opts) => {
@@ -1673,6 +1859,7 @@
 				pack.description = data.description ? String(data.description) : null;
 				pack.homeUrl = data.homeUrl ? String(data.homeUrl) : null;
 				pack.template = data.template ? String(data.template) : null;
+				pack.thumbsTemplate = data.thumbsTemplate ? String(data.thumbsTemplate) : null;
 
 				// Override update URL if required
 				if (data.updateUrl) {
@@ -1683,9 +1870,9 @@
 
 		// General chores
 		pack.count = pack.files.length;
-		// If all thumbs are missing, just empty the array
+		// If all thumbs are missing, just remove the prop
 		if (Array.isArray(pack.thumbs) && pack.thumbs.every(thumb => thumb === null)) {
-			pack.thumbs = [];
+			delete pack.thumbs;
 		}
 
 		return pack;
@@ -1730,7 +1917,7 @@
 			opts.id = `${match.result[2]}-${match.result[3]}`;
 			opts.homeUrl = url;
 
-			// API will now be always deteremined on-the-fly,
+			// API will now be always determined on-the-fly,
 			// to allow changing this in the future, if required,
 			// without breaking packs saved with any older methods.
 			const downloadUrl = `${match.result[1]}${match.result[2]}/api/album/${match.result[3]}`;
@@ -1738,12 +1925,12 @@
 			// Initially try with latest Chibisafe API
 			const chibisafeSuffix = '/view?page=1&limit=500';
 			log(`Fetching chibisafe album: ${downloadUrl + chibisafeSuffix}`);
-			let response = await fetch(downloadUrl + chibisafeSuffix, { cache: 'no-cache' })
-				.catch(response => response); // ignore network errors, mainly CORS
+			const result = await Helper.fetchJson(downloadUrl + chibisafeSuffix, { cache: 'no-cache' });
+			const response = result.response;
 
 			if (response?.status === 200 || response?.status === 304) {
 				// Parse as JSON immediately, and assign remote type 1
-				data = await response.json();
+				data = result.data;
 				opts.remoteType = 1;
 			} else {
 				// Fallback to old API for backwards-compatibility,
@@ -1752,14 +1939,14 @@
 					? `${response.status} ${response.statusText}`.trim()
 					: 'N/A';
 				log(`HTTP error ${_status}, re-trying with: ${downloadUrl}`);
-				response = await fetch(downloadUrl, { cache: 'no-cache' });
-				data = await response.json();
+				const retryResult = await Helper.fetchJson(downloadUrl, { cache: 'no-cache' });
+				data = retryResult.data;
 				opts.remoteType = 2; // assign remote type 2
 			}
 		} else {
 			// Custom JSON
-			const response = await fetch(opts.updateUrl);
-			data = await response.json();
+			const result = await Helper.fetchJson(opts.updateUrl);
+			data = result.data;
 			opts.remoteType = 0; // assign remote type 0
 		}
 
@@ -1774,7 +1961,7 @@
 		try {
 			if (!localPacks[id] || !localPacks[id].updateUrl) return;
 			if (!silent) {
-				toast('Updating pack information\u2026', { nolog: true, timeout: 500 });
+				toast('Updating pack information\u2026', { nolog: true, timeout: 1000, force: true });
 			}
 
 			// Only pass update URL, the function will determine by itself what to do with it
@@ -1811,7 +1998,7 @@
 			}
 
 			if (!silent) {
-				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true });
+				toastSuccess(`Updated pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 			}
 			return stored;
 		} catch (error) {
@@ -1825,34 +2012,65 @@
 
 		let remoteType = 'N/A';
 		if (typeof localPacks[id].remoteType === 'number') {
-			remoteType = `${localPacks[id].remoteType} – ${remotePackTypes[localPacks[id].remoteType] || 'N/A'}`;
+			remoteType = `\`${localPacks[id].remoteType}\` – ${remotePackTypes[localPacks[id].remoteType] || 'N/A'}`;
 		} else if (id.startsWith('startswith-')) {
 			remoteType = 'LINE';
+			if (localPacks[id].animated) {
+				remoteType += ' – Animated';
+			}
 		} else if (id.startsWith('emojis-')) {
 			remoteType = 'LINE Emojis';
+			if (localPacks[id].animated) {
+				remoteType += ' – Animated';
+			}
 		}
 
 		// Formatting is very particular, so we do this the old-fashioned way
-		/* eslint-disable prefer-template */
-		const content = '**ID:**\n\n' +
-			'```\n' + id + '\n```\n\n' +
-			'**Name:**\n\n' +
-			localPacks[id].name + '\n\n' +
-			'**Count:**\n\n' +
-			localPacks[id].count + '\n\n' +
-			'**Description:**\n\n' +
-			(localPacks[id].description || 'N/A') + '\n\n' +
-			'**Home URL:**\n\n' +
-			(localPacks[id].homeUrl || 'N/A') + '\n\n' +
-			'**Update URL:**\n\n' +
-			'```\n' + (localPacks[id].updateUrl || 'N/A') + '\n```\n\n' +
-			'**Remote Type:**\n\n' +
-			remoteType;
-		/* eslint-enable prefer-template */
+		const contents = [
+			/* eslint-disable-next-line prefer-template */
+			'**ID:**\n\n```\n' + id + '\n```',
+			`**Name:**\n\n${localPacks[id].name}`,
+			`**Count:**\n\n\`${localPacks[id].count}\``
+		];
+
+		if (localPacks[id].description) {
+			contents.push(`**Description:**\n\n${localPacks[id].description}`);
+		}
+
+		if (localPacks[id].homeUrl) {
+			contents.push(`**Home URL:**\n\n[${localPacks[id].homeUrl}](${localPacks[id].homeUrl})`);
+		}
+
+		if (localPacks[id].updateUrl) {
+			contents.push(`**Update URL:**\n\n[${localPacks[id].updateUrl}](${localPacks[id].updateUrl})`);
+		}
+
+		contents.push(`**Remote Type:**\n\n${remoteType}`);
+
+		if (typeof localPacks[id].remoteType === 'number') {
+			/* eslint-disable-next-line prefer-template */
+			contents.push('**Files:**\n\n```\n' +
+				localPacks[id].files.join('\n') +
+				'\n```');
+			if (localPacks[id].template) {
+				/* eslint-disable-next-line prefer-template */
+				contents.push('**URL Template:**\n\n```\n' + localPacks[id].template + '\n```');
+			}
+			if (Array.isArray(localPacks[id].thumbs) && localPacks[id].thumbs.length) {
+				/* eslint-disable-next-line prefer-template */
+				contents.push('**Thumbnails:**\n\n```\n' +
+					localPacks[id].thumbs.join('\n') +
+					'\n```');
+			}
+			if (localPacks[id].thumbsTemplate) {
+				/* eslint-disable-next-line prefer-template */
+				contents.push('**Thumbnail URL Template:**\n\n```\n' + localPacks[id].thumbsTemplate + '\n```');
+			}
+		}
 
 		Helper.Alerts.show(
 			localPacks[id].name,
-			content
+			contents.join('\n\n')
 		);
 	};
 
@@ -1882,7 +2100,8 @@
 
 		/* eslint-disable-next-line prefer-template */
 		assertImportPacksConsent('URLs:\n\n```\n' + linePackUrls.join('\n') + '\n```', async () => {
-			toast('Importing packs\u2026', { nolog: true, timeout: 500 });
+			toast('Importing packs\u2026', { nolog: true, timeout: 500, force: true });
+			let hasAnimation = false;
 			const failed = [];
 			for (const url of linePackUrls) {
 				try {
@@ -1893,28 +2112,35 @@
 					if (match[3] === 'emoji') {
 						// LINE Emojis will only work when using its full URL
 						const id = match[4];
-						const response = await fetch(`https://magane.moe/api/proxy/emoji/${id}`);
-						const props = await response.json();
+						const result = await Helper.fetchJson(`https://magane.moe/api/proxy/emoji/${id}`);
+						const props = result.data;
 						stored = appendEmojisPack({
 							name: props.title,
 							id: props.id,
 							count: props.len,
-							animated: props.hasAnimation || null
+							animated: Boolean(props.hasAnimation),
+							homeUrl: url
 						});
 					} else {
 						// LINE Stickers work with either its full URL or just its ID
 						const id = Number(match[4]);
 						if (isNaN(id) || id < 0) return toastError('Unsupported LINE Stickers ID.');
-						const response = await fetch(`https://magane.moe/api/proxy/sticker/${id}`);
-						const props = await response.json();
+						const result = await Helper.fetchJson(`https://magane.moe/api/proxy/sticker/${id}`);
+						const props = result.data;
 						stored = appendPack({
 							name: props.title,
 							firstid: props.first,
 							count: props.len,
-							animated: props.hasAnimation
+							animated: Boolean(props.hasAnimation),
+							homeUrl: url
 						});
 					}
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
+
+					if (stored.pack.animated) {
+						hasAnimation = true;
+					}
+
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
@@ -1927,6 +2153,10 @@
 				linePackSearch = failed.join('\n');
 			} else {
 				linePackSearch = '';
+			}
+
+			if (hasAnimation && mountType !== MountType.VENCORD) {
+				toastWarn('Be advised that animated stickers/emojis from LINE Store currently cannot be animated.', { nolog: true, timeout: 6000, force: true });
 			}
 		});
 	};
@@ -1942,14 +2172,14 @@
 
 		/* eslint-disable-next-line prefer-template */
 		assertImportPacksConsent('URLs:\n\n```\n' + remotePackUrls.join('\n') + '\n```', async () => {
-			toast('Importing packs\u2026', { nolog: true, timeout: 500 });
+			toast('Importing packs\u2026', { nolog: true, timeout: 500, force: true });
 			const failed = [];
 			for (const url of remotePackUrls) {
 				try {
 					const pack = await fetchRemotePack(url);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
@@ -1972,7 +2202,7 @@
 
 		const results = [];
 
-		toast(`Reading ${files.length} file${files.length === 1 ? '' : 's'}\u2026`);
+		toast(`Reading ${files.length} file${files.length === 1 ? '' : 's'}\u2026`, { timeout: 500, force: true });
 		for (const file of files) {
 			await new Promise((resolve, reject) => {
 				const reader = new FileReader();
@@ -1996,6 +2226,8 @@
 		// Reset selected files in the hidden input
 		event.target.value = '';
 
+		if (!results.length) return false;
+
 		const fileNames = results.map(result => result.name);
 
 		/* eslint-disable-next-line prefer-template */
@@ -2006,7 +2238,7 @@
 					const pack = await processRemotePack(result.data);
 					pack.id = `custom-${pack.id}`;
 					const stored = _appendPack(pack.id, pack);
-					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true });
+					toastSuccess(`Added a new pack ${stored.pack.name}.`, { nolog: true, timeout: 1000, force: true });
 				} catch (error) {
 					console.error(error);
 					toastError(error.toString(), { nolog: true });
@@ -2045,11 +2277,11 @@
 				onConfirm: async () => {
 					try {
 						for (let i = 0; i < packs.length; i++) {
-							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 500 });
+							toast(`Updating pack ${i + 1} out of ${packs.length}\u2026`, { nolog: true, timeout: 500, force: true });
 							const stored = await updateRemotePack(packs[i], true);
 							if (!stored) break;
 						}
-						toastSuccess('Updates completed.', { nolog: true });
+						toastSuccess('Updates completed.', { nolog: true, force: true });
 					} catch (ex) {
 						toastWarn('Updates cancelled due to unexpected errors.', { nolog: true });
 						// Do nothing
@@ -2071,6 +2303,22 @@
 
 		saveToLocalStorage('magane.settings', settings);
 		toastSuccess('Settings saved!', { nolog: true });
+	};
+
+	const parseStickerSizeInput = () => {
+		const size = parseInt(stickerSizeInput, 10);
+		if (isNaN(size) || size < 32 || size > 512) {
+			return toastError('Sticker size must be ≥ 32 and ≤ 512.');
+		}
+
+		settings.stickerSize = size;
+		log(`settings['stickerSize'] = ${settings.stickerSize}`);
+
+		saveToLocalStorage('magane.settings', settings);
+		toastSuccess('Settings saved!', { nolog: true, force: true });
+
+		// Refresh UI
+		stickerSizeInput = size;
 	};
 
 	const updateFrequentlyUsed = () => {
@@ -2113,12 +2361,13 @@
 		if (count === 0) {
 			stickersStats = [];
 			saveToLocalStorage('magane.stats', stickersStats);
-			toastSuccess('Settings saved, and stickers usage cleared!', { nolog: true });
+			toastSuccess('Settings saved, and stickers usage cleared!', { nolog: true, force: true });
 		} else {
-			toastSuccess('Settings saved!', { nolog: true });
+			toastSuccess('Settings saved!', { nolog: true, force: true });
 		}
 
 		// Refresh UI
+		frequentlyUsedInput = count;
 		updateFrequentlyUsed();
 	};
 
@@ -2200,7 +2449,7 @@
 			log(`settings['hotkey'] = ${settings.hotkey}`);
 
 			saveToLocalStorage('magane.settings', settings);
-			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.', { nolog: true });
+			toastSuccess(hotkey ? 'Hotkey saved.' : 'Hotkey cleared.', { nolog: true, force: true });
 		}
 	};
 
@@ -2285,7 +2534,7 @@
 						await migrateStringPackIds();
 
 						if (success) {
-							toastSuccess('Magane is now ready!', { timeout: 1000, force: true });
+							toastSuccess('Magane is now ready!', { force: true });
 						}
 						forceHideMagane = false;
 					}
@@ -2307,7 +2556,7 @@
 		let hrefUrl = '';
 
 		try {
-			toast('Exporting database\u2026');
+			toast('Exporting database\u2026', { timeout: 1000, force: true });
 			const database = {};
 			for (const key of allowedStorageKeys) {
 				const data = getFromLocalStorage(key);
@@ -2351,6 +2600,7 @@
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? simplePacksData[sticker.pack].name : '' }"
 							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
+							on:contextmenu|stopPropagation|preventDefault="{ replaySticker }"
 						>
 						<div class="deleteFavorite"
 							title="Unfavorite"
@@ -2375,6 +2625,7 @@
 							alt="{ sticker.pack } - { sticker.id }"
 							title="{ simplePacksData[sticker.pack] ? `${simplePacksData[sticker.pack].name} – ` : '' }Used: {sticker.used}"
 							on:click="{ event => sendSticker(sticker.pack, sticker.id, event) }"
+							on:contextmenu|stopPropagation|preventDefault="{ replaySticker }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === sticker.pack && f.id === sticker.id) === -1 }
 						<div class="addFavorite"
@@ -2401,6 +2652,9 @@
 				{ #each subscribedPacks as pack, i }
 				<div class="pack">
 					<span id="p{pack.id}">{ pack.name }{ @html formatStickersCount(pack.files.length) }</span>
+					{ #if pack.animated && mountType === MountType.VENCORD && (pack.id.startsWith('startswith-') || pack.id.startsWith('emojis-')) }
+					<span class="subtext">Right-click the sticker to replay its animation.</span>
+					{ /if }
 
 					{ #each pack.files as sticker, i }
 					<div class="sticker">
@@ -2409,6 +2663,7 @@
 							src="{ `${formatUrl(pack.id, sticker, false, i)}` }"
 							alt="{ pack.id } - { sticker }"
 							on:click="{ event => sendSticker(pack.id, sticker, event) }"
+							on:contextmenu|stopPropagation|preventDefault="{ replaySticker }"
 						>
 						{ #if favoriteStickers.findIndex(f => f.pack === pack.id && f.id === sticker) === -1 }
 						<div class="addFavorite"
@@ -2433,7 +2688,7 @@
 				{ /each }
 			</div>
 
-			<div class="packs-toolbar { settings.useLeftToolbar ? 'has-scroll-y' : 'has-scroll-x' }">
+			<div class="packs-toolbar { settings.useLeftToolbar ? 'is-left' : 'is-bottom' }">
 				<div class="packs packs-controls">
 					<div class="packs-wrapper">
 						<div class="pack"
@@ -2458,7 +2713,7 @@
 					</div>
 				</div>
 
-				<div class="packs" style="">
+				<div class="packs { settings.useLeftToolbar ? 'has-scroll-y' : 'has-scroll-x' }" style="">
 					<div class="packs-wrapper">
 						{ #each subscribedPacks as pack, i }
 						<div class="pack"
@@ -2713,7 +2968,7 @@
 											name="disableDownscale"
 											type="checkbox"
 											bind:checked={ settings.disableDownscale } />
-										Disable downscaling of imported LINE packs using <code>wsrv.nl</code>
+										Disable downscaling stickers with <a href="https://wsrv.nl/" target="_blank">wsrv.nl</a>
 									</label>
 								</p>
 								<p>
@@ -2789,6 +3044,28 @@
 									</label>
 								</p>
 							</div>
+							<div class="section sticker-size">
+								<p class="section-title">Sticker Size</p>
+								<p>
+									Maximum height of stickers to send. Downscaling-only.
+								</p>
+								<p>
+									This depends on <b>wsrv.nl</b> not being disabled.
+								</p>
+								{ #if mountType === MountType.VENCORD }
+								<p>
+									<i>This always applies to imported animated LINE stickers, because Vencord has a built-in APNG to GIF conversion library.</i>
+								</p>
+								{ /if }
+								<p class="input-grouped">
+									<input
+										bind:value={ stickerSizeInput }
+										class="inputQuery supress-magane-hotkey"
+										type="number" />
+									<button class="button is-primary"
+										on:click="{ () => parseStickerSizeInput() }">Set</button>
+								</p>
+							</div>
 							<div class="section frequently-used">
 								<p class="section-title">Frequently Used</p>
 								<p>
@@ -2801,7 +3078,7 @@
 									<input
 										bind:value={ frequentlyUsedInput }
 										class="inputQuery supress-magane-hotkey"
-										type="text" />
+										type="number" />
 									<button class="button is-primary"
 										on:click="{ () => parseFrequentlyUsedInput() }">Set</button>
 								</p>
