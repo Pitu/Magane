@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.24
+ * @version 3.2.25
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -1026,7 +1026,7 @@ function create_each_block_4(ctx) {
 }
 
 function create_each_block_3(ctx) {
-	let div, span, t0, html_tag, span_id_value, t1, t2, t3, t0_value = ctx[176].name + "", raw_value = ctx[33](ctx[176].files.length) + "", show_if = ctx[176].animated && ctx[0] === ctx[22].VENCORD && (ctx[176].id.startsWith("startswith-") || ctx[176].id.startsWith("emojis-")), if_block = show_if && create_if_block_14(), each_value_4 = ctx[176].files, each_blocks = [];
+	let div, span, t0, html_tag, span_id_value, t1, t2, t3, t0_value = ctx[176].name + "", raw_value = ctx[33](ctx[176].files.length) + "", show_if = ctx[0] === ctx[22].VENCORD && "string" == typeof ctx[176].id && ctx[176].animated && (ctx[176].id.startsWith("startswith-") || ctx[176].id.startsWith("emojis-")), if_block = show_if && create_if_block_14(), each_value_4 = ctx[176].files, each_blocks = [];
 	for (let i = 0; i < each_value_4.length; i += 1) each_blocks[i] = create_each_block_4(get_each_context_4(ctx, each_value_4, i));
 	return {
 		c() {
@@ -1046,7 +1046,7 @@ function create_each_block_3(ctx) {
 			if (512 & dirty[0] && t0_value !== (t0_value = ctx[176].name + "") && set_data(t0, t0_value), 
 			512 & dirty[0] && raw_value !== (raw_value = ctx[33](ctx[176].files.length) + "") && html_tag.p(raw_value), 
 			512 & dirty[0] && span_id_value !== (span_id_value = "p" + ctx[176].id) && attr(span, "id", span_id_value), 
-			513 & dirty[0] && (show_if = ctx[176].animated && ctx[0] === ctx[22].VENCORD && (ctx[176].id.startsWith("startswith-") || ctx[176].id.startsWith("emojis-"))), 
+			513 & dirty[0] && (show_if = ctx[0] === ctx[22].VENCORD && "string" == typeof ctx[176].id && ctx[176].animated && (ctx[176].id.startsWith("startswith-") || ctx[176].id.startsWith("emojis-"))), 
 			show_if ? if_block || (if_block = create_if_block_14(), if_block.c(), if_block.m(div, t2)) : if_block && (if_block.d(1), 
 			if_block = null), 2013266688 & dirty[0] | 1 & dirty[1]) {
 				let i;
@@ -2070,8 +2070,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		}).then((async result => {
 			log("Remote dist file fetched.");
 			const data = result.data;
-			if (data.version) if (gt_1(data.version, "3.2.24")) {
-				log(`Update found: ${data.version} > 3.2.24.`);
+			if (data.version) if (gt_1(data.version, "3.2.25")) {
+				log(`Update found: ${data.version} > 3.2.25.`);
 				const buttons = [ {
 					label: "Download",
 					onClick: () => window.open("https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js", {
@@ -2083,10 +2083,10 @@ function instance$1($$self, $$props, $$invalidate) {
 					onClick: () => window.open("https://github.com/Pitu/Magane", {
 						target: "_blank"
 					})
-				}), Helper.UI.showNotice(`Magane v3.2.24 found an update: v${data.version}. Please download the update manually.`, {
+				}), Helper.UI.showNotice(`Magane v3.2.25 found an update: v${data.version}. Please download the update manually.`, {
 					buttons
 				});
-			} else log(`No updates found: ${data.version} <= 3.2.24.`), manual && toast("No updates found.", {
+			} else log(`No updates found: ${data.version} <= 3.2.25.`), manual && toast("No updates found.", {
 				nolog: !0,
 				force: !0
 			}); else toastWarn("Failed to parse version string from remote dist file.");
@@ -2462,7 +2462,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		  default:
 			log("Magane is mounted with other or legacy method.");
 		}
-		log("Magane version: v3.2.24.");
+		log("Magane version: v3.2.25.");
 		const startTime = Date.now();
 		try {
 			toast("Loading Magane…", {
