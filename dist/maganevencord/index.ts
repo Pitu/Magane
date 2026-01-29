@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.25
+ * @version 3.2.27
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/maganevencord
@@ -2077,8 +2077,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		}).then((async result => {
 			log("Remote dist file fetched.");
 			const data = result.data;
-			if (data.version) if (gt_1(data.version, "3.2.25")) {
-				log(`Update found: ${data.version} > 3.2.25.`);
+			if (data.version) if (gt_1(data.version, "3.2.27")) {
+				log(`Update found: ${data.version} > 3.2.27.`);
 				const buttons = [ {
 					label: "Download",
 					onClick: () => window.open("https://raw.githubusercontent.com/Pitu/Magane/master/dist/maganevencord", {
@@ -2090,10 +2090,10 @@ function instance$1($$self, $$props, $$invalidate) {
 					onClick: () => window.open("https://github.com/Pitu/Magane", {
 						target: "_blank"
 					})
-				}), Helper.UI.showNotice(`Magane v3.2.25 found an update: v${data.version}. Please download the update manually.`, {
+				}), Helper.UI.showNotice(`Magane v3.2.27 found an update: v${data.version}. Please download the update manually.`, {
 					buttons
 				});
-			} else log(`No updates found: ${data.version} <= 3.2.25.`), manual && toast("No updates found.", {
+			} else log(`No updates found: ${data.version} <= 3.2.27.`), manual && toast("No updates found.", {
 				nolog: !0,
 				force: !0
 			}); else toastWarn("Failed to parse version string from remote dist file.");
@@ -2469,7 +2469,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		  default:
 			log("Magane is mounted with other or legacy method.");
 		}
-		log("Magane version: v3.2.25.");
+		log("Magane version: v3.2.27.");
 		const startTime = Date.now();
 		try {
 			toast("Loading Magane…", {
