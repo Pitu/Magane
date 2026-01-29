@@ -1962,7 +1962,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	toast(message, options)), toastError = (message, options = {}) => (options.type = "error", 
 	options.force = !0, toast(message, options)), toastWarn = (message, options = {}) => (options.type = "warn", 
 	options.force = !0, toast(message, options)), mountButtonComponent = textArea => {
-		const buttonsContainer = textArea.querySelector('[class*="-buttons"]'), component = new Button({
+		const buttonsContainer = textArea.querySelector('[class*="buttons__"], [class*="-buttons"]'), component = new Button({
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
 		});
@@ -1980,7 +1980,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		}, component;
 	}, updateStickerWindowPosition = component => {
 		log("Updating window's position…");
-		const props = component.textArea.querySelector('[class*="-buttons"]').getBoundingClientRect();
+		const props = component.textArea.querySelector('[class*="buttons__"], [class*="-buttons"]').getBoundingClientRect();
 		if ($$invalidate(1, coords.wbottom = base.clientHeight - props.top + 8, coords), 
 		$$invalidate(1, coords.wright = base.clientWidth - props.right - 12, coords), mountType === MountType.LEGACY) {
 			const baseProps = base.getBoundingClientRect();
@@ -2002,9 +2002,9 @@ function instance$1($$self, $$props, $$invalidate) {
 					waitForTimeouts[selector] = setTimeout(poll, 500);
 				})();
 			}));
-		})('[class*="-channelTextArea"]:not([class*="-channelTextAreaDisabled"])', {
+		})('[class*="channelTextArea__"]:not([class*="channelTextAreaDisabled__"]), [class*="-channelTextArea"]:not([class*="-channelTextAreaDisabled"])', {
 			logname: "textarea",
-			assert: element => Boolean(element.querySelector('[class*="-buttons"]')),
+			assert: element => Boolean(element.querySelector('[class*="buttons__"], [class*="-buttons"]')),
 			multiple: !0
 		}), componentsOld = components.slice(), componentsNew = [];
 		for (const textArea of textAreas) {
