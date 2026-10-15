@@ -34,10 +34,10 @@
 	*/
 	const MOCK_API = {};
 	const VENCORD_TOASTS_TYPE = {
-		info: 0,
-		success: 1,
-		error: 2,
-		warn: 2
+		info: 'default',
+		success: 'success',
+		error: 'critical',
+		warn: 'critical'
 	};
 	const Helper = {
 		findByProps(...args) {
@@ -100,15 +100,16 @@
 				if (mountType === MountType.BETTERDISCORD) {
 					return BdApi.UI.showToast(...args);
 				} else if (mountType === MountType.VENCORD) {
-					const message = args[0];
-					const options = Object.assign({}, ...args.slice(1));
-					let type = 0;
+					const options = Object.assign({
+						text: args[0]
+					}, ...args.slice(1));
 
 					// Re-map options for Vencord
 					if (options.type) {
-						type = VENCORD_TOASTS_TYPE[options.type];
+						options.variant = VENCORD_TOASTS_TYPE[options.type];
 						delete options.type;
 					}
+
 					if (options.timeout === undefined) {
 						// BetterDiscord's default timeout for toasts
 						options.duration = 3000;
@@ -118,13 +119,9 @@
 					}
 
 					// Force position to bottom
-					options.position = 1;
+					options.position = 'bottom';
 
-					return VencordApi.Toasts.show({
-						message,
-						type,
-						options
-					});
+					return VencordApi.showToast(options);
 				}
 
 				return MOCK_API.TOASTS_SHOW(...args);
