@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.27
+ * @version 3.2.28
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js
@@ -1817,10 +1817,10 @@ function instance$1($$self, $$props, $$invalidate) {
 	};
 	let mountType = null;
 	const Modules = {}, MOCK_API = {}, VENCORD_TOASTS_TYPE = {
-		info: 0,
-		success: 1,
-		error: 2,
-		warn: 2
+		info: "default",
+		success: "success",
+		error: "critical",
+		warn: "critical"
 	}, Helper = {
 		findByProps(...args) {
 			switch (mountType) {
@@ -1868,15 +1868,12 @@ function instance$1($$self, $$props, $$invalidate) {
 			show(...args) {
 				if (mountType === MountType.BETTERDISCORD) return BdApi.UI.showToast(...args);
 				if (mountType === MountType.VENCORD) {
-					const message = args[0], options = Object.assign({}, ...args.slice(1));
-					let type = 0;
-					return options.type && (type = VENCORD_TOASTS_TYPE[options.type], delete options.type), 
+					const options = Object.assign({
+						text: args[0]
+					}, ...args.slice(1));
+					return options.type && (options.variant = VENCORD_TOASTS_TYPE[options.type], delete options.type), 
 					void 0 === options.timeout ? options.duration = 3000 : (options.duration = options.timeout, 
-					delete options.timeout), options.position = 1, VencordApi.Toasts.show({
-						message,
-						type,
-						options
-					});
+					delete options.timeout), options.position = "bottom", VencordApi.showToast(options);
 				}
 				return MOCK_API.TOASTS_SHOW(...args);
 			}
@@ -2070,8 +2067,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		}).then((async result => {
 			log("Remote dist file fetched.");
 			const data = result.data;
-			if (data.version) if (gt_1(data.version, "3.2.27")) {
-				log(`Update found: ${data.version} > 3.2.27.`);
+			if (data.version) if (gt_1(data.version, "3.2.28")) {
+				log(`Update found: ${data.version} > 3.2.28.`);
 				const buttons = [ {
 					label: "Download",
 					onClick: () => window.open("https://raw.githubusercontent.com/Pitu/Magane/master/dist/magane.plugin.js", {
@@ -2083,10 +2080,10 @@ function instance$1($$self, $$props, $$invalidate) {
 					onClick: () => window.open("https://github.com/Pitu/Magane", {
 						target: "_blank"
 					})
-				}), Helper.UI.showNotice(`Magane v3.2.27 found an update: v${data.version}. Please download the update manually.`, {
+				}), Helper.UI.showNotice(`Magane v3.2.28 found an update: v${data.version}. Please download the update manually.`, {
 					buttons
 				});
-			} else log(`No updates found: ${data.version} <= 3.2.27.`), manual && toast("No updates found.", {
+			} else log(`No updates found: ${data.version} <= 3.2.28.`), manual && toast("No updates found.", {
 				nolog: !0,
 				force: !0
 			}); else toastWarn("Failed to parse version string from remote dist file.");
@@ -2462,7 +2459,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		  default:
 			log("Magane is mounted with other or legacy method.");
 		}
-		log("Magane version: v3.2.27.");
+		log("Magane version: v3.2.28.");
 		const startTime = Date.now();
 		try {
 			toast("Loading Magane…", {
@@ -2474,7 +2471,7 @@ function instance$1($$self, $$props, $$invalidate) {
 				searchExports: !0
 			}), Modules.Permissions = Helper.findByProps("computePermissions"), Modules.CloudUpload = Helper.find((m => m.prototype?.trackUploadFinished), {
 				searchExports: !0
-			}), Modules.DraftStore = Helper.findByProps("getDraft", "getState"), Modules.MessageUtils = Helper.findByProps("sendMessage"), 
+			}), Modules.DraftStore = Helper.findByProps("getDraft", "getState"), Modules.MessageUtils = Helper.findByProps("_sendMessage"), 
 			Modules.PendingReplyStore = Helper.findByProps("getPendingReply"), Modules.React = Helper.findByProps("createElement", "version"), 
 			(() => {
 				const iframe = document.createElement("iframe");
