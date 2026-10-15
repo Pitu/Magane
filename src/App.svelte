@@ -524,7 +524,7 @@
 		// Messages & Uploads
 		Modules.CloudUpload = Helper.find(m => m.prototype?.trackUploadFinished, { searchExports: true });
 		Modules.DraftStore = Helper.findByProps('getDraft', 'getState');
-		Modules.MessageUtils = Helper.findByProps('sendMessage');
+		Modules.MessageUtils = Helper.findByProps('_sendMessage');
 		Modules.PendingReplyStore = Helper.findByProps('getPendingReply');
 
 		// Misc
