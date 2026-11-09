@@ -6,7 +6,7 @@
  * @authorId 176200089226706944
  * @authorLink https://github.com/Pitu
  * @license MIT - https://opensource.org/licenses/MIT
- * @version 3.2.28
+ * @version 3.2.29
  * @invite 5g6vgwn
  * @source https://github.com/Pitu/Magane
  * @updateUrl https://raw.githubusercontent.com/Pitu/Magane/master/dist/maganevencord
@@ -1959,7 +1959,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	toast(message, options)), toastError = (message, options = {}) => (options.type = "error", 
 	options.force = !0, toast(message, options)), toastWarn = (message, options = {}) => (options.type = "warn", 
 	options.force = !0, toast(message, options)), mountButtonComponent = textArea => {
-		const buttonsContainer = textArea.querySelector('[class*="buttons__"], [class*="-buttons"]'), component = new Button({
+		const buttonsContainer = textArea.querySelector('[class*="buttons_"], [class*="-buttons"]'), component = new Button({
 			target: buttonsContainer,
 			anchor: buttonsContainer.firstElementChild
 		});
@@ -1977,7 +1977,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		}, component;
 	}, updateStickerWindowPosition = component => {
 		log("Updating window's position…");
-		const props = component.textArea.querySelector('[class*="buttons__"], [class*="-buttons"]').getBoundingClientRect();
+		const props = component.textArea.querySelector('[class*="buttons_"], [class*="-buttons"]').getBoundingClientRect();
 		if ($$invalidate(1, coords.wbottom = base.clientHeight - props.top + 8, coords), 
 		$$invalidate(1, coords.wright = base.clientWidth - props.right - 12, coords), mountType === MountType.LEGACY) {
 			const baseProps = base.getBoundingClientRect();
@@ -1999,9 +1999,9 @@ function instance$1($$self, $$props, $$invalidate) {
 					waitForTimeouts[selector] = setTimeout(poll, 500);
 				})();
 			}));
-		})('[class*="channelTextArea__"]:not([class*="channelTextAreaDisabled__"]), [class*="-channelTextArea"]:not([class*="-channelTextAreaDisabled"])', {
+		})('[class*="channelTextArea_"]:not([class*="channelTextAreaDisabled_"]), [class*="-channelTextArea"]:not([class*="-channelTextAreaDisabled"])', {
 			logname: "textarea",
-			assert: element => Boolean(element.querySelector('[class*="buttons__"], [class*="-buttons"]')),
+			assert: element => Boolean(element.querySelector('[class*="buttons_"], [class*="-buttons"]')),
 			multiple: !0
 		}), componentsOld = components.slice(), componentsNew = [];
 		for (const textArea of textAreas) {
@@ -2074,8 +2074,8 @@ function instance$1($$self, $$props, $$invalidate) {
 		}).then((async result => {
 			log("Remote dist file fetched.");
 			const data = result.data;
-			if (data.version) if (gt_1(data.version, "3.2.28")) {
-				log(`Update found: ${data.version} > 3.2.28.`);
+			if (data.version) if (gt_1(data.version, "3.2.29")) {
+				log(`Update found: ${data.version} > 3.2.29.`);
 				const buttons = [ {
 					label: "Download",
 					onClick: () => window.open("https://raw.githubusercontent.com/Pitu/Magane/master/dist/maganevencord", {
@@ -2087,10 +2087,10 @@ function instance$1($$self, $$props, $$invalidate) {
 					onClick: () => window.open("https://github.com/Pitu/Magane", {
 						target: "_blank"
 					})
-				}), Helper.UI.showNotice(`Magane v3.2.28 found an update: v${data.version}. Please download the update manually.`, {
+				}), Helper.UI.showNotice(`Magane v3.2.29 found an update: v${data.version}. Please download the update manually.`, {
 					buttons
 				});
-			} else log(`No updates found: ${data.version} <= 3.2.28.`), manual && toast("No updates found.", {
+			} else log(`No updates found: ${data.version} <= 3.2.29.`), manual && toast("No updates found.", {
 				nolog: !0,
 				force: !0
 			}); else toastWarn("Failed to parse version string from remote dist file.");
@@ -2466,7 +2466,7 @@ function instance$1($$self, $$props, $$invalidate) {
 		  default:
 			log("Magane is mounted with other or legacy method.");
 		}
-		log("Magane version: v3.2.28.");
+		log("Magane version: v3.2.29.");
 		const startTime = Date.now();
 		try {
 			toast("Loading Magane…", {
