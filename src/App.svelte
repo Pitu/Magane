@@ -184,8 +184,8 @@
 	};
 
 	const coords = { top: 0, left: 0 };
-	const selectorButtonsContainer = '[class*="buttons__"], [class*="-buttons"]';
-	const selectorTextArea = '[class*="channelTextArea__"]:not([class*="channelTextAreaDisabled__"]), [class*="-channelTextArea"]:not([class*="-channelTextAreaDisabled"])';
+	const selectorButtonsContainer = '[class*="buttons_"], [class*="-buttons"]';
+	const selectorTextArea = '[class*="channelTextArea_"]:not([class*="channelTextAreaDisabled_"]), [class*="-channelTextArea"]:not([class*="-channelTextAreaDisabled"])';
 	let main = null;
 	let base = null;
 	let forceHideMagane = false;
